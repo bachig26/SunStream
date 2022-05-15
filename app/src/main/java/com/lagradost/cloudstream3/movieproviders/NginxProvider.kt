@@ -91,7 +91,7 @@ class NginxProvider : MainAPI() {
 
 
             val tagsList = metadataDocument.select("genre")
-                ?.mapNotNull {   // all the tags like action, thriller ...; unused variable
+                .mapNotNull {   // all the tags like action, thriller ...; unused variable
                     it?.text()
                 }
 
@@ -102,7 +102,7 @@ class NginxProvider : MainAPI() {
 
             seasons.forEach { element ->
                 val season =
-                    element.attr("href")?.replace("Season%20", "")?.replace("/", "")?.toIntOrNull()
+                    element.attr("href").replace("Season%20", "").replace("/", "").toIntOrNull()
                 val href = mediaRootUrl + element.attr("href")
                 if (season != null && season > 0 && href.isNotBlank()) {
                     list.add(Pair(season, href))
@@ -194,7 +194,7 @@ class NginxProvider : MainAPI() {
         val document = app.get(mainUrl, authHeader).document
         val categories = document.select("a")
         val returnList = categories.mapNotNull {
-            val categoryPath = mainUrl + it.attr("href") ?: return@mapNotNull null // get the url of the category; like http://192.168.1.10/media/Movies/
+            val categoryPath = mainUrl + it.attr("href")// get the url of the category; like http://192.168.1.10/media/Movies/
             val categoryTitle = it.text()  // get the category title like Movies or Series
             if (categoryTitle != "../" && categoryTitle != "Music/") {  // exclude parent dir and Music dir
                 val categoryDocument = app.get(categoryPath, authHeader).document // queries the page http://192.168.1.10/media/Movies/
