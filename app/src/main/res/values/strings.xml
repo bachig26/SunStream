@@ -36,6 +36,10 @@
     <string name="nginx_url_key" translatable="false">nginx_url_key</string>
     <string name="nginx_credentials" translatable="false">nginx_credentials</string>
     <string name="nginx_info" translatable="false">nginx_info</string>
+    <string name="radarr_url_key" translatable="false">radarr_url_key</string>
+    <string name="radarr_credentials" translatable="false">radarr_credentials</string>
+    <string name="radarr_info" translatable="false">radarr_info</string>
+    <string name="radarr_root_folder_path" translatable="false">radarr_info</string>
     <string name="app_name_download_path" translatable="false">Cloudstream</string>
     <string name="app_layout_key" translatable="false">app_layout_key</string>
     <string name="primary_color_key" translatable="false">primary_color_key</string>
@@ -242,6 +246,13 @@
     <string name="nginx_info_title">What is Nginx ?</string>
     <string name="nginx_info_summary">Nginx is a software that can be used to display files from a server that you own. Click to see a Nginx setup guide</string>
 
+    <string name="radarr_credentials_title">Radarr Credential</string>
+    <string name="radarr_credentials_summary">Your radarr api key, find it under Settings > General</string>
+    <string name="radarr_info_title">What is Radarr ?</string>
+    <string name="radarr_info_summary">Radarr is a software that you run on a server to find torrents on trackers. Click to have more information</string>
+    <string name="radarr_root_folder_path_title">Radarr is a software that you run on a server to find torrents on trackers. Click to have more information</string>
+    <string name="radarr_root_folder_path_summary">Path to your media library (also called Root Folder), /media/Movies/ for example</string>
+
     <string name="settings_info">Info</string>
     <string name="advanced_search">Advanced Search</string>
     <string name="advanced_search_des">Gives you the search results separated by provider</string>
@@ -380,6 +391,7 @@
     <string name="download_path_pref">Download path</string>
 
     <string name="nginx_url_pref">Nginx server url</string>
+    <string name="radarr_url_pref">Radarr server url</string>
 
     <string name="display_subbed_dubbed_settings">Display Dubbed/Subbed Anime</string>
 
