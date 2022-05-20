@@ -583,6 +583,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
 
         getPref(R.string.radarr_root_folder_path)?.setOnPreferenceClickListener {
+            println("received click !!")
             activity?.showNginxTextInputDialog(
                 settingsManager.getString(getString(R.string.radarr_root_folder_path_title), "Radarr Root folder path")
                     .toString(),

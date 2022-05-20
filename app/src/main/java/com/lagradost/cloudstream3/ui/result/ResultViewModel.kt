@@ -11,8 +11,6 @@ import com.lagradost.cloudstream3.APIHolder.getApiFromUrlNull
 import com.lagradost.cloudstream3.APIHolder.getId
 import com.lagradost.cloudstream3.AcraApplication.Companion.setKey
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
-import com.lagradost.cloudstream3.animeproviders.GogoanimeProvider
-import com.lagradost.cloudstream3.animeproviders.NineAnimeProvider
 import com.lagradost.cloudstream3.metaproviders.SyncRedirector
 import com.lagradost.cloudstream3.mvvm.Resource
 import com.lagradost.cloudstream3.mvvm.safeApiCall
@@ -132,7 +130,8 @@ class ResultViewModel : ViewModel() {
             actors = actors ?: meta.actors
 
             val realRecommendations = ArrayList<SearchResponse>()
-            val apiNames = listOf(GogoanimeProvider().name, NineAnimeProvider().name)
+            //val apiNames = listOf(GogoanimeProvider().name, NineAnimeProvider().name)
+            val apiNames: List<String> = listOf() // WILL BREAK SYNC IF NOT CHANGED
             meta.recommendations?.forEach { rec ->
                 apiNames.forEach { name ->
                     realRecommendations.add(rec.copy(apiName = name))
@@ -329,8 +328,7 @@ class ResultViewModel : ViewModel() {
         val validUrlResource = safeApiCall {
             SyncRedirector.redirect(
                 url,
-                api.mainUrl.replace(NineAnimeProvider().mainUrl, "9anime")
-                    .replace(GogoanimeProvider().mainUrl, "gogoanime")
+                api.mainUrl // NOT WORKING FOR GOGO ANIME
             )
         }
 

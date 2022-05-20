@@ -39,7 +39,7 @@
     <string name="radarr_url_key" translatable="false">radarr_url_key</string>
     <string name="radarr_credentials" translatable="false"></string>
     <string name="radarr_info" translatable="false">radarr_info</string>
-    <string name="radarr_root_folder_path" translatable="false"></string>
+    <string name="radarr_root_folder_path" translatable="false">radarr_root_folder_path</string>
     <string name="app_name_download_path" translatable="false">Cloudstream</string>
     <string name="app_layout_key" translatable="false">app_layout_key</string>
     <string name="primary_color_key" translatable="false">primary_color_key</string>

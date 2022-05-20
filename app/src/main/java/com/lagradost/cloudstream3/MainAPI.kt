@@ -41,77 +41,8 @@ object APIHolder {
 
     val allProviders by lazy {
         arrayListOf(
-            // Movie providers
-            PelisplusProvider(),
-            PelisplusHDProvider(),
-            PeliSmartProvider(),
-            MeloMovieProvider(), // Captcha for links
-            DoramasYTProvider(),
-            CinecalidadProvider(),
-            CuevanaProvider(),
-            EntrepeliculasyseriesProvider(),
-            PelisflixProvider(),
-            SeriesflixProvider(),
-            IHaveNoTvProvider(), // Documentaries provider
-            LookMovieProvider(), // RECAPTCHA (Please allow up to 5 seconds...)
-            VMoveeProvider(),
-            AllMoviesForYouProvider(),
-            VidEmbedProvider(),
-            VfFilmProvider(),
-            VfSerieProvider(),
-            FrenchStreamProvider(),
-            AsianLoadProvider(),
-            AsiaFlixProvider(), // restricted
-            BflixProvider(),
-            FmoviesToProvider(),
-            SflixProProvider(),
-            FilmanProvider(),
-            SflixProvider(),
-            DopeboxProvider(),
-            SolarmovieProvider(),
-            PinoyMoviePediaProvider(),
-            PinoyHDXyzProvider(),
-            PinoyMoviesEsProvider(),
-            TrailersTwoProvider(),
-            TwoEmbedProvider(),
-            DramaSeeProvider(),
-            WatchAsianProvider(),
-            KdramaHoodProvider(),
-            AkwamProvider(),
-            MyCimaProvider(),
-            EgyBestProvider(),
-            FaselHDProvider(),
-            SoaptwoDayProvider(),
-            HDMProvider(),// disabled due to cloudflare
-            TheFlixToProvider(),
-            StreamingcommunityProvider(),
-            TantifilmProvider(),
-
-            // Metadata providers
-            //TmdbProvider(),
-            CrossTmdbProvider(),
-            ApiMDBProvider(),
-
-            // Anime providers
-            WatchCartoonOnlineProvider(),
-            GogoanimeProvider(),
-            AllAnimeProvider(),
-            AnimekisaProvider(),
-            //ShiroProvider(), // v2 fucked me
-            AnimeFlickProvider(),
-            AnimeflvnetProvider(),
-            TenshiProvider(),
-            WcoProvider(),
-            AnimePaheProvider(),
-            DreamSubProvider(),
-            NineAnimeProvider(),
-            AnimeWorldProvider(),
-            ZoroProvider(),
-            DubbedAnimeProvider(),
-            MonoschinosProvider(),
-            KawaiifuProvider(), // disabled due to cloudflare
-            //MultiAnimeProvider(),
-	        NginxProvider(),
+            NginxProvider(),
+            RadarrProvider(),
         )
     }
 
@@ -316,6 +247,7 @@ data class ProvidersInfoJson(
     @JsonProperty("name") var name: String,
     @JsonProperty("url") var url: String,
     @JsonProperty("credentials") var credentials: String? = null,
+    @JsonProperty("rootFolderPath") var rootFolderPath: String? = null,
     @JsonProperty("status") var status: Int,
 )
 
@@ -328,7 +260,8 @@ abstract class MainAPI {
     fun overrideWithNewData(data: ProvidersInfoJson) {
         this.name = data.name
         this.mainUrl = data.url
-	    this.storedCredentials = data.credentials
+        this.storedCredentials = data.credentials
+        this.rootFolderPath = data.rootFolderPath
     }
 
     init {
@@ -340,6 +273,7 @@ abstract class MainAPI {
     open var name = "NONE"
     open var mainUrl = "NONE"
     open var storedCredentials: String? = null
+    open var rootFolderPath: String? = null
 
     //open val uniqueId : Int by lazy { this.name.hashCode() } // in case of duplicate providers you can have a shared id
 
