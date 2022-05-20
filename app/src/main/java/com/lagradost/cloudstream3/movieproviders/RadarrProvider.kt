@@ -104,8 +104,9 @@ class RadarrProvider : MainAPI() {
         val movieObject = JSONObject(data)
         movieObject.put("qualityProfileId", "1")
         movieObject.put("monitored", true)
-        //movieObject.put("rootFolderPath", rootFolderPath)
+        movieObject.put("rootFolderPath", rootFolderPath)
         val body = movieObject.toString().toRequestBody("application/json;charset=UTF-8".toMediaTypeOrNull())
+        println(body.contentType())
 
 
         val postRequest = app.post(
@@ -114,11 +115,17 @@ class RadarrProvider : MainAPI() {
                 "Accept" to "application/json",
                 "X-Api-Key" to storedCredentials.toString(),
             ),
-            json=body)
-        if (postRequest.code == 200) {
-            print("working well")
+            requestBody=body)
+        if (postRequest.isSuccessful) {
+            println("working well")
         } else {
+            println("ERROR HERE:")
+            println(postRequest.document)
+            println(postRequest.okhttpResponse)
+            println(postRequest.body)
+            println(postRequest.headers)
             println(postRequest.code)
+            println(postRequest.isSuccessful)
         }
         return false
     }
