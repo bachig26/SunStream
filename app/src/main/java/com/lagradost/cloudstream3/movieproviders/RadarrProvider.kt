@@ -65,7 +65,7 @@ class RadarrProvider : MainAPI() {
 
         println(storedCredentials)
         println(mainUrl)
-        println(rootFolderPath)
+        //println(rootFolderPath)
         println(storedCredentials)
 
         if (storedCredentials == null || mainUrl == "NONE") {
@@ -104,7 +104,7 @@ class RadarrProvider : MainAPI() {
         val movieObject = JSONObject(data)
         movieObject.put("qualityProfileId", "1")
         movieObject.put("monitored", true)
-        movieObject.put("rootFolderPath", rootFolderPath)
+        //movieObject.put("rootFolderPath", rootFolderPath)
         val body = movieObject.toString().toRequestBody("application/json;charset=UTF-8".toMediaTypeOrNull())
 
 
@@ -114,7 +114,7 @@ class RadarrProvider : MainAPI() {
                 "Accept" to "application/json",
                 "X-Api-Key" to storedCredentials.toString(),
             ),
-            data=body)
+            json=body)
         if (postRequest.code == 200) {
             print("working well")
         } else {

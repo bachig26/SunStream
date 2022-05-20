@@ -185,8 +185,8 @@
 
 
     <PreferenceCategory
-        android:key="@string/nginx_category"
-        android:title="@string/nginx_category"
+        android:key="@string/self_hosted_category"
+        android:title="@string/self_hosted_category"
         app:isPreferenceVisible="true">
         <Preference
             android:key="@string/nginx_url_key"
@@ -201,10 +201,33 @@
             android:key="@string/nginx_info"
             android:title="@string/nginx_info_title"
             android:icon="@drawable/ic_baseline_play_arrow_24"
-	        android:summary="@string/nginx_info_summary" >
+            android:summary="@string/nginx_info_summary">
             <intent
                 android:action="android.intent.action.VIEW"
                 android:data="https://www.sarlays.com/use-nginx-with-cloudstream/" />
+        </Preference>
+        <Preference
+            android:key="@string/radarr_url_key"
+            android:title="@string/radarr_url_pref"
+            android:icon="@drawable/ic_baseline_play_arrow_24" />
+        <Preference
+            android:key="@string/radarr_credentials"
+            android:title="@string/radarr_credentials_title"
+            android:icon="@drawable/video_locked"
+            android:summary="@string/radarr_credentials_summary"/>
+        <Preference
+            android:key="@string/radarr_root_folder_path"
+            android:title="@string/radarr_root_folder_path_title"
+            android:icon="@drawable/video_locked"
+            android:summary="@string/radarr_root_folder_path_summary"/>
+        <Preference
+            android:key="@string/radarr_info"
+            android:title="@string/radarr_info_title"
+            android:icon="@drawable/ic_baseline_play_arrow_24"
+            android:summary="@string/radarr_info_summary">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://www.sarlays.com/use-nginx-with-cloudstream/ // TODO CHANGE" />
         </Preference>
     </PreferenceCategory>
 

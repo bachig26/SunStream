@@ -37,9 +37,9 @@
     <string name="nginx_credentials" translatable="false">nginx_credentials</string>
     <string name="nginx_info" translatable="false">nginx_info</string>
     <string name="radarr_url_key" translatable="false">radarr_url_key</string>
-    <string name="radarr_credentials" translatable="false">radarr_credentials</string>
+    <string name="radarr_credentials" translatable="false"></string>
     <string name="radarr_info" translatable="false">radarr_info</string>
-    <string name="radarr_root_folder_path" translatable="false">radarr_info</string>
+    <string name="radarr_root_folder_path" translatable="false"></string>
     <string name="app_name_download_path" translatable="false">Cloudstream</string>
     <string name="app_layout_key" translatable="false">app_layout_key</string>
     <string name="primary_color_key" translatable="false">primary_color_key</string>
@@ -240,6 +240,7 @@
     <string name="backup_failed_error_format">Error backing up %s</string>
 
     <string name="search">Search</string>
+    <string name="self_hosted_category">Self Hosted applications</string>
     <string name="nginx_category">Nginx Settings</string>
     <string name="nginx_credentials_title">Nginx Credential</string>
     <string name="nginx_credentials_summary">You have to use the following format mycoolusername:mysecurepassword123</string>
@@ -250,7 +251,7 @@
     <string name="radarr_credentials_summary">Your radarr api key, find it under Settings > General</string>
     <string name="radarr_info_title">What is Radarr ?</string>
     <string name="radarr_info_summary">Radarr is a software that you run on a server to find torrents on trackers. Click to have more information</string>
-    <string name="radarr_root_folder_path_title">Radarr is a software that you run on a server to find torrents on trackers. Click to have more information</string>
+    <string name="radarr_root_folder_path_title">Radarr Root folder path</string>
     <string name="radarr_root_folder_path_summary">Path to your media library (also called Root Folder), /media/Movies/ for example</string>
 
     <string name="settings_info">Info</string>
