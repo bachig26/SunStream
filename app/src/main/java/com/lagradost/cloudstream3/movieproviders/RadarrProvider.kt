@@ -63,15 +63,8 @@ class RadarrProvider : MainAPI() {
     // Each of the classes requires some different data, but always has some critical things like name, poster and url.
     override suspend fun search(query: String): List<SearchResponse> {
 
-        println(storedCredentials)
-        println(mainUrl)
-        //println(rootFolderPath)
-        println(storedCredentials)
-
         if (storedCredentials == null || mainUrl == "NONE") {
-            println(storedCredentials)
-            println(mainUrl)
-            throw ErrorLoadingException("No radarr url specified in the settings: Nginx Settigns > Nginx server url, try again in a few seconds")
+            throw ErrorLoadingException("No radarr url specified in the settings: Radarr Settigns > Radarr server url, try again in a few seconds")
         }
 
 
@@ -79,12 +72,8 @@ class RadarrProvider : MainAPI() {
         // https://vidembed.cc/search.html?keyword=neverland where neverland is the query, can be written as below.
         val searchResponse = app.get("$mainUrl/api/v3/movie/lookup?term=$query&apikey=$storedCredentials").text
         val results: List<lookupJson> = mapper.readValue(searchResponse)
-        println("tmdbID:")
-        println(results[0].tmdbId)
 
         return results.map {
-            println("tmdbID:")
-            println(it.tmdbId)
             newMovieSearchResponse(it.title, it.tmdbId, TvType.Movie, fix=false) {  // here url = tmdbId
                 // this.year = it.year
                 this.posterUrl = it.posterUrl
@@ -106,7 +95,6 @@ class RadarrProvider : MainAPI() {
         movieObject.put("monitored", true)
         movieObject.put("rootFolderPath", rootFolderPath)
         val body = movieObject.toString().toRequestBody("application/json;charset=UTF-8".toMediaTypeOrNull())
-        println(body.contentType())
 
 
         val postRequest = app.post(
@@ -116,6 +104,7 @@ class RadarrProvider : MainAPI() {
                 "X-Api-Key" to storedCredentials.toString(),
             ),
             requestBody=body)
+        /*
         if (postRequest.isSuccessful) {
             println("working well")
         } else {
@@ -127,6 +116,7 @@ class RadarrProvider : MainAPI() {
             println(postRequest.code)
             println(postRequest.isSuccessful)
         }
+         */
         return false
     }
 
