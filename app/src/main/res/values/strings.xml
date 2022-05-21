@@ -244,7 +244,7 @@
 
     <string name="search">Search</string>
     <string name="category_nginx">Nginx</string>
-    <string name="category_radarrr">Radarr</string>
+    <string name="category_radarr">Radarr</string>
     <string name="category_credits">Credits and account</string>
     <string name="category_updates">Updates and backup</string>
     <string name="nginx_credentials_title">Nginx Credential</string>
