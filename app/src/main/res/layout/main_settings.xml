@@ -42,14 +42,22 @@
 
             <TextView
                     android:nextFocusUp="@id/settings_ui"
-                    android:nextFocusDown="@id/settings_updates"
+                    android:nextFocusDown="@id/settings_radarr"
 
                     android:id="@+id/settings_nginx"
                     style="@style/SettingsItem"
                     android:text="@string/category_nginx" />
 
             <TextView
-                    android:nextFocusUp="@id/settings_nginx"
+                android:nextFocusUp="@id/settings_nginx"
+                android:nextFocusDown="@id/settings_updates"
+
+                android:id="@+id/settings_radarr"
+                style="@style/SettingsItem"
+                android:text="@string/category_radarr" />
+
+            <TextView
+                    android:nextFocusUp="@id/settings_radarr"
                     android:nextFocusDown="@id/settings_credits"
 
                     android:id="@+id/settings_updates"
