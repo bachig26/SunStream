@@ -41,7 +41,7 @@ object APIHolder {
     val allProviders by lazy {
         arrayListOf(
             NginxProvider(),
-            RadarrProvider(),
+            RadarrProvider()
         )
     }
 
