@@ -201,7 +201,7 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                 putString(URL_BUNDLE, card.url)
                 putString(API_NAME_BUNDLE, card.apiName)
                 if (card is DataStoreHelper.ResumeWatchingResult) {
-                    println("CARD::::: $card")
+//                    println("CARD::::: $card")
                     if (card.season != null)
                         putInt(SEASON_BUNDLE, card.season)
                     if (card.episode != null)
@@ -1729,13 +1729,11 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                     setRecommendations(d.recommendations, null)
                     setActors(d.actors)
 
-                    if (SettingsFragment.accountEnabled) {
-                        if (syncModel.addSyncs(d.syncData)) {
-                            syncModel.updateMetaAndUser()
-                            syncModel.updateSynced()
-                        } else {
-                            syncModel.addFromUrl(d.url)
-                        }
+                    if (syncModel.addSyncs(d.syncData)) {
+                        syncModel.updateMetaAndUser()
+                        syncModel.updateSynced()
+                    } else {
+                        syncModel.addFromUrl(d.url)
                     }
 
                     result_meta_site?.text = d.apiName
