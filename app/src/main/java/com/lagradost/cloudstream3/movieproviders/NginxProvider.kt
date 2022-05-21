@@ -17,7 +17,7 @@ class NginxProvider : MainAPI() {
 
     fun getAuthHeader(storedCredentials: String?): Map<String, String> {
         if (storedCredentials == null) {
-            return mapOf(Pair("Authorization", "Basic "))  // no Authorization headers
+            return mapOf(Pair("Authorization", "Basic "))  // no Authorization headers.
         }
         val basicAuthToken = base64Encode(storedCredentials.toByteArray())  // will this be loaded when not using the provider ??? can increase load
         return mapOf(Pair("Authorization", "Basic $basicAuthToken"))
