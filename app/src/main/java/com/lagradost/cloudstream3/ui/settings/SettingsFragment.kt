@@ -96,36 +96,13 @@ class SettingsFragment : Fragment() {
         }
 
         val isTrueTv = context?.isTrueTvSettings() == true
-
-<<<<<<< HEAD
-        settings_credits?.setOnClickListener {
-            navigate(R.id.action_navigation_settings_to_navigation_settings_account)
-        }
-
-        settings_ui?.setOnClickListener {
-            navigate(R.id.action_navigation_settings_to_navigation_settings_ui)
-        }
-
-        settings_lang?.setOnClickListener {
-            navigate(R.id.action_navigation_settings_to_navigation_settings_lang)
-        }
-
-        settings_nginx?.setOnClickListener {
-            navigate(R.id.action_navigation_settings_to_navigation_settings_nginx)
-        }
-        settings_radarr?.setOnClickListener {
-            navigate(R.id.action_navigation_settings_to_navigation_settings_radarr)
-        }
-
-        settings_updates?.setOnClickListener {
-            navigate(R.id.action_navigation_settings_to_navigation_settings_updates)
-=======
         listOf(
             Pair(settings_player, R.id.action_navigation_settings_to_navigation_settings_player),
             Pair(settings_credits, R.id.action_navigation_settings_to_navigation_settings_account),
             Pair(settings_ui, R.id.action_navigation_settings_to_navigation_settings_ui),
             Pair(settings_lang, R.id.action_navigation_settings_to_navigation_settings_lang),
             Pair(settings_nginx, R.id.action_navigation_settings_to_navigation_settings_nginx),
+            Pair(settings_radarr, R.id.action_navigation_settings_to_navigation_settings_radarr),
             Pair(settings_updates, R.id.action_navigation_settings_to_navigation_settings_updates),
         ).forEach { (view, navigationId) ->
             view?.apply {
@@ -137,7 +114,6 @@ class SettingsFragment : Fragment() {
                     isFocusableInTouchMode = true
                 }
             }
->>>>>>> 0c6cf7a0b8e50bfc18ce2f9ea93cdf42e07efe2f
         }
     }
 }
