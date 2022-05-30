@@ -59,7 +59,6 @@ import com.lagradost.cloudstream3.ui.player.SubtitleData
 import com.lagradost.cloudstream3.ui.quicksearch.QuickSearchFragment
 import com.lagradost.cloudstream3.ui.search.SearchAdapter
 import com.lagradost.cloudstream3.ui.search.SearchHelper
-import com.lagradost.cloudstream3.ui.settings.SettingsFragment
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTrueTvSettings
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTvSettings
 import com.lagradost.cloudstream3.ui.subtitles.SubtitlesFragment.Companion.getDownloadSubsLanguageISO639_1
@@ -97,6 +96,7 @@ import kotlinx.android.synthetic.main.result_recommendations.*
 import kotlinx.android.synthetic.main.result_sync.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -1584,14 +1584,14 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
             result_dub_select?.text = status.toString()
         }
 
-        val preferDub = context?.getApiDubstatusSettings()?.all { it == DubStatus.Dubbed } == true
+//        val preferDub = context?.getApiDubstatusSettings()?.all { it == DubStatus.Dubbed } == true
 
         observe(viewModel.dubSubSelections) { range ->
             dubRange = range
 
-            if (preferDub && dubRange?.contains(DubStatus.Dubbed) == true) {
-                viewModel.changeDubStatus(DubStatus.Dubbed)
-            }
+//            if (preferDub && dubRange?.contains(DubStatus.Dubbed) == true) {
+//                viewModel.changeDubStatus(DubStatus.Dubbed)
+//            }
 
             result_dub_select?.visibility = if (range.size <= 1) GONE else VISIBLE
 
@@ -1747,20 +1747,21 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                             result_poster_holder?.setOnClickListener {
                                 try {
                                     context?.let { ctx ->
-                                        val bitmap = result_poster.drawable.toBitmap()
-                                        val sourceBuilder = AlertDialog.Builder(ctx)
-                                        sourceBuilder.setView(R.layout.result_poster)
+                                        runBlocking {
+                                            val sourceBuilder = AlertDialog.Builder(ctx)
+                                            sourceBuilder.setView(R.layout.result_poster)
 
-                                        val sourceDialog = sourceBuilder.create()
-                                        sourceDialog.show()
+                                            val sourceDialog = sourceBuilder.create()
+                                            sourceDialog.show()
 
-                                        sourceDialog.findViewById<ImageView?>(R.id.imgPoster)
-                                            ?.apply {
-                                                setImageBitmap(bitmap)
-                                                setOnClickListener {
-                                                    sourceDialog.dismissSafe()
+                                            sourceDialog.findViewById<ImageView?>(R.id.imgPoster)
+                                                ?.apply {
+                                                    setImage(posterImageLink)
+                                                    setOnClickListener {
+                                                        sourceDialog.dismissSafe()
+                                                    }
                                                 }
-                                            }
+                                        }
                                     }
                                 } catch (e: Exception) {
                                     logError(e)

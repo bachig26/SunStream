@@ -75,9 +75,10 @@ class SettingsFragment : Fragment() {
         private fun Context.isAutoTv(): Boolean {
             val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager?
             // AFT = Fire TV
+            val model = Build.MODEL.lowercase()
             return uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION || Build.MODEL.contains(
                 "AFT"
-            )
+            ) || model.contains("firestick") || model.contains("fire tv") || model.contains("chromecast")
         }
     }
 
@@ -94,10 +95,9 @@ class SettingsFragment : Fragment() {
             activity?.navigate(id, Bundle())
         }
 
-        settings_player?.setOnClickListener {
-            navigate(R.id.action_navigation_settings_to_navigation_settings_player)
-        }
+        val isTrueTv = context?.isTrueTvSettings() == true
 
+<<<<<<< HEAD
         settings_credits?.setOnClickListener {
             navigate(R.id.action_navigation_settings_to_navigation_settings_account)
         }
@@ -119,6 +119,25 @@ class SettingsFragment : Fragment() {
 
         settings_updates?.setOnClickListener {
             navigate(R.id.action_navigation_settings_to_navigation_settings_updates)
+=======
+        listOf(
+            Pair(settings_player, R.id.action_navigation_settings_to_navigation_settings_player),
+            Pair(settings_credits, R.id.action_navigation_settings_to_navigation_settings_account),
+            Pair(settings_ui, R.id.action_navigation_settings_to_navigation_settings_ui),
+            Pair(settings_lang, R.id.action_navigation_settings_to_navigation_settings_lang),
+            Pair(settings_nginx, R.id.action_navigation_settings_to_navigation_settings_nginx),
+            Pair(settings_updates, R.id.action_navigation_settings_to_navigation_settings_updates),
+        ).forEach { (view, navigationId) ->
+            view?.apply {
+                setOnClickListener {
+                    navigate(navigationId)
+                }
+                if (isTrueTv) {
+                    isFocusable = true
+                    isFocusableInTouchMode = true
+                }
+            }
+>>>>>>> 0c6cf7a0b8e50bfc18ce2f9ea93cdf42e07efe2f
         }
     }
 }
