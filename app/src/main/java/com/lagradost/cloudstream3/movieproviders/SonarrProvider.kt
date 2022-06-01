@@ -49,7 +49,7 @@ class SonarrProvider : MainAPI() {
         val loadResponse = app.get("$mainUrl/api/v3/movie/lookup/tmdb?tmdbId=$tmdbId&apikey=$storedCredentials").text
         val resultsResponse: loadJson = mapper.readValue(loadResponse)
         val returnedPoster = resultsResponse.posterUrl?.first { it?.coverType == "poster" }?.url
-        return newMovieLoadResponse(resultsResponse.title, tmdbId, TvType.Movie, loadResponse) {  // here url = loadResponse
+        return newMovieLoadResponse(resultsResponse.title, tmdbId, TvType.TvSeries, loadResponse) {  // here url = loadResponse
             this.year = resultsResponse.year
             this.plot = resultsResponse.plot
             this.posterUrl = returnedPoster
@@ -64,7 +64,7 @@ class SonarrProvider : MainAPI() {
     override suspend fun search(query: String): List<SearchResponse> {
 
         if (storedCredentials == null || mainUrl == "NONE") {
-            throw ErrorLoadingException("No radarr url specified in the settings: Radarr Settigns > Radarr server url, try again in a few seconds")
+            throw ErrorLoadingException("No sonarr url specified in the settings: Sonarr Settigns > Sonarr server url, try again in a few seconds")
         }
 
 
