@@ -42,6 +42,7 @@ object APIHolder {
         arrayListOf(
             NginxProvider(),
             RadarrProvider(),
+            SonarrProvider(),
         )
     }
 
