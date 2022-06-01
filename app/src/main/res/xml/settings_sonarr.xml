@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:icon="@color/transparent" />
+
+    <Preference
+        android:key="@string/sonarr_url_key"
+        android:title="@string/sonarr_url_pref"
+        android:icon="@drawable/ic_baseline_play_arrow_24" />
+    <Preference
+        android:key="@string/sonarr_credentials"
+        android:title="@string/sonarr_credentials_title"
+        android:icon="@drawable/video_locked"
+        android:summary="@string/sonarr_credentials_summary"/>
+    <Preference
+        android:key="@string/sonarr_root_folder_path"
+        android:title="@string/sonarr_root_folder_path_title"
+        android:icon="@drawable/video_locked"
+        android:summary="@string/sonarr_root_folder_path_summary"/>
+    <Preference
+        android:key="@string/sonarr_info"
+        android:title="@string/sonarr_info_title"
+        android:icon="@drawable/ic_baseline_play_arrow_24"
+        android:summary="@string/sonarr_info_summary">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="https://www.sarlays.com/use-nginx-with-cloudstream/ // TODO CHANGE" />
+    </Preference>
+</PreferenceScreen>

@@ -39,9 +39,13 @@
     <string name="nginx_credentials" translatable="false">nginx_credentials</string>
     <string name="nginx_info" translatable="false">nginx_info</string>
     <string name="radarr_url_key" translatable="false">radarr_url_key</string>
+    <string name="sonarr_url_key" translatable="false">sonarr_url_key</string>
     <string name="radarr_credentials" translatable="false"></string>
+    <string name="sonarr_credentials" translatable="false"></string>
     <string name="radarr_info" translatable="false">radarr_info</string>
+    <string name="sonarr_info" translatable="false">sonarr_info</string>
     <string name="radarr_root_folder_path" translatable="false">radarr_root_folder_path</string>
+    <string name="sonarr_root_folder_path" translatable="false">sonarr_root_folder_path</string>
     <string name="app_name_download_path" translatable="false">Cloudstream</string>
     <string name="app_layout_key" translatable="false">app_layout_key</string>
     <string name="primary_color_key" translatable="false">primary_color_key</string>
@@ -246,6 +250,7 @@
     <string name="search">Search</string>
     <string name="category_nginx">Nginx</string>
     <string name="category_radarr">Radarr</string>
+    <string name="category_sonarr">Sonarr</string>
     <string name="category_credits">Credits and account</string>
     <string name="category_updates">Updates and backup</string>
     <string name="nginx_credentials_title">Nginx Credential</string>
@@ -254,11 +259,17 @@
     <string name="nginx_info_summary">Nginx is a software that can be used to display files from a server that you own. Click to see a Nginx setup guide</string>
 
     <string name="radarr_credentials_title">Radarr Credential</string>
+    <string name="sonarr_credentials_title">Sonarr Credential</string>
     <string name="radarr_credentials_summary">Your radarr api key, find it under Settings > General</string>
+    <string name="sonarr_credentials_summary">Your sonarr api key, find it under Settings > General</string>
     <string name="radarr_info_title">What is Radarr ?</string>
+    <string name="sonarr_info_title">What is Sonarr ?</string>
     <string name="radarr_info_summary">Radarr is a software that you run on a server to find torrents on trackers. Click to have more information</string>
+    <string name="sonarr_info_summary">Sonarr is a software that you run on a server to find torrents on trackers. Click to have more information</string>
     <string name="radarr_root_folder_path_title">Radarr Root folder path</string>
+    <string name="sonarr_root_folder_path_title">Sonarr Root folder path</string>
     <string name="radarr_root_folder_path_summary">Path to your media library (also called Root Folder), /media/Movies/ for example</string>
+    <string name="sonarr_root_folder_path_summary">Path to your media library (also called Root Folder), /media/Series/ for example</string>
 
     <string name="settings_info">Info</string>
     <string name="advanced_search">Advanced Search</string>
@@ -401,6 +412,7 @@
 
     <string name="nginx_url_pref">Nginx server url</string>
     <string name="radarr_url_pref">Radarr server url</string>
+    <string name="sonarr_url_pref">Sonarr server url</string>
 
     <string name="display_subbed_dubbed_settings">Display Dubbed/Subbed Anime</string>
 

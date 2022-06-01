@@ -103,6 +103,7 @@ class SettingsFragment : Fragment() {
             Pair(settings_lang, R.id.action_navigation_settings_to_navigation_settings_lang),
             Pair(settings_nginx, R.id.action_navigation_settings_to_navigation_settings_nginx),
             Pair(settings_radarr, R.id.action_navigation_settings_to_navigation_settings_radarr),
+            Pair(settings_sonarr, R.id.action_navigation_settings_to_navigation_settings_sonarr),
             Pair(settings_updates, R.id.action_navigation_settings_to_navigation_settings_updates),
         ).forEach { (view, navigationId) ->
             view?.apply {
