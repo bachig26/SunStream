@@ -36,6 +36,7 @@ import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.CommonActivity.updateLocale
 import com.lagradost.cloudstream3.movieproviders.NginxProvider
 import com.lagradost.cloudstream3.movieproviders.RadarrProvider
+import com.lagradost.cloudstream3.movieproviders.SonarrProvider
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.receivers.VideoDownloadRestartReceiver
@@ -134,6 +135,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             R.id.navigation_chrome_subtitles,
             R.id.navigation_settings_nginx,
             R.id.navigation_settings_radarr,
+            R.id.navigation_settings_sonarr,
             R.id.navigation_settings_player,
             R.id.navigation_settings_updates,
             R.id.navigation_settings_ui,
@@ -389,6 +391,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             "radarr_url_key"
         }
 
+        val sonarrUrl = try {
+            settingsManager.getString(getString(R.string.sonarr_url_key), "sonarr_url_key").toString()
+        } catch (e: Exception) {
+            logError(e)
+            "sonarr_url_key"
+        }
+
         // must give benenes to get beta providers
         val hasBenene = try {
             val count = settingsManager.getInt(getString(R.string.benene_count), 0)
@@ -409,7 +418,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
                     if (providerName == RadarrProvider().name) {
                         settingsManager.getString(getString(R.string.radarr_credentials), "radarr_credentials").toString()
                     } else {
-                        null
+                        if (providerName == SonarrProvider().name) {
+                            settingsManager.getString(
+                                getString(R.string.sonarr_credentials),
+                                "sonarr_credentials"
+                            ).toString()
+                        } else { null }
                     }
 
                 }
@@ -417,7 +431,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
                 val rootFolderPath = if (providerName == RadarrProvider().name) {
                     settingsManager.getString(getString(R.string.radarr_root_folder_path), "radarr_root_folder_path").toString()
                 } else {
-                    null
+                    if (providerName == SonarrProvider().name) {
+                        settingsManager.getString(getString(R.string.sonarr_root_folder_path), "sonarr_root_folder_path").toString()
+                    } else { null }
                 }
 
                 ProvidersInfoJson(
@@ -457,7 +473,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
                 val radarrProviderIndex = apis.indexOf(APIHolder.getApiFromName(radarrProviderName))
                 val createdJsonProvider = createProviderJson(radarrUrl, radarrProviderName)
                 if (createdJsonProvider != null) {
-                    println(createdJsonProvider.rootFolderPath)
                     apis[radarrProviderIndex].overrideWithNewData(createdJsonProvider) // people will have access to it if they disable metadata check (they are not filtered)
                 }
             } catch (e: Exception) {
@@ -465,6 +480,22 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             }
 
         }
+
+        if (sonarrUrl != "sonarr_url_key" && sonarrUrl != "") {
+            try {
+
+                val sonarrProviderName = SonarrProvider().name
+                val sonarrProviderIndex = apis.indexOf(APIHolder.getApiFromName(sonarrProviderName))
+                val createdJsonProvider = createProviderJson(sonarrUrl, sonarrProviderName)
+                if (createdJsonProvider != null) {
+                    apis[sonarrProviderIndex].overrideWithNewData(createdJsonProvider) // people will have access to it if they disable metadata check (they are not filtered)
+                }
+            } catch (e: Exception) {
+                logError(e)
+            }
+
+        }
+
 
         loadThemes(this)
         updateLocale()
