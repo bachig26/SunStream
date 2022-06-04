@@ -51,6 +51,7 @@ class DownloadFileGenerator(
         isCasting: Boolean,
         callback: (Pair<ExtractorLink?, ExtractorUri?>) -> Unit,
         subtitleCallback: (SubtitleData) -> Unit,
+        audioTrackCallback: (AudioTrackData) -> Unit,
         offset: Int,
     ): Boolean {
         val meta = episodes[currentIndex + offset]

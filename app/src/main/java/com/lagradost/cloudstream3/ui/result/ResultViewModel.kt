@@ -19,6 +19,7 @@ import com.lagradost.cloudstream3.mvvm.safeApiCall
 import com.lagradost.cloudstream3.syncproviders.SyncAPI
 import com.lagradost.cloudstream3.ui.APIRepository
 import com.lagradost.cloudstream3.ui.WatchType
+import com.lagradost.cloudstream3.ui.player.AudioTrackData
 import com.lagradost.cloudstream3.ui.player.IGenerator
 import com.lagradost.cloudstream3.ui.player.RepoLinkGenerator
 import com.lagradost.cloudstream3.ui.player.SubtitleData
@@ -250,6 +251,7 @@ class ResultViewModel : ViewModel() {
 
             val currentLinks = mutableSetOf<ExtractorLink>()
             val currentSubs = mutableSetOf<SubtitleData>()
+            val currentAudioTracks = mutableSetOf<AudioTrackData>()
 
             generator?.goto(index)
             generator?.generateLinks(clearCache, isCasting, {
@@ -258,6 +260,8 @@ class ResultViewModel : ViewModel() {
                 }
             }, { sub ->
                 currentSubs.add(sub)
+            }, { audio ->
+                currentAudioTracks.add(audio)
             })
 
             return@safeApiCall Pair(

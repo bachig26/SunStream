@@ -25,6 +25,7 @@ import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.mvvm.safeApiCall
 import com.lagradost.cloudstream3.sortSubs
 import com.lagradost.cloudstream3.sortUrls
+import com.lagradost.cloudstream3.ui.player.AudioTrackData
 import com.lagradost.cloudstream3.ui.player.RepoLinkGenerator
 import com.lagradost.cloudstream3.ui.player.SubtitleData
 import com.lagradost.cloudstream3.ui.result.ResultEpisode
@@ -288,6 +289,7 @@ class SelectSourceController(val view: ImageView, val activity: ControllerActivi
                     ioSafe {
                         val currentLinks = mutableSetOf<ExtractorLink>()
                         val currentSubs = mutableSetOf<SubtitleData>()
+                        val currentAudioTracks = mutableSetOf<AudioTrackData>()
 
                         val generator = RepoLinkGenerator(listOf(epData))
 
@@ -299,6 +301,9 @@ class SelectSourceController(val view: ImageView, val activity: ControllerActivi
                                     }
                                 }, subtitleCallback = {
                                     currentSubs.add(it)
+                                },
+                                {
+                                    currentAudioTracks.add(it)
                                 })
                         }
 

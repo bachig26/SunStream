@@ -53,6 +53,7 @@ import com.lagradost.cloudstream3.ui.download.DOWNLOAD_ACTION_DOWNLOAD
 import com.lagradost.cloudstream3.ui.download.DOWNLOAD_NAVIGATE_TO
 import com.lagradost.cloudstream3.ui.download.DownloadButtonSetup.handleDownloadClick
 import com.lagradost.cloudstream3.ui.download.EasyDownloadButton
+import com.lagradost.cloudstream3.ui.player.AudioTrackData
 import com.lagradost.cloudstream3.ui.player.GeneratorPlayer
 import com.lagradost.cloudstream3.ui.player.RepoLinkGenerator
 import com.lagradost.cloudstream3.ui.player.SubtitleData
@@ -420,13 +421,17 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                 val generator = RepoLinkGenerator(listOf(episode))
                 val currentLinks = mutableSetOf<ExtractorLink>()
                 val currentSubs = mutableSetOf<SubtitleData>()
+                val currentAudioTracks = mutableSetOf<AudioTrackData>()
                 generator.generateLinks(clearCache = false, isCasting = false, callback = {
                     it.first?.let { link ->
                         currentLinks.add(link)
                     }
                 }, subtitleCallback = { sub ->
                     currentSubs.add(sub)
-                })
+                }, audioTrackCallback = { audio ->
+                    currentAudioTracks.add(audio)
+                },
+                )
 
                 if (currentLinks.isEmpty()) {
                     main {
