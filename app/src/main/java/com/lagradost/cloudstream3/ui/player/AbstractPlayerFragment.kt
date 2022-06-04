@@ -96,6 +96,10 @@ abstract class AbstractPlayerFragment(
         throw NotImplementedError()
     }
 
+    open fun embeddedAudioTracksFetched(audioTracks: List<AudioTrackData>) {
+        throw NotImplementedError()
+    }
+
     open fun exitedPipMode() {
         throw NotImplementedError()
     }
@@ -345,6 +349,7 @@ abstract class AbstractPlayerFragment(
             ),
             subtitlesUpdates = ::subtitlesChanged,
             embeddedSubtitlesFetched = ::embeddedSubtitlesFetched,
+            embeddedAudioTracksFetched = ::embeddedAudioTracksFetched,
         )
 
         if (player is CS3IPlayer) {

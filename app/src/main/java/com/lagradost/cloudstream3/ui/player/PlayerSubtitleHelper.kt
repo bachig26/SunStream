@@ -8,6 +8,7 @@ import android.widget.FrameLayout
 import com.google.android.exoplayer2.ui.SubtitleView
 import com.google.android.exoplayer2.util.MimeTypes
 import com.hippo.unifile.UniFile
+import com.lagradost.cloudstream3.AudioTrackFile
 import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.ui.subtitles.SaveCaptionStyle
 import com.lagradost.cloudstream3.ui.subtitles.SubtitlesFragment.Companion.fromSaveToStyle
@@ -26,6 +27,11 @@ enum class SubtitleOrigin {
     EMBEDDED_IN_VIDEO
 }
 
+enum class AudioTrackOrigin {
+    EMBEDDED_IN_VIDEO,
+}
+
+
 /**
  * @param name To be displayed in the player
  * @param url Url for the subtitle, when EMBEDDED_IN_VIDEO this variable is used as the real backend language
@@ -35,6 +41,13 @@ data class SubtitleData(
     val url: String,
     val origin: SubtitleOrigin,
     val mimeType: String,
+)
+
+data class AudioTrackData(
+    val name: String,
+    val url: String,
+    val origin: AudioTrackOrigin? = null,
+    val mimeType: String? = null,
 )
 
 class PlayerSubtitleHelper {

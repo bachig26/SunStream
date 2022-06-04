@@ -63,6 +63,7 @@ class RepoLinkGenerator(
         isCasting: Boolean,
         callback: (Pair<ExtractorLink?, ExtractorUri?>) -> Unit,
         subtitleCallback: (SubtitleData) -> Unit,
+        audioTrackCallback: (AudioTrackData) -> Unit,
         offset: Int,
     ): Boolean {
         val index = currentIndex
@@ -135,6 +136,11 @@ class RepoLinkGenerator(
                         //linkCache[index] = currentLinkCache
                     }
                 }
+            },
+            { audio ->
+                Log.d(TAG, "Loaded audio tracks: $audio")
+                val name = audio.name
+                val url = audio.url
             }
         )
         cache[Pair(current.apiName, current.id)] = Pair(currentLinkCache, currentSubsCache)

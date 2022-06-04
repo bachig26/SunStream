@@ -86,6 +86,7 @@ interface IPlayer {
         prevEpisode: (() -> Unit)? = null,                          // this is used by the player to load the previous episode
         subtitlesUpdates: (() -> Unit)? = null,                     // callback from player to inform that subtitles have updated in some way
         embeddedSubtitlesFetched: ((List<SubtitleData>) -> Unit)? = null, // callback from player to give all embedded subtitles
+        embeddedAudioTracksFetched: ((List<AudioTrackData>) -> Unit)? = null, // callback from player to give all embedded tracks
     )
 
     fun updateSubtitleStyle(style: SaveCaptionStyle)

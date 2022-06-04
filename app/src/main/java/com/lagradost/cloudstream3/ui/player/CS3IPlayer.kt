@@ -97,7 +97,10 @@ class CS3IPlayer : IPlayer {
     private var prevEpisode: (() -> Unit)? = null
 
     private var playerUpdated: ((Any?) -> Unit)? = null
+
     private var embeddedSubtitlesFetched: ((List<SubtitleData>) -> Unit)? = null
+
+    private var embeddedAudioTracksFetched: ((List<AudioTrackData>) -> Unit)? = null
 
     override fun initCallbacks(
         playerUpdated: (Any?) -> Unit,
@@ -111,6 +114,7 @@ class CS3IPlayer : IPlayer {
         prevEpisode: (() -> Unit)?,
         subtitlesUpdates: (() -> Unit)?,
         embeddedSubtitlesFetched: ((List<SubtitleData>) -> Unit)?,
+        embeddedAudioTracksFetched: ((List<AudioTrackData>) -> Unit)?,
     ) {
         this.playerUpdated = playerUpdated
         this.updateIsPlaying = updateIsPlaying
@@ -123,6 +127,7 @@ class CS3IPlayer : IPlayer {
         this.prevEpisode = prevEpisode
         this.subtitlesUpdates = subtitlesUpdates
         this.embeddedSubtitlesFetched = embeddedSubtitlesFetched
+        this.embeddedAudioTracksFetched = embeddedAudioTracksFetched
     }
 
     // I know, this is not a perfect solution, however it works for fixing subs
@@ -637,6 +642,10 @@ class CS3IPlayer : IPlayer {
                                 this.sampleMimeType?.contains("audio/") == false
                     }
 
+                    fun Format.isAudioTrack(): Boolean {
+                        return this.sampleMimeType?.contains("audio/") == false
+                    }
+
                     normalSafeApiCall {
                         exoPlayerSelectedTracks =
                             tracksInfo.trackGroupInfos.mapNotNull {
@@ -670,6 +679,32 @@ class CS3IPlayer : IPlayer {
                         }
 
                         embeddedSubtitlesFetched?.invoke(exoPlayerReportedTracks)
+                        subtitlesUpdates?.invoke()
+
+
+                        val exoPlayerAvailableAudioTracks = tracksInfo.trackGroupInfos.mapNotNull {
+                            // Filter out unsupported tracks
+                            if (it.isSupported)
+                                it.trackGroup.getFormat(0)
+                            else
+                                null
+                        }.mapNotNull {
+                            // Filter out non subs, already used subs and subs without languages
+                            if (!it.isAudioTrack() ||
+                                // Anything starting with - is not embedded
+                                it.language?.startsWith("-") == true
+                            ) return@mapNotNull null  // remove everything not audio and not embedded
+                            return@mapNotNull AudioTrackData(
+                                // Nicer looking displayed names
+                                it.label!!,
+                                // See setPreferredTextLanguage
+                                it.language!!,
+                                AudioTrackOrigin.EMBEDDED_IN_VIDEO,
+                                it.sampleMimeType ?: MimeTypes.APPLICATION_SUBRIP
+                            )
+                        }
+
+                        embeddedAudioTracksFetched?.invoke(exoPlayerAvailableAudioTracks)
                         subtitlesUpdates?.invoke()
                     }
                     super.onTracksInfoChanged(tracksInfo)

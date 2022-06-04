@@ -76,7 +76,8 @@ class APIRepository(val api: MainAPI) {
         data: String,
         isCasting: Boolean,
         subtitleCallback: (SubtitleFile) -> Unit,
-        callback: (ExtractorLink) -> Unit
+        callback: (ExtractorLink) -> Unit,
+        audioTrackCallback: (AudioTrackFile) -> Unit,
     ): Boolean {
         if (isInvalidData(data)) return false // this makes providers cleaner
         return try {

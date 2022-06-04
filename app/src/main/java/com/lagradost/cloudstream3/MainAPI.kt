@@ -498,6 +498,7 @@ fun TvType.isAnimeOp(): Boolean {
 }
 
 data class SubtitleFile(val lang: String, val url: String)
+data class AudioTrackFile(val name: String, val url: String)
 
 class HomePageResponse(
     val items: List<HomePageList>
@@ -1037,7 +1038,9 @@ data class Episode(
     var rating: Int? = null,
     var description: String? = null,
     var date: Long? = null,
+    var monitored: Boolean? = null,
 )
+
 
 fun Episode.addDate(date: String?, format: String = "yyyy-MM-dd") {
     try {
@@ -1116,6 +1119,26 @@ fun MainAPI.newTvSeriesLoadResponse(
         type = type,
         episodes = episodes,
         comingSoon = episodes.isEmpty(),
+    )
+    builder.initializer()
+    return builder
+}
+
+
+fun MainAPI.newSonarrTvSeriesLoadResponse(
+    name: String,
+    url: String,
+    type: TvType,
+    seasons: List<Episode>,
+    initializer: TvSeriesLoadResponse.() -> Unit = { }
+): TvSeriesLoadResponse {
+    val builder = TvSeriesLoadResponse(
+        name = name,
+        url = url,
+        apiName = this.name,
+        type = type,
+        episodes = seasons,
+        comingSoon = seasons.isEmpty(),
     )
     builder.initializer()
     return builder

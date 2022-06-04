@@ -26,6 +26,9 @@ class PlayerGeneratorViewModel : ViewModel() {
     private val _currentSubs = MutableLiveData<Set<SubtitleData>>(setOf())
     val currentSubs: LiveData<Set<SubtitleData>> = _currentSubs
 
+    private val _currentAudioTracks = MutableLiveData<Set<AudioTrackData>>(setOf())
+    val currentAudioTracks: LiveData<Set<AudioTrackData>> = _currentAudioTracks
+
     private val _loadingLinks = MutableLiveData<Resource<Boolean?>>()
     val loadingLinks: LiveData<Resource<Boolean?>> = _loadingLinks
 
@@ -69,6 +72,7 @@ class PlayerGeneratorViewModel : ViewModel() {
                         isCasting = false,
                         {},
                         {},
+                        {},
                         offset = 1
                     )
                 }
@@ -107,6 +111,18 @@ class PlayerGeneratorViewModel : ViewModel() {
             _currentSubs.postValue(allSubs)
     }
 
+    fun addAudioTrack(file: Set<AudioTrackData>) { // TODO("GOTA SLEEP")
+        val currentAudioTracks = _currentAudioTracks.value ?: emptySet()
+        // Prevent duplicates
+        val allTracks = (currentAudioTracks + file).distinct().toSet()
+        // Do not post if there's nothing new
+        // Posting will refresh subtitles which will in turn
+        // make the subs to english if previously unselected
+        if (allTracks != _currentAudioTracks)
+            _currentAudioTracks.postValue(allTracks)
+    }
+
+
     private var currentJob: Job? = null
 
     fun loadLinks(clearCache: Boolean = false, isCasting: Boolean = false) {
@@ -115,10 +131,12 @@ class PlayerGeneratorViewModel : ViewModel() {
         currentJob = viewModelScope.launch {
             val currentLinks = mutableSetOf<Pair<ExtractorLink?, ExtractorUri?>>()
             val currentSubs = mutableSetOf<SubtitleData>()
+            val currentAudioTracks = mutableSetOf<AudioTrackData>()
 
             // clear old data
             _currentSubs.postValue(currentSubs)
             _currentLinks.postValue(currentLinks)
+            _currentAudioTracks.postValue(currentAudioTracks)
 
             // load more data
             _loadingLinks.postValue(Resource.Loading())
@@ -129,7 +147,11 @@ class PlayerGeneratorViewModel : ViewModel() {
                 }, {
                     currentSubs.add(it)
                     // _currentSubs.postValue(currentSubs) // this causes ConcurrentModificationException, so fuck it
-                })
+                },
+                {
+                    currentAudioTracks.add(it)
+                },
+                )
             }
 
             _loadingLinks.postValue(loadingState)

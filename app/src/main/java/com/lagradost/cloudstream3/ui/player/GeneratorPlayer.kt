@@ -88,6 +88,10 @@ class GeneratorPlayer : FullScreenPlayer() {
         viewModel.addSubtitles(subtitles.toSet())
     }
 
+    override fun embeddedAudioTracksFetched(audioTracks: List<AudioTrackData>) {
+        viewModel.addAudioTrack(audioTracks.toSet())
+    }
+
     private fun noSubtitles(): Boolean {
         return setSubtitles(null)
     }
@@ -394,7 +398,7 @@ class GeneratorPlayer : FullScreenPlayer() {
     private fun startPlayer() {
         if (isActive) return // we don't want double load when you skip loading
 
-        val links = sortLinks()
+        val links = sortLinks() // list all links ( List<Pair<ExtractorLink?, ExtractorUri?>> ) ===
         if (links.isEmpty()) {
             noLinksFound()
             return
