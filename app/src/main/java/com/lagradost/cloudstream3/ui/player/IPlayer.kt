@@ -90,6 +90,8 @@ interface IPlayer {
     )
 
     fun updateSubtitleStyle(style: SaveCaptionStyle)
+    fun saveData()
+
     fun loadPlayer(
         context: Context,
         sameEpisode: Boolean,
@@ -98,6 +100,7 @@ interface IPlayer {
         startPosition: Long? = null,
         subtitles : Set<SubtitleData>,
         subtitle : SubtitleData?,
+        autoPlay : Boolean? = true
     )
 
     fun reloadPlayer(context: Context)
