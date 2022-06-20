@@ -559,6 +559,9 @@ enum class ProviderType {
 
     // When all data is from the site
     DirectProvider,
+
+    // when provider is managing a remote server (*arr: radarr or sonarr)
+    ArrProvider,
 }
 
 enum class VPNStatus {

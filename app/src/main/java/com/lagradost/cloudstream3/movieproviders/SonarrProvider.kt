@@ -17,6 +17,7 @@ class SonarrProvider : MainAPI() {
     override val hasDownloadSupport = false
     //override val providerType = ProviderType.ArrProvider
     override val supportedTypes = setOf(TvType.TvSeries, TvType.Anime, TvType.Cartoon)
+    override val providerType = ProviderType.ArrProvider
 
 
     companion object {
@@ -24,6 +25,75 @@ class SonarrProvider : MainAPI() {
         var apiKey: String? = null
         var rootFolderPath: String? = null
         const val ERROR_STRING = "Invalid sonarr credentials ! Please check your configuration"
+
+
+        suspend fun requestSonarrDownload(data: String?, monitorStatus: String) { // adds the serie to the collection of the server
+            data?: throw ErrorLoadingException(SonarrProvider.ERROR_STRING)
+            val clearedData = data.removePrefix("[").removeSuffix("]") // removes array delimiter
+            val movieObject = JSONObject(clearedData)
+
+            //val movieObject: List<loadJson> = mapper.readValue(data)
+            movieObject.put("qualityProfileId", 1)
+            movieObject.put("monitored", true)
+            movieObject.put("rootFolderPath", rootFolderPath)
+            movieObject.put("LanguageProfileId", 1)
+            movieObject.put("seasonFolder", true)
+
+            val options = JSONObject()
+            options.put("monitor", monitorStatus)
+            /* monitor can be:
+                all
+                future
+                missing
+                existing
+                pilot
+                firstSeason
+                latestSeason
+                none
+             */
+            options.put("searchForCutoffUnmetEpisodes", false)
+            options.put("searchForMissingEpisodes", true)
+            options.put("ignoreEpisodesWithFiles", true)
+            movieObject.put("addOptions", options)
+
+            /*
+
+            "addOptions":
+            {
+              "ignoreEpisodesWithFiles": true,
+              "ignoreEpisodesWithoutFiles": true,
+              "searchForMissingEpisodes": false,
+              "searchForCutoffUnmetEpisodes":	false
+            }
+
+             */
+
+            val body = movieObject.toString().toRequestBody("application/json;charset=UTF-8".toMediaTypeOrNull())
+
+
+            val postRequest = mapOf(
+                "Accept" to "application/json",
+                "X-Api-Key" to apiKey,
+            ).let {
+                app.post(
+                    "$overrideUrl/api/v3/series?apikey=$apiKey",
+                    headers= it as Map<String, String>,
+                    requestBody=body)
+            }
+
+            if (postRequest.isSuccessful) {
+                println("working well")
+            } else {
+                println("ERROR HERE:")
+                println(postRequest.document)
+                println(postRequest.okhttpResponse)
+                println(postRequest.body)
+                println(postRequest.headers)
+                println(postRequest.code)
+                println(postRequest.isSuccessful)
+            }
+
+        }
     }
 
 
@@ -132,72 +202,6 @@ class SonarrProvider : MainAPI() {
                 this.posterUrl = it.posterUrl
             }
         }
-    }
-
-
-    override suspend fun loadLinks(
-        data: String,
-        isCasting: Boolean,
-        subtitleCallback: (SubtitleFile) -> Unit,
-        callback: (ExtractorLink) -> Unit
-    ): Boolean {
-        println(data)
-        val (apiKey, path) = getApiKeyAndPath()
-        val clearedData = data.removePrefix("[").removeSuffix("]") // removes array delimiter
-        val movieObject = JSONObject(clearedData)
-
-        //val movieObject: List<loadJson> = mapper.readValue(data)
-        movieObject.put("qualityProfileId", 1)
-        movieObject.put("monitored", true)
-        movieObject.put("rootFolderPath", path)
-        movieObject.put("LanguageProfileId", 1)
-        movieObject.put("seasonFolder", true)
-
-        val options = JSONObject()
-        options.put("monitor", "missing")
-        /* monitor can be:
-        - "missing"
-         */
-        options.put("searchForCutoffUnmetEpisodes", false)
-        options.put("searchForMissingEpisodes", true)
-        options.put("ignoreEpisodesWithFiles", true)
-        movieObject.put("addOptions", options)
-
-        /*
-
-        "addOptions":
-        {
-          "ignoreEpisodesWithFiles": true,
-          "ignoreEpisodesWithoutFiles": true,
-          "searchForMissingEpisodes": false,
-          "searchForCutoffUnmetEpisodes":	false
-        }
-
-         */
-
-        val body = movieObject.toString().toRequestBody("application/json;charset=UTF-8".toMediaTypeOrNull())
-
-
-        val postRequest = app.post(
-            "$mainUrl/api/v3/series?apikey=$apiKey",
-            headers= mapOf(
-                "Accept" to "application/json",
-                "X-Api-Key" to apiKey,
-            ),
-            requestBody=body)
-
-        if (postRequest.isSuccessful) {
-            println("working well")
-        } else {
-            println("ERROR HERE:")
-            println(postRequest.document)
-            println(postRequest.okhttpResponse)
-            println(postRequest.body)
-            println(postRequest.headers)
-            println(postRequest.code)
-            println(postRequest.isSuccessful)
-        }
-        return false
     }
 
 

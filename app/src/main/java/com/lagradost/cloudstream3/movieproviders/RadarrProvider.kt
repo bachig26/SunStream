@@ -20,7 +20,7 @@ class RadarrProvider : MainAPI() {
     override val hasChromecastSupport = false
     override val hasDownloadSupport = false
 
-    //override val providerType = ProviderType.ArrProvider
+    override val providerType = ProviderType.ArrProvider
     override val supportedTypes =
         setOf(TvType.Movie, TvType.Documentary, TvType.AnimeMovie, TvType.AnimeMovie)
 
@@ -30,6 +30,28 @@ class RadarrProvider : MainAPI() {
         var apiKey: String? = null
         var rootFolderPath: String? = null
         const val ERROR_STRING = "No valid radarr account ! Please check your configuration"
+
+        suspend fun requestRadarrDownload(data: String?) { // adds the serie to the collection of the server
+            data?: throw ErrorLoadingException(RadarrProvider.ERROR_STRING) // error, no data provided by load function
+            val movieObject = JSONObject(data)
+            movieObject.put("qualityProfileId", 1) // should add an option
+            movieObject.put("monitored", true)
+            movieObject.put("rootFolderPath", rootFolderPath)
+            val body = movieObject.toString()
+                .toRequestBody("application/json;charset=UTF-8".toMediaTypeOrNull())
+
+
+            val postRequest = mapOf(
+                "Accept" to "application/json",
+                "X-Api-Key" to apiKey,
+            ).let {
+                app.post(
+                    "$overrideUrl/api/v3/movie?apikey=$apiKey",
+                    headers = it as Map<String, String>,
+                    requestBody = body
+                )
+            }
+        }
     }
 
 
@@ -117,23 +139,7 @@ class RadarrProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val (apiKey, path) = getApiKeyAndPath()
-        val movieObject = JSONObject(data)
-        movieObject.put("profileId", "1") // should add an option
-        movieObject.put("monitored", true)
-        movieObject.put("rootFolderPath", path)
-        val body = movieObject.toString()
-            .toRequestBody("application/json;charset=UTF-8".toMediaTypeOrNull())
 
-
-        val postRequest = app.post(
-            "$mainUrl/api/v3/movie?apikey=$apiKey",
-            headers = mapOf(
-                "Accept" to "application/json",
-                "X-Api-Key" to apiKey,
-            ),
-            requestBody = body
-        )
         /*
         if (postRequest.isSuccessful) {
             println("working well")
