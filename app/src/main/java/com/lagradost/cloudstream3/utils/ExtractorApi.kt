@@ -9,17 +9,65 @@ import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import kotlinx.coroutines.delay
 import org.jsoup.Jsoup
 
-data class ExtractorLink(
-    val source: String,
-    val name: String,
-    override val url: String,
+/**
+ * For use in the ConcatenatingMediaSource.
+ * If features are missing (headers), please report and we can add it.
+ * @param durationUs use Long.toUs() for easier input
+ * */
+data class PlayListItem(
+    val url: String,
+    val durationUs: Long,
+)
+
+/**
+ * Converts Seconds to MicroSeconds, multiplication by 1_000_000
+ * */
+fun Long.toUs(): Long {
+    return this * 1_000_000
+}
+
+/**
+ * If your site has an unorthodox m3u8-like system where there are multiple smaller videos concatenated
+ * use this.
+ * */
+data class ExtractorLinkPlayList(
+    override val source: String,
+    override val name: String,
+    val playlist: List<PlayListItem>,
     override val referer: String,
-    val quality: Int,
-    val isM3u8: Boolean = false,
+    override val quality: Int,
+    override val isM3u8: Boolean = false,
     override val headers: Map<String, String> = mapOf(),
     /** Used for getExtractorVerifierJob() */
-    val extractorData: String? = null
-) : VideoDownloadManager.IDownloadableMinimum
+    override val extractorData: String? = null,
+    ) : ExtractorLink(
+    source,
+    name,
+    // Blank as un-used
+    "",
+    referer,
+    quality,
+    isM3u8,
+    headers,
+    extractorData
+)
+
+
+open class ExtractorLink(
+    open val source: String,
+    open val name: String,
+    override val url: String,
+    override val referer: String,
+    open val quality: Int,
+    open val isM3u8: Boolean = false,
+    override val headers: Map<String, String> = mapOf(),
+    /** Used for getExtractorVerifierJob() */
+    open val extractorData: String? = null,
+) : VideoDownloadManager.IDownloadableMinimum {
+    override fun toString(): String {
+        return "ExtractorLink(name=$name, url=$url, referer=$referer, isM3u8=$isM3u8)"
+    }
+}
 
 data class ExtractorUri(
     val uri: Uri,
@@ -140,6 +188,8 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     //mixdrop extractors
     MixDropBz(),
     MixDropCh(),
+    MixDropTo(),
+
     MixDrop(),
 
     Mcloud(),
@@ -186,6 +236,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     DoodLaExtractor(),
     DoodWsExtractor(),
     DoodShExtractor(),
+    DoodWatchExtractor(),
 
     AsianLoad(),
 
@@ -213,11 +264,23 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     Blogger(),
     Solidfiles(),
+    YourUpload(),
 
     Hxfile(),
     KotakAnimeid(),
     Neonime8n(),
     Neonime7n(),
+    Yufiles(),
+    Aico(),
+
+    JWPlayer(),
+    Meownime(),
+    DesuArcg(),
+    DesuOdchan(),
+    DesuOdvip(),
+    DesuDrive(),
+
+    Filesim(),
 
     YoutubeExtractor(),
     YoutubeShortLinkExtractor(),

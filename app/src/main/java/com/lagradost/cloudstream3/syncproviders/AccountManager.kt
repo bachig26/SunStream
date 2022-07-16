@@ -3,12 +3,7 @@ package com.lagradost.cloudstream3.syncproviders
 import com.lagradost.cloudstream3.AcraApplication.Companion.getKey
 import com.lagradost.cloudstream3.AcraApplication.Companion.removeKeys
 import com.lagradost.cloudstream3.AcraApplication.Companion.setKey
-import com.lagradost.cloudstream3.syncproviders.providers.AniListApi
-import com.lagradost.cloudstream3.syncproviders.providers.MALApi
-import com.lagradost.cloudstream3.syncproviders.providers.NginxApi
-import com.lagradost.cloudstream3.syncproviders.providers.RadarrApi
-import com.lagradost.cloudstream3.syncproviders.providers.SonarrApi
-import com.lagradost.cloudstream3.syncproviders.providers.OpenSubtitlesApi
+import com.lagradost.cloudstream3.syncproviders.providers.*
 import java.util.concurrent.TimeUnit
 
 abstract class AccountManager(private val defIndex: Int) : AuthAPI {
@@ -16,6 +11,8 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
         val malApi = MALApi(0)
         val aniListApi = AniListApi(0)
         val openSubtitlesApi = OpenSubtitlesApi(0)
+        // Removed because of cloudflare
+//        val indexSubtitlesApi = IndexSubtitleApi()
         val nginxApi = NginxApi(0)
         val radarrApi = RadarrApi(0)
         val sonarrApi = SonarrApi(0)
@@ -43,7 +40,9 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
 
         val subtitleProviders
             get() = listOf(
-                openSubtitlesApi
+                openSubtitlesApi,
+                // Removed because of cloudflare
+//                indexSubtitlesApi
             )
 
         const val appString = "cloudstreamapp"

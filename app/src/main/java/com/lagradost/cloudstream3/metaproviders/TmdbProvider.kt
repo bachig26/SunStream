@@ -36,12 +36,11 @@ open class TmdbProvider : MainAPI() {
     // As some sites doesn't support s0
     open val disableSeasonZero = true
 
-    override val hasMainPage = true
     override val providerType = ProviderType.MetaProvider
 
     // Fuck it, public private api key because github actions won't co-operate.
     // Please no stealy.
-    private val tmdb = Tmdb("e6333b32409e02a4a6eba6fb7ff866bb")
+    private val tmdb = Tmdb("1dbf84763e0115344e61effd0743d694") // sarlay's api key
 
     private fun getImageUrl(link: String?): String? {
         if (link == null) return null
