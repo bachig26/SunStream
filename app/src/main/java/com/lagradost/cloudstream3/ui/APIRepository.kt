@@ -30,6 +30,7 @@ class APIRepository(val api: MainAPI) {
     val name = api.name
     val mainUrl = api.mainUrl
     val hasQuickSearch = api.hasQuickSearch
+    val hasSearch = api.hasSearch
 
     suspend fun load(url: String): Resource<LoadResponse> {
         if (isInvalidData(url)) throw ErrorLoadingException()

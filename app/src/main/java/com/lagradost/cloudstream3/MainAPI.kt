@@ -414,6 +414,7 @@ abstract class MainAPI {
 
     open val hasMainPage = false
     open val hasQuickSearch = false
+    open val hasSearch = true
 
     open val supportedTypes = setOf(
         TvType.Movie,

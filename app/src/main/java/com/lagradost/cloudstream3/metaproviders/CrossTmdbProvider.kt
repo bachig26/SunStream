@@ -10,13 +10,14 @@ import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 
 class CrossTmdbProvider : TmdbProvider() {
-    override var name = "MultiMovie"
-    override val apiName = "MultiMovie"
+    override var name = "MultiMedia"
+    override val apiName = "MultiMedia"
     override var lang = "en"
     override val useMetaLoadResponse = true
     override val usesWebView = true
     override val supportedTypes = setOf(TvType.Movie, TvType.TvSeries)
     override val hasMainPage = true
+    override val hasSearch = true
 
     private fun filterName(name: String): String {
         return Regex("""[^a-zA-Z0-9-]""").replace(name, "")
@@ -56,12 +57,12 @@ class CrossTmdbProvider : TmdbProvider() {
     }
 
     override suspend fun search(query: String): List<SearchResponse>? {
-        return super.search(query)?.filterIsInstance<MovieSearchResponse>() // TODO REMOVE
+        return super.search(query)
     }
 
     override suspend fun load(url: String): LoadResponse? {
         val base = super.load(url)?.apply {
-            this.recommendations = this.recommendations?.filterIsInstance<MovieSearchResponse>() // TODO REMOVE
+            this.recommendations = this.recommendations
             val matchName = filterName(this.name)
             when (this) {
                 is MovieLoadResponse -> {
