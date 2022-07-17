@@ -3,6 +3,7 @@ package com.lagradost.cloudstream3.metaproviders
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.APIHolder.apis
+import com.lagradost.cloudstream3.APIHolder.allEnabledProviders
 import com.lagradost.cloudstream3.APIHolder.getApiFromNameNull
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
@@ -24,7 +25,7 @@ class CrossTmdbProvider : TmdbProvider() {
     }
 
     private val validApis by lazy {
-        apis.filter { it.lang == this.lang && it::class.java != this::class.java }
+        allEnabledProviders.filter { it.lang == this.lang && it::class.java != this::class.java }
             //.distinctBy { it.uniqueId }
     }
 

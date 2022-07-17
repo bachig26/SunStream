@@ -1,6 +1,7 @@
 package com.lagradost.cloudstream3.utils
 
 import android.net.Uri
+import com.lagradost.cloudstream3.APIHolder
 import com.lagradost.cloudstream3.TvType
 import com.lagradost.cloudstream3.USER_AGENT
 import com.lagradost.cloudstream3.app

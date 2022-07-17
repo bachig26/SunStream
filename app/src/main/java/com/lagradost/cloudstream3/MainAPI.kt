@@ -154,6 +154,8 @@ object APIHolder {
         )
 
 
+    var allEnabledProviders = arrayListOf<MainAPI>()
+
     fun initAll() {
         for (api in allProviders) {
             api.init()

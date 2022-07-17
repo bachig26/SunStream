@@ -93,10 +93,18 @@
 
             <TextView
                     android:nextFocusUp="@id/settings_updates"
+                    android:nextFocusDown="@id/settings_providers"
 
                     android:id="@+id/settings_credits"
                     style="@style/SettingsItem"
                     android:text="@string/category_account" />
+
+            <TextView
+                android:nextFocusUp="@id/settings_credits"
+
+                android:id="@+id/settings_providers"
+                style="@style/SettingsItem"
+                android:text="@string/category_providers" />
 
             <TextView
                     android:padding="10dp"
