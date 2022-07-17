@@ -11,8 +11,7 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
         val malApi = MALApi(0)
         val aniListApi = AniListApi(0)
         val openSubtitlesApi = OpenSubtitlesApi(0)
-        // Removed because of cloudflare
-//        val indexSubtitlesApi = IndexSubtitleApi()
+        val indexSubtitlesApi = IndexSubtitleApi()
         val nginxApi = NginxApi(0)
         val radarrApi = RadarrApi(0)
         val sonarrApi = SonarrApi(0)
@@ -41,8 +40,7 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
         val subtitleProviders
             get() = listOf(
                 openSubtitlesApi,
-                // Removed because of cloudflare
-//                indexSubtitlesApi
+                indexSubtitlesApi
             )
 
         const val appString = "cloudstreamapp"

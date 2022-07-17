@@ -100,8 +100,10 @@ object APIHolder {
 
             IdlixProvider(),
             MultiplexProvider(),
-            */
-
+            UakinoProvider(),
+            PhimmoichillProvider(),
+            HDrezkaProvider(),
+             */
 
             // Metadata providers
             //TmdbProvider(),
