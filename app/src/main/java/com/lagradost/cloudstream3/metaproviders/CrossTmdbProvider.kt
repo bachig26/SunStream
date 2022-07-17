@@ -24,8 +24,12 @@ class CrossTmdbProvider : TmdbProvider() {
         return Regex("""[^a-zA-Z0-9-]""").replace(name, "")
     }
 
-    private val validApis by lazy {
-        allEnabledProviders.filter { it.lang == this.lang && it::class.java != this::class.java }
+    private fun getValidApis(): List<MainAPI> { // refresh every request, may be slow ?
+        return if (allEnabledProviders.filter { it.lang == this.lang && it::class.java != this::class.java }.isNotEmpty()) {
+            allEnabledProviders.filter { it.lang == this.lang && it::class.java != this::class.java}
+        } else {
+            apis.filter { it.lang == this.lang && it::class.java != this::class.java}
+        }
             //.distinctBy { it.uniqueId }
     }
 
@@ -65,6 +69,7 @@ class CrossTmdbProvider : TmdbProvider() {
         val base = super.load(url)?.apply {
             this.recommendations = this.recommendations
             val matchName = filterName(this.name)
+            val validApis = getValidApis()
             when (this) {
                 is MovieLoadResponse -> {
                     val data = validApis.apmap { api ->

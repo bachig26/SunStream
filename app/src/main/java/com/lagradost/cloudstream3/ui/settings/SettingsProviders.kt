@@ -38,12 +38,11 @@ class SettingsProviders : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_providers, rootKey)
-        val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        //val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
         getPref(R.string.enabled_providers_key)?.setOnPreferenceClickListener {
 
             val savedSettingsProviders = context?.getKey<List<String>>(ENABLED_META_PROVIDERS)
-            //val savedEnabledProviders = ArrayList<String>()
 
             val allAvailableProviders: List<String> = APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider}.map { it.name }
 
@@ -64,20 +63,6 @@ class SettingsProviders : PreferenceFragmentCompat() {
                 index++
             }
 
-            println("\nallAvailableProviders: $allAvailableProviders")
-
-
-            println("\nsavedEnabledProviders: $savedEnabledProviders")
-
-
-            println("\nenabledProvidersIndex: $enabledProvidersIndex")
-
-
-            println("\nenabledProvidersIndex: $enabledProvidersIndex")
-
-
-
-
             activity?.showMultiDialog(
                 allAvailableProviders,
                 enabledProvidersIndex.toList(),
@@ -91,13 +76,8 @@ class SettingsProviders : PreferenceFragmentCompat() {
                         null
                     }
                 })
-                println("\nselectedList: $selectedList")
-                println("\nenabledProviders: $enabledProviders")
+
                 APIHolder.allEnabledProviders = ArrayList(enabledProviders.map{ getApiFromName(it) })
-
-                println("allenabledones:")
-                println(APIHolder.allEnabledProviders)
-
                 context?.setKey(ENABLED_META_PROVIDERS, enabledProviders)
             }
 

@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "com.lagradost.cloudstream3.prerelease",
+  "applicationId": "com.sarlays.sunstream.prerelease",
   "variantName": "prerelease",
   "elements": [
     {

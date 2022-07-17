@@ -37,7 +37,7 @@
     <string name="provider_lang_key" translatable="false">provider_lang_key</string>
     <string name="dns_key" translatable="false">dns_key</string>
     <string name="download_path_key" translatable="false">download_path_key</string>
-    <string name="app_name_download_path" translatable="false">Cloudstream</string>
+    <string name="app_name_download_path" translatable="false">SunStream</string>
     <string name="app_layout_key" translatable="false">app_layout_key</string>
     <string name="primary_color_key" translatable="false">primary_color_key</string>
     <string name="restore_key" translatable="false">restore_key</string>
@@ -92,7 +92,7 @@
     <string name="filler" formatted="true">Filler</string>
     <string name="duration_format" formatted="true">%d min</string>
 
-    <string name="app_name">CloudStream</string>
+    <string name="app_name">SunStream</string>
     <string name="title_home">Home</string>
     <string name="title_search">Search</string>
     <string name="title_downloads">Downloads</string>
@@ -267,6 +267,10 @@
     <string name="uprereleases_settings">Update to prereleases</string>
     <string name="uprereleases_settings_des">Search for prerelease updates instead of full releases only</string>
     <string name="github">Github</string>
+    <string name="tmdb_name">TMDB</string>
+    <string name="tmdb_desc">The Movie Database (themoviedb.org) is used to display every information about movies and tvshows.
+
+    Disclaimer: This product uses the TMDB API but is not endorsed or certified by TMDB</string>
     <string name="lightnovel">Light novel app by the same devs</string>
     <string name="anim">Anime app by the same devs</string>
     <string name="discord">Join Discord</string>

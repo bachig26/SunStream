@@ -31,7 +31,6 @@ class SonarrApi(index: Int) : InAppAuthAPIManager(index) {
     }
 
     override suspend fun login(data: InAppAuthAPI.LoginData): Boolean {
-        println("HERE DUDE !!!!!!!!!!!!!! $data")
         if (data.server.isNullOrBlank()) return false // we require a server
         if (data.apiKey.isNullOrBlank()) return false // we require an apikey
         if (data.path.isNullOrBlank()) return false // we require a Path
@@ -54,7 +53,6 @@ class SonarrApi(index: Int) : InAppAuthAPIManager(index) {
             SonarrProvider.rootFolderPath = null
             return
         }
-        println("HERE DUDE !!!!!!!!!!!!!! $data")
         SonarrProvider.overrideUrl = data.server?.removeSuffix("/")
         SonarrProvider.apiKey = data.apiKey
         SonarrProvider.rootFolderPath = data.path
