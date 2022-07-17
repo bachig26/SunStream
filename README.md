@@ -8,7 +8,7 @@ https://github.com/Sarlay/SunStream/releases
 ***Features:***
 + Every feature Cloudstream-3 has
 + removed 93.5% of Cloudstream-3 providers 😂 
-+ Unified providers thanks to tmdb
++ All providers show up as one (called MultiMedia) thanks to TMDB
 
 ***Screenshots:***
 (All the images are blurred because of DMCA reasons, but are actually not blurred in the app)
