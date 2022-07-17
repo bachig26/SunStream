@@ -10,6 +10,11 @@ https://github.com/Sarlay/SunStream/releases
 + removed 93.5% of Cloudstream-3 providers 😂 
 + All providers show up as one (called MultiMedia) thanks to TMDB
 
+
+***TODO:***
++ Add filters to add back removed providers
++ self-hosted providers like nginx, radarr and sonarr
+
 ***Screenshots:***
 (All the images are blurred because of DMCA reasons, but are actually not blurred in the app)
 
