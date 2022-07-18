@@ -19,7 +19,6 @@ import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showMultiDialog
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
 import com.lagradost.cloudstream3.utils.getExtractorApiFromName
-import org.acra.util.mapNotNullToSparseArray
 
 
 const val ENABLED_META_PROVIDERS = "enabled_meta_providers" // Probably wrong

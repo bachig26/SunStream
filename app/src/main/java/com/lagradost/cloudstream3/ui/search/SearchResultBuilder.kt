@@ -101,8 +101,7 @@ object SearchResultBuilder {
 
 
         if (card.rating == null || card.rating == 0.0) {
-            textRating?.isVisible = true // hide if no rating
-            textRating?.text = card.rating?.toString()
+            textRating?.isVisible = false // hide if no rating
         } else {
             textRating?.text = card.rating?.toString()
         }
