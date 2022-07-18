@@ -34,6 +34,7 @@ interface SyncAPI : OAuth2API {
         override var quality: SearchQuality? = null,
         override var posterHeaders: Map<String, String>? = null,
         override var id: Int? = null,
+        override var rating: Double? = null,
     ) : SearchResponse
 
     data class SyncStatus(

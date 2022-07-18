@@ -47,6 +47,7 @@ object DataStoreHelper {
         @JsonProperty("year") val year: Int?,
         @JsonProperty("quality") override var quality: SearchQuality? = null,
         @JsonProperty("posterHeaders") override var posterHeaders: Map<String, String>? = null,
+        @JsonProperty("rating") override var rating: Double? = null,
     ) : SearchResponse
 
     data class ResumeWatchingResult(
@@ -65,6 +66,7 @@ object DataStoreHelper {
         @JsonProperty("isFromDownload") val isFromDownload: Boolean,
         @JsonProperty("quality") override var quality: SearchQuality? = null,
         @JsonProperty("posterHeaders") override var posterHeaders: Map<String, String>? = null,
+        @JsonProperty("rating") override var rating: Double? = null,
     ) : SearchResponse
 
     private var currentAccount: String = "0" //TODO ACCOUNT IMPLEMENTATION

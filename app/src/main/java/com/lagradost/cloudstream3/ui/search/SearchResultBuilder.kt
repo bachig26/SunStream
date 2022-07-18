@@ -47,6 +47,7 @@ object SearchResultBuilder {
         val textIsDub: TextView? = itemView.text_is_dub
         val textIsSub: TextView? = itemView.text_is_sub
         val textQuality: TextView? = itemView.text_quality
+        val textRating: TextView? = itemView.text_rating
         val shadow: View? = itemView.title_shadow
 
         val bg: CardView = itemView.background_card
@@ -60,6 +61,7 @@ object SearchResultBuilder {
         playImg?.isVisible = false
         textIsDub?.isVisible = false
         textIsSub?.isVisible = false
+        textRating?.isVisible = true // visible unless null
 
         val showSub = showCache[textIsDub?.context?.getString(R.string.show_sub_key)] ?: false
         val showDub = showCache[textIsDub?.context?.getString(R.string.show_dub_key)] ?: false
@@ -96,6 +98,15 @@ object SearchResultBuilder {
         cardText?.text = card.name
         cardText?.isVisible = showTitle
         cardView.isVisible = true
+
+
+        if (card.rating == null || card.rating == 0.0) {
+            textRating?.isVisible = true // hide if no rating
+            textRating?.text = card.rating?.toString()
+        } else {
+            textRating?.text = card.rating?.toString()
+        }
+
 
         if (!cardView.setImage(card.posterUrl, card.posterHeaders)) {
             cardView.setImageResource(R.drawable.default_cover)

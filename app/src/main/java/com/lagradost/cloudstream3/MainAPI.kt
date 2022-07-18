@@ -148,11 +148,12 @@ object APIHolder {
             //MultiAnimeProvider(),
             AniflixProvider(),
 
-            // SELF HOSTED providers
-            NginxProvider(),
-            RadarrProvider(),
-            SonarrProvider(),
              */
+            // SELF HOSTED providers
+            //NginxProvider(),
+            //RadarrProvider(),
+            //SonarrProvider(),
+
         )
 
 
@@ -173,8 +174,9 @@ object APIHolder {
             apiMap = apis.mapIndexed { index, api -> api.name to index }.toMap()
     }
 
+
     fun getApiFromName(apiName: String?): MainAPI {
-        return getApiFromNameNull(apiName) ?: apis[defProvider]
+        return getApiFromNameNull(apiName) ?: apis[defProvider] // TODO FIX BHECAUSE OF NGINX
     }
 
     fun getApiFromNameNull(apiName: String?): MainAPI? {
@@ -182,6 +184,12 @@ object APIHolder {
         initMap()
         return apiMap?.get(apiName)?.let { apis.getOrNull(it) }
     }
+
+
+    fun getProviderFromName(name: String): MainAPI {
+        return allProviders.first { it.name == name }
+    }
+
 
     fun getApiFromUrlNull(url: String?): MainAPI? {
         if (url == null) return null
@@ -707,6 +715,7 @@ interface SearchResponse {
     var posterHeaders: Map<String, String>?
     var id: Int?
     var quality: SearchQuality?
+    var rating: Double?
 }
 
 fun MainAPI.newMovieSearchResponse(
@@ -817,6 +826,7 @@ data class AnimeSearchResponse(
     override var id: Int? = null,
     override var quality: SearchQuality? = null,
     override var posterHeaders: Map<String, String>? = null,
+    override var rating: Double? = null,
 ) : SearchResponse
 
 fun AnimeSearchResponse.addDubStatus(status: DubStatus, episodes: Int? = null) {
@@ -871,6 +881,7 @@ data class TorrentSearchResponse(
     override var id: Int? = null,
     override var quality: SearchQuality? = null,
     override var posterHeaders: Map<String, String>? = null,
+    override var rating: Double? = null,
 ) : SearchResponse
 
 data class MovieSearchResponse(
@@ -884,6 +895,7 @@ data class MovieSearchResponse(
     override var id: Int? = null,
     override var quality: SearchQuality? = null,
     override var posterHeaders: Map<String, String>? = null,
+    override var rating: Double? = null,
 ) : SearchResponse
 
 data class TvSeriesSearchResponse(
@@ -898,6 +910,7 @@ data class TvSeriesSearchResponse(
     override var id: Int? = null,
     override var quality: SearchQuality? = null,
     override var posterHeaders: Map<String, String>? = null,
+    override var rating: Double? = null,
 ) : SearchResponse
 
 interface LoadResponse {

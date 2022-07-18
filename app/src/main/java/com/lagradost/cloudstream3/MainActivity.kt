@@ -453,14 +453,18 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             logError(e)
             null
         }
+        println(enabledProvidersName)
 
 
         // Gets the enabled providers in the settings and apply it
         APIHolder.allEnabledProviders = if(!enabledProvidersName.isNullOrEmpty()) {
-            ArrayList(enabledProvidersName.map{ APIHolder.getApiFromName(it) })
+            ArrayList(enabledProvidersName.map { APIHolder.getProviderFromName(it) }) // find from settigs
+
         } else {
             arrayListOf<MainAPI>()
         }
+
+        println(APIHolder.allEnabledProviders )
 
 
         val downloadFromGithub = try {

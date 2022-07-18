@@ -6,6 +6,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.APIHolder.getApiFromName
+import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.ui.search.SEARCH_PREF_PROVIDERS
@@ -39,17 +40,16 @@ class SettingsProviders : PreferenceFragmentCompat() {
         getPref(R.string.enabled_providers_key)?.setOnPreferenceClickListener {
 
             val savedSettingsProviders = settingsManager.getStringSet(getString(R.string.enabled_providers_key), null)?.toList()
-            
             val savedEnabledProviders: List<String> = if (!savedSettingsProviders.isNullOrEmpty()) {
                 savedSettingsProviders
             } else {
-                APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider}.map { it.name }
+                APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider && it.name != "MultiMedia"}.map { it.name } // TODO FIX EXCLUDE MULTIMEDIA
             }
 
             var index = 0 // TODO maybe should use the .withIndex() function but I lazy
             val enabledProvidersIndex = mutableListOf<Int>()
 
-            val allAvailableProviders: List<String> = APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider}.map { it.name }
+            val allAvailableProviders: List<String> = APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider && it.name != "MultiMedia"}.map { it.name }// TODO FIX EXCLUDE MULTIMEDIA
 
             allAvailableProviders.forEach { provider -> // their is probably a better way to do it
                 if (provider in savedEnabledProviders) {

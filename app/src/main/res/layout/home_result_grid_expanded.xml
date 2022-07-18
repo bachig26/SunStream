@@ -74,11 +74,23 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp">
             </ImageView>-->
-            <TextView
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_gravity="end"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <TextView
                     tools:text="@string/quality_hd"
                     android:id="@+id/text_quality"
                     style="@style/SearchBox"
                     android:background="@drawable/type_bg_color" />
+
+                <TextView
+                    tools:text="00"
+                    android:id="@+id/text_rating"
+                    style="@style/SearchBox"
+                    android:background="@drawable/rating_bg_color"/>
+            </LinearLayout>
 
             <LinearLayout
                     android:orientation="vertical"

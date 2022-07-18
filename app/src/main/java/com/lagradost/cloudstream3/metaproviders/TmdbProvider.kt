@@ -8,10 +8,14 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.uwetrottmann.tmdb2.Tmdb
 import com.uwetrottmann.tmdb2.entities.*
+import com.uwetrottmann.tmdb2.entities.DiscoverFilter
 import com.uwetrottmann.tmdb2.enumerations.AppendToResponseItem
+import com.uwetrottmann.tmdb2.enumerations.ReleaseType
 import com.uwetrottmann.tmdb2.enumerations.VideoType
 import retrofit2.awaitResponse
 import java.util.*
+import java.time.LocalDate // might be bad idk
+import java.time.format.DateTimeFormatter
 
 /**
  * episode and season starting from 1
@@ -67,7 +71,8 @@ open class TmdbProvider : MainAPI() {
                 }.get(Calendar.YEAR)
             },
             null,
-            this.id
+            this.id,
+            rating = this.vote_average,
         )
     }
 
@@ -77,13 +82,14 @@ open class TmdbProvider : MainAPI() {
             getUrl(id, false),
             apiName,
             TvType.TvSeries,
-            getImageUrl(this.poster_path),
+            getImageUrl(this.poster_path),  // POSTER
             this.release_date?.let {
                 Calendar.getInstance().apply {
                     time = it
                 }.get(Calendar.YEAR)
             },
             this.id,
+            rating = this.vote_average,
         )
     }
 
@@ -213,25 +219,50 @@ open class TmdbProvider : MainAPI() {
         var discoverSeries: List<TvSeriesSearchResponse> = listOf()
         var topMovies: List<MovieSearchResponse> = listOf()
         var topSeries: List<TvSeriesSearchResponse> = listOf()
+
+        // tmdb java wrapper api exemple https://useof.org/java-open-source/com.uwetrottmann.tmdb2.entities.DiscoverFilter
+
+
+        /*
+        1st- Theater
+        2dn- Physical
+        3rd- Digital
+
+
+         It's important to note the order of the release types that are used. Specifying "2|3" would return the limited theatrical release date as opposed to "3|2" which would return the theatrical date.
+
+
+
+           1- Premiere
+           2- Theatrical (limited)
+           3- Theatrical
+           4- Digital
+           5- Physical
+            TV
+
+         */
+
+        val releasedOnlineFilter = DiscoverFilter(DiscoverFilter.Separator.OR, ReleaseType.PHYSICAL, ReleaseType.DIGITAL) // only show physical release and digital (hide theater cams: those are really annoying)
+        val releasedBeforeDate = TmdbDate(LocalDate.now().minusDays(5).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))) // get date of 5 days ago
         argamap(
             {
-                discoverMovies = tmdb.discoverMovie().build().awaitResponse().body()?.results?.map {
+                discoverMovies = tmdb.discoverMovie().with_release_type(releasedOnlineFilter).release_date_lte(releasedBeforeDate).build().awaitResponse().body()?.results?.map { // show movies released in physical or digital at least five days ago (time to upload rip)
                     it.toSearchResponse()
                 } ?: listOf()
             }, {
-                discoverSeries = tmdb.discoverTv().build().awaitResponse().body()?.results?.map {
+                discoverSeries = tmdb.discoverTv().build().awaitResponse().body()?.results?.map { // no need for release type for tv show
                     it.toSearchResponse()
                 } ?: listOf()
             }, {
                 // https://en.wikipedia.org/wiki/ISO_3166-1
                 topMovies =
-                    tmdb.moviesService().topRated(1, "en-US", "US").awaitResponse()
+                    tmdb.moviesService().topRated(1, "en-US", "US").awaitResponse() // TODO change region, CANT FILTER OUT CINEMA
                         .body()?.results?.map {
                             it.toSearchResponse()
                         } ?: listOf()
             }, {
                 topSeries =
-                    tmdb.tvService().topRated(1, "en-US").awaitResponse().body()?.results?.map {
+                    tmdb.tvService().topRated(1, "en-US").awaitResponse().body()?.results?.map {// TODO change region
                         it.toSearchResponse()
                     } ?: listOf()
             }

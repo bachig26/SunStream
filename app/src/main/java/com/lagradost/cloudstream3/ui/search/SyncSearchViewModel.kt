@@ -17,5 +17,6 @@ class SyncSearchViewModel {
         override var id: Int?,
         override var quality: SearchQuality? = null,
         override var posterHeaders: Map<String, String>? = null,
+        override var rating: Double? = null,
     ) : SearchResponse
 }
