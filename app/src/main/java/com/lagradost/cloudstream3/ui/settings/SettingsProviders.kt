@@ -24,10 +24,6 @@ import org.acra.util.mapNotNullToSparseArray
 const val ENABLED_META_PROVIDERS = "enabled_meta_providers" // Probably wrong
 
 class SettingsProviders : PreferenceFragmentCompat() {
-    // idk, if you find a way of automating this it would be great
-    // https://www.iemoji.com/view/emoji/1794/flags/antarctica
-    // Emoji Character Encoding Data --> C/C++/Java Src
-    // https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes leave blank for auto
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -38,23 +34,22 @@ class SettingsProviders : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_providers, rootKey)
-        //val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
         getPref(R.string.enabled_providers_key)?.setOnPreferenceClickListener {
 
-            val savedSettingsProviders = context?.getKey<List<String>>(ENABLED_META_PROVIDERS)
-
-            val allAvailableProviders: List<String> = APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider}.map { it.name }
-
-            val savedEnabledProviders: List<String> = if (savedSettingsProviders?.isEmpty() == false) {
+            val savedSettingsProviders = settingsManager.getStringSet(getString(R.string.enabled_providers_key), null)?.toList()
+            
+            val savedEnabledProviders: List<String> = if (!savedSettingsProviders.isNullOrEmpty()) {
                 savedSettingsProviders
             } else {
                 APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider}.map { it.name }
             }
 
-
-            var index = 0 // TODO use the .withIndex() function but I lazy
+            var index = 0 // TODO maybe should use the .withIndex() function but I lazy
             val enabledProvidersIndex = mutableListOf<Int>()
+
+            val allAvailableProviders: List<String> = APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider}.map { it.name }
 
             allAvailableProviders.forEach { provider -> // their is probably a better way to do it
                 if (provider in savedEnabledProviders) {
@@ -78,7 +73,7 @@ class SettingsProviders : PreferenceFragmentCompat() {
                 })
 
                 APIHolder.allEnabledProviders = ArrayList(enabledProviders.map{ getApiFromName(it) })
-                context?.setKey(ENABLED_META_PROVIDERS, enabledProviders)
+                settingsManager.edit().putStringSet(getString(R.string.enabled_providers_key), enabledProviders.toMutableSet()).apply() // YES APPLY PLS
             }
 
             return@setOnPreferenceClickListener true

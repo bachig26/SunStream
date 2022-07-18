@@ -446,6 +446,23 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         SearchResultBuilder.updateCache(this)
 
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
+
+        val enabledProvidersName = try {
+            settingsManager.getStringSet(getString(R.string.enabled_providers_key), null)?.toList()
+        } catch (e: Exception) {
+            logError(e)
+            null
+        }
+
+
+        // Gets the enabled providers in the settings and apply it
+        APIHolder.allEnabledProviders = if(!enabledProvidersName.isNullOrEmpty()) {
+            ArrayList(enabledProvidersName.map{ APIHolder.getApiFromName(it) })
+        } else {
+            arrayListOf<MainAPI>()
+        }
+
+
         val downloadFromGithub = try {
             settingsManager.getBoolean(getString(R.string.killswitch_key), true)
         } catch (e: Exception) {
