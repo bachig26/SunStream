@@ -24,14 +24,15 @@ class CrossTmdbProvider : TmdbProvider() {
         return Regex("""[^a-zA-Z0-9-]""").replace(name, "")
     }
 
-    private val validApis by lazy {
-        allEnabledProviders.filter { it.lang == this.lang && it::class.java != this::class.java && this.providerType == ProviderType.MetaProvider }
-        //.distinctBy { it.uniqueId }
+
+    private fun getAllEnabledProviders(): List<MainAPI> {
+        return allEnabledProviders.filter { it.lang == this.lang && it::class.java != this::class.java && this.providerType == ProviderType.MetaProvider }
     }
 
     data class CrossMetaData(  // movies and series
         @JsonProperty("isSuccess") val isSuccess: Boolean,
-        @JsonProperty("media") val medias: List<Pair<String, String>>? = null, // list<apiName, dataUrl>
+        @JsonProperty("dataUrl") val dataUrl: String,
+        @JsonProperty("availableApis") val availableApis: List<String>? = null, // list<apiName, dataUrl>
     )
 
     override suspend fun loadLinks(
@@ -42,16 +43,16 @@ class CrossTmdbProvider : TmdbProvider() {
     ): Boolean {
         tryParseJson<CrossMetaData>(data)?.let { metaData ->
             if (!metaData.isSuccess) return false
-            metaData.medias?.apmap { (apiName, data) -> // apiName, dataUrl
+            val dataUrl = metaData.dataUrl
+            metaData.availableApis?.map { apiName ->
                 getApiFromNameNull(apiName)?.let {
                     try {
-                        it.loadLinks(data, isCasting, subtitleCallback, callback)
+                        it.loadLinks(dataUrl, isCasting, subtitleCallback, callback)
                     } catch (e: Exception) {
                         logError(e)
                     }
                 }
             }
-
             return true
         }
         return false
@@ -64,47 +65,63 @@ class CrossTmdbProvider : TmdbProvider() {
     override suspend fun load(url: String): LoadResponse? {
         val base = super.load(url)?.apply {
             this.recommendations = this.recommendations
-            val matchName = filterName(this.name)
-            val validApis = validApis
+            //val matchName = filterName(this.name)
+            val validApisName = getAllEnabledProviders().map {it.name}
             when (this) {
                 is MovieLoadResponse -> {
-                    val data = validApis.apmap { api ->
-                        try {
-                            if (api.supportedTypes.contains(TvType.Movie)) { //|| api.supportedTypes.contains(TvType.AnimeMovie)
-                                return@apmap api.search(this.name)?.first {
-                                    if (filterName(it.name).equals(
-                                            matchName,
-                                            ignoreCase = true
-                                        )
-                                    ) {
-                                        if (it is MovieSearchResponse)
-                                            if (it.year != null && this.year != null && it.year != this.year) // if year exist then do a check
-                                                return@first false
 
-                                        return@first true // same movie
-                                    }
-                                    false
-                                }?.let { search ->
-                                    val response = api.load(search.url)
-                                    if (response is MovieLoadResponse) {
-                                        response
-                                    } else {
-                                        null
-                                    }
+                    /*
+                    val data = validApis.mapNotNull { api -> // TODO FIX
+
+                    try {
+
+
+                    // usefull when searching movie on other (non tmdb) providers
+                        if (api.supportedTypes.contains(TvType.Movie)) { //|| api.supportedTypes.contains(TvType.AnimeMovie)
+                            return@apmap api.search(this.name)?.first { movieSearchResponse -> // first result
+                                if (filterName(movieSearchResponse.name).equals(
+                                        matchName,
+                                        ignoreCase = true
+                                    )
+                                ) {
+                                    if (movieSearchResponse is MovieSearchResponse)
+                                        if (movieSearchResponse.year != null && this.year != null && movieSearchResponse.year != this.year) // if year exist then do a check
+                                            return@first false // could be false negative due to different release year according to resion and prerelease
+
+                                    return@first true // same movie: Success
+                                }
+                                false // nope
+                            }?.let { search ->
+                                val response = api.load(search.url)
+                                if (response is MovieLoadResponse) {
+                                    response
+                                } else {
+                                    null
                                 }
                             }
-                            null
-                        } catch (e: Exception) {
-                            logError(e)
-                            null
                         }
-                    }.filterNotNull()
+                        null
+
+                    } catch (e: Exception) {
+                        logError(e)
+                        null
+                    }
+                    }
+                    println(data)
                     this.dataUrl =
-                        CrossMetaData(true, data.map { it.apiName to it.dataUrl }).toJson() // sent to loadLinks
+                    CrossMetaData(true, data.map { it.apiName to it.dataUrl }).toJson() // sent to loadLinks
+                    // (old content of data before update): {"isSuccess":true,"movies":[{"first":"VidSrc","second":"{\"imdbID\":\"tt9419884\",\"tmdbID\":453395,\"episode\":null,\"season\":null,\"movieName\":\"Doctor Strange in the Multiverse of Madness\"}"},{"first":"OpenVids","second":"{\"imdbID\":\"tt9419884\",\"tmdbID\":453395,\"episode\":null,\"season\":null,\"movieName\":\"Doctor Strange in the Multiverse of Madness\"}"}]}
+                                    }
+*/
+
+
+
+                    this.dataUrl = CrossMetaData(true, this.dataUrl, validApisName).toJson() // sent to loadLinks
+
                 }
-                // {"isSuccess":true,"movies":[{"first":"VidSrc","second":"{\"imdbID\":\"tt9419884\",\"tmdbID\":453395,\"episode\":null,\"season\":null,\"movieName\":\"Doctor Strange in the Multiverse of Madness\"}"},{"first":"OpenVids","second":"{\"imdbID\":\"tt9419884\",\"tmdbID\":453395,\"episode\":null,\"season\":null,\"movieName\":\"Doctor Strange in the Multiverse of Madness\"}"}]}
 
                 is TvSeriesLoadResponse -> {
+                    /*
                     val data = validApis.apmap { api -> // all tvseries load response apis without a null response
                         try {
                             if (api.supportedTypes.contains(TvType.TvSeries) || api.supportedTypes.contains(
@@ -141,6 +158,12 @@ class CrossTmdbProvider : TmdbProvider() {
                     }.filterNotNull()
                     this.episodes.forEach() { Episode -> //MAY BE SLOW !
                         Episode.data = CrossMetaData(true, data.map { it.apiName to Episode.data }).toJson() // sent to loadLinks
+                    }
+
+                     */
+
+                    this.episodes.forEach() { Episode -> //MAY BE SLOW !
+                        Episode.data = CrossMetaData(true, Episode.data, validApisName).toJson() // sent to loadLinks
                     }
                 }
             }

@@ -256,7 +256,7 @@ open class TmdbProvider : MainAPI() {
             }, {
                 // https://en.wikipedia.org/wiki/ISO_3166-1
                 topMovies =
-                    tmdb.moviesService().topRated(1, "en-US", "US").awaitResponse() // TODO change region, CANT FILTER OUT CINEMA
+                    tmdb.moviesService().topRated(1, "en-US", "US").awaitResponse() // TODO change region
                         .body()?.results?.map {
                             it.toSearchResponse()
                         } ?: listOf()
