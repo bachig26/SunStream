@@ -93,6 +93,17 @@
         <item name="white">#000</item>
     </style>
 
+
+    <style name="OverlayPrimaryColorSunSet">
+        <item name="colorPrimary">@color/colorPrimaryOrange</item>
+        <item name="android:colorPrimary">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryDark">#C50037</item>
+        <item name="colorAccent">#F5AB3B</item> <!--#F53B3B-->
+        <item name="colorOnPrimary">#F5AB3B</item> <!--#EC3838-->
+        <!-- Needed for leanback fuckery -->
+        <item name="android:colorAccent">#F5AB3B</item>
+    </style>
+
     <style name="OverlayPrimaryColorNormal">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="android:colorPrimary">@color/colorPrimary</item>

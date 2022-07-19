@@ -226,6 +226,7 @@
 
     <string-array name="themes_overlay_names">
         <item>Normal</item>
+        <item>SunSet</item>
         <item>Carnation Pink</item>
         <item>Dark Green</item>
         <item>Maroon</item>
@@ -244,6 +245,7 @@
     </string-array>
     <string-array name="themes_overlay_names_values">
         <item>Normal</item>
+        <item>SunSet</item>
         <item>CarnationPink</item>
         <item>DarkGreen</item>
         <item>Maroon</item>
