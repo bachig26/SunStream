@@ -16,6 +16,7 @@
 
     <array name="dns_pref">
         <item>@string/none</item>
+        <item>Quad9</item>
         <item>Google</item>
         <item>Cloudflare</item>
         <!--        <item>OpenDns</item>-->
@@ -23,6 +24,7 @@
     </array>
     <array name="dns_pref_values">
         <item>0</item>
+        <item>5</item>
         <item>1</item>
         <item>2</item>
         <!--        <item>3</item>-->
@@ -171,6 +173,7 @@
         <item>@string/show_dub</item>
         <item>@string/show_sub</item>
         <item>@string/show_title</item>
+        <item>@string/show_rating</item>
     </array>
 
     <array name="poster_ui_options_values">
@@ -178,6 +181,7 @@
         <item>@string/show_dub_key</item>
         <item>@string/show_sub_key</item>
         <item>@string/show_title_key</item>
+        <item>@string/show_rating_key</item>
     </array>
 
     <array name="episode_long_click_options">

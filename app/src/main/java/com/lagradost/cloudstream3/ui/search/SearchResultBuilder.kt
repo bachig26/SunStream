@@ -67,6 +67,7 @@ object SearchResultBuilder {
         val showDub = showCache[textIsDub?.context?.getString(R.string.show_dub_key)] ?: false
         val showTitle = showCache[cardText?.context?.getString(R.string.show_title_key)] ?: false
         val showHd = showCache[textQuality?.context?.getString(R.string.show_hd_key)] ?: false
+        val showRating = showCache[textRating?.context?.getString(R.string.show_rating_key)] ?: false
 
         shadow?.isVisible = showTitle
 
@@ -100,8 +101,8 @@ object SearchResultBuilder {
         cardView.isVisible = true
 
 
-        if (card.rating == null || card.rating == 0.0) {
-            textRating?.isVisible = false // hide if no rating
+        if (card.rating == null || card.rating == 0.0 || !showRating) {
+            textRating?.isVisible = false // hide if no rating or rating disabled
         } else {
             textRating?.text = card.rating?.toString()
         }

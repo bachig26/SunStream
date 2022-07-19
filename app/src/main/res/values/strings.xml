@@ -259,7 +259,8 @@
     <string name="bug_report_settings_off">Only sends data on crashes</string>
     <string name="bug_report_settings_on">Sends no data</string>
     <string name="show_fillers_settings">Show filler episode for anime</string>
-    <string name="show_trailers_settings">Show trailers</string>
+    <string name="show_trailers_settings">Show trailers: will affect loading time</string>
+    <string name="show_trailers_settings_summary">Will affect loading time</string>
     <string name="kitsu_settings">Show posters from kitsu</string>
 
     <string name="updates_settings">Show app updates</string>
@@ -365,10 +366,12 @@
     <string name="show_dub">Dub label</string>
     <string name="show_sub">Sub label</string>
     <string name="show_title">Title</string>
+    <string name="show_rating">Rating</string>
     <string name="show_hd_key" translatable="false">show_hd_key</string>
     <string name="show_dub_key" translatable="false">show_dub_key</string>
     <string name="show_sub_key" translatable="false">show_sub_key</string>
     <string name="show_title_key" translatable="false">show_title_key</string>
+    <string name="show_rating_key" translatable="false">show_title_key</string>
     <string name="poster_ui_settings">Toggle UI elements on poster</string>
 
     <string name="no_update_found">No Update Found</string>

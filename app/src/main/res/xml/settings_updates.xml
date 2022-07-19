@@ -38,7 +38,7 @@
             app:key="@string/prerelease_update_key"
             android:title="@string/uprereleases_settings"
             android:summary="@string/uprereleases_settings_des"
-            app:defaultValue="false"
+            app:defaultValue="true"
             android:icon="@drawable/ic_baseline_developer_mode_24" />
     <SwitchPreference
             android:icon="@drawable/netflix_download"

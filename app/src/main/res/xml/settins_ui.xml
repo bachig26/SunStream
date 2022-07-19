@@ -22,7 +22,7 @@
             app:key="advanced_search"
             android:title="@string/advanced_search"
             android:summary="@string/advanced_search_des"
-            app:defaultValue="true" />
+            app:defaultValue="false" />
     <SwitchPreference
             android:defaultValue="true"
             android:icon="@drawable/baseline_grid_view_24"
@@ -33,6 +33,7 @@
             android:key="@string/show_trailers_key"
             android:icon="@drawable/baseline_theaters_24"
             android:title="@string/show_trailers_settings"
+            android:summary="@string/show_trailers_settings_summary"
             android:defaultValue="true" />
     <SwitchPreference
             android:key="@string/show_kitsu_posters_key"

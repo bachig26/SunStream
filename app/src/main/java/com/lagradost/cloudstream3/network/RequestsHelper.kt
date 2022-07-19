@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 
 fun Requests.initClient(context: Context): OkHttpClient {
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(context)
-    val dns = settingsManager.getInt(context.getString(R.string.dns_pref), 0)
+    val dns = settingsManager.getInt(context.getString(R.string.dns_pref), 5)
     baseClient = OkHttpClient.Builder()
         .followRedirects(true)
         .followSslRedirects(true)
@@ -36,6 +36,7 @@ fun Requests.initClient(context: Context): OkHttpClient {
                 2 -> addCloudFlareDns()
 //                3 -> addOpenDns()
                 4 -> addAdGuardDns()
+                5 -> addQuadNineDns()
             }
         }
         // Needs to be build as otherwise the other builders will change this object
