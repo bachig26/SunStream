@@ -162,7 +162,7 @@ class CrossTmdbProvider : TmdbProvider() {
 
                      */
 
-                    this.episodes.forEach() { Episode -> //MAY BE SLOW !
+                    this.episodes.forEach() { Episode -> //MIGHT BE SLOW !
                         Episode.data = CrossMetaData(true, Episode.data, validApisName).toJson() // sent to loadLinks
                     }
                 }
