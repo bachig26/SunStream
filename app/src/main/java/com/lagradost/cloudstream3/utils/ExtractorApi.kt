@@ -223,6 +223,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     FeHD(),
     Fplayer(),
     DBfilm(),
+    Luxubu(),
     LayarKaca(),
     //  WatchSB(), 'cause StreamSB.kt works
     Uqload(),
@@ -295,6 +296,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     YoutubeExtractor(),
     YoutubeShortLinkExtractor(),
+    Streamlare()
 )
 
 fun getExtractorApiFromName(name: String): ExtractorApi {

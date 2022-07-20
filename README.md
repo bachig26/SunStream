@@ -23,6 +23,7 @@ https://github.com/Sarlay/SunStream/releases
 
 ***The list of supported languages:***
 * 🇱🇧 Arabic
+* 🇨🇿 Czech
 * 🇳🇱 Dutch
 * 🇬🇧 English
 * 🇫🇷 French

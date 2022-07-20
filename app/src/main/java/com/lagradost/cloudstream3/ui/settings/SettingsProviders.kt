@@ -45,7 +45,6 @@ class SettingsProviders : PreferenceFragmentCompat() {
                 APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider && it.name != "MultiMedia"}.map { it.name } // TODO FIX EXCLUDE MULTIMEDIA
             }
 
-
             var index = 0 // TODO maybe should use the .withIndex() function but I lazy
             val enabledProvidersIndex = mutableListOf<Int>()
 

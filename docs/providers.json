@@ -78,7 +78,6 @@
         "url": "https://animekisa.in"
     },
     "ApiMDBProvider": {
-        "language": "en",
         "name": "ApiMDB",
         "status": 0,
         "url": "https://v2.apimdb.net"
@@ -104,7 +103,7 @@
     "CineblogProvider": {
         "language": "it",
         "name": "CineBlog",
-        "status": 1,
+        "status": 0,
         "url": "https://cb01.rip"
     },
     "CinecalidadProvider": {
@@ -198,8 +197,8 @@
     "FilmpertuttiProvider": {
         "language": "it",
         "name": "Filmpertutti",
-        "status": 1,
-        "url": "https://www.filmpertutti.buzz"
+        "status": 0,
+        "url": "https://www.filmpertutti.love"
     },
     "FmoviesToProvider": {
         "language": "en",
@@ -272,6 +271,12 @@
         "name": "KDramaHood",
         "status": 1,
         "url": "https://kdramahood.com"
+    },
+    "KimCartoonProvider": {
+        "language": "en",
+        "name": "Kim Cartoon",
+        "status": 1,
+        "url": "https://kimcartoon.li"
     },
     "KuramanimeProvider": {
         "language": "id",
@@ -527,7 +532,7 @@
         "language": "en",
         "name": "VidEmbed",
         "status": 1,
-        "url": "https://vidembed.cc"
+        "url": "https://membed.net"
     },
     "VidSrcProvider": {
         "language": "en",
