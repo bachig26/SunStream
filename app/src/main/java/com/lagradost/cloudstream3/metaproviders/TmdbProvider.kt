@@ -154,7 +154,6 @@ open class TmdbProvider : MainAPI() {
             duration = episode_run_time?.average()?.toInt()
             rating = this@toLoadResponse.rating
             addTrailer(videos.toTrailers())
-
             recommendations = (this@toLoadResponse.recommendations
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
             addActors(credits?.cast?.toList().toActors())
@@ -196,7 +195,6 @@ open class TmdbProvider : MainAPI() {
             duration = runtime
             rating = this@toLoadResponse.rating
             addTrailer(videos.toTrailers())
-
             recommendations = (this@toLoadResponse.recommendations
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
             addActors(credits?.cast?.toList().toActors())
@@ -316,7 +314,8 @@ open class TmdbProvider : MainAPI() {
                         "en-US",
                         AppendToResponse(
                             AppendToResponseItem.EXTERNAL_IDS,
-                            AppendToResponseItem.VIDEOS
+                            AppendToResponseItem.VIDEOS,
+                            AppendToResponseItem.CREDITS,
                         )
                     )
                     .awaitResponse().body()
@@ -344,7 +343,8 @@ open class TmdbProvider : MainAPI() {
                         "en-US",
                         AppendToResponse(
                             AppendToResponseItem.EXTERNAL_IDS,
-                            AppendToResponseItem.VIDEOS
+                            AppendToResponseItem.VIDEOS,
+                            AppendToResponseItem.CREDITS,
                         )
                     )
                     .awaitResponse().body()

@@ -152,7 +152,7 @@ class SearchFragment : Fragment() {
         search_filter.setOnClickListener { searchView ->
             searchView?.context?.let { ctx ->
                 val validAPIs = ctx.filterProviderByPreferredMedia(hasHomePageIsRequired = false).filter {
-                    // filter out meta providers except multimoviec
+                    // filter out meta providers except multimovie
                     !(it.providerType == ProviderType.MetaProvider && it::class != CrossTmdbProvider::class)
                 }
                 var currentValidApis = listOf<MainAPI>()

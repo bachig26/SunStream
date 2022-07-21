@@ -261,7 +261,7 @@
     <string name="bug_report_settings_on">Sends no data</string>
     <string name="show_fillers_settings">Show filler episode for anime</string>
     <string name="show_trailers_settings">Show trailers</string>
-    <string name="show_trailers_settings_summary">Will affect loading time</string>
+    <string name="show_trailers_settings_summary">Will affect loading time when turned on</string>
     <string name="kitsu_settings">Show posters from kitsu</string>
 
     <string name="updates_settings">Show app updates</string>

@@ -762,6 +762,7 @@ class ResultFragment : ResultTrailerPlayer() {
             if (isImage) {
                 (result_cast_items?.adapter as ActorAdaptor?)?.apply {
                     updateList(actors)
+
                 }
                 result_cast_text?.isVisible = false
                 result_cast_items?.isVisible = true
@@ -1899,7 +1900,7 @@ class ResultFragment : ResultTrailerPlayer() {
                     setYear(d.year)
                     setRating(d.rating)
                     setRecommendations(d.recommendations, null)
-                    setActors(d.actors)
+                    setActors(d.actors) // TODO FIX actors not showing up
                     setNextEpisode(if (d is EpisodeResponse) d.nextAiring else null)
                     setTrailers(d.trailers)
 
