@@ -25,6 +25,7 @@ import com.lagradost.cloudstream3.APIHolder.getApiFromName
 import com.lagradost.cloudstream3.APIHolder.getApiProviderLangSettings
 import com.lagradost.cloudstream3.APIHolder.getApiSettings
 import com.lagradost.cloudstream3.AcraApplication.Companion.removeKey
+import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
 import com.lagradost.cloudstream3.mvvm.Resource
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.mvvm.observe
@@ -42,6 +43,7 @@ import com.lagradost.cloudstream3.utils.UIHelper.fixPaddingStatusbar
 import com.lagradost.cloudstream3.utils.UIHelper.getSpanCount
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
 import kotlinx.android.synthetic.main.fragment_search.*
+import org.junit.internal.Classes.getClass
 import java.util.concurrent.locks.ReentrantLock
 
 const val SEARCH_PREF_TAGS = "search_pref_tags"
@@ -149,7 +151,10 @@ class SearchFragment : Fragment() {
 
         search_filter.setOnClickListener { searchView ->
             searchView?.context?.let { ctx ->
-                val validAPIs = ctx.filterProviderByPreferredMedia(hasHomePageIsRequired = false)
+                val validAPIs = ctx.filterProviderByPreferredMedia(hasHomePageIsRequired = false).filter {
+                    // filter out meta providers except multimoviec
+                    !(it.providerType == ProviderType.MetaProvider && it::class != CrossTmdbProvider::class)
+                }
                 var currentValidApis = listOf<MainAPI>()
                 val currentSelectedApis = if (selectedApis.isEmpty()) validAPIs.map { it.name }
                     .toMutableSet() else selectedApis

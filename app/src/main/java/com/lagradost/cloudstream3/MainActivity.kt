@@ -35,6 +35,7 @@ import com.lagradost.cloudstream3.CommonActivity.onDialogDismissedEvent
 import com.lagradost.cloudstream3.CommonActivity.onUserLeaveHint
 import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.CommonActivity.updateLocale
+import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.receivers.VideoDownloadRestartReceiver
@@ -449,22 +450,20 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
         val enabledProvidersName = try {
             settingsManager.getStringSet(getString(R.string.enabled_providers_key), null)?.toList()
+                ?: allProviders.filter{ it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java }.map { it.name }
         } catch (e: Exception) {
             logError(e)
-            null
+            allProviders.filter{ it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java }.map { it.name }
         }
-        println(enabledProvidersName)
 
 
         // Gets the enabled providers in the settings and apply it
-        APIHolder.allEnabledProviders = if(!enabledProvidersName.isNullOrEmpty()) {
+        APIHolder.allEnabledProviders = if(enabledProvidersName.isNotEmpty()) {
             ArrayList(enabledProvidersName.map { APIHolder.getProviderFromName(it) }) // find from settigs
-
         } else {
             arrayListOf<MainAPI>()
         }
 
-        println(APIHolder.allEnabledProviders )
 
 
         val downloadFromGithub = try {

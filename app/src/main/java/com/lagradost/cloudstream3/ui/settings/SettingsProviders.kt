@@ -5,6 +5,7 @@ import android.view.View
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.APIHolder.allProviders
 import com.lagradost.cloudstream3.APIHolder.getApiFromName
 import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
 import com.lagradost.cloudstream3.mvvm.logError
@@ -42,13 +43,13 @@ class SettingsProviders : PreferenceFragmentCompat() {
             val savedEnabledProviders: List<String> = if (!savedSettingsProviders.isNullOrEmpty()) {
                 savedSettingsProviders
             } else {
-                APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider && it.name != "MultiMedia"}.map { it.name } // TODO FIX EXCLUDE MULTIMEDIA
+                APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java }.map { it.name }
             }
 
             var index = 0 // TODO maybe should use the .withIndex() function but I lazy
             val enabledProvidersIndex = mutableListOf<Int>()
 
-            val allAvailableProviders: List<String> = APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider && it.name != "MultiMedia"}.map { it.name }// TODO FIX EXCLUDE MULTIMEDIA
+            val allAvailableProviders: List<String> = APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java}.map { it.name }
 
             allAvailableProviders.forEach { provider -> // their is probably a better way to do it
                 if (provider in savedEnabledProviders) {
