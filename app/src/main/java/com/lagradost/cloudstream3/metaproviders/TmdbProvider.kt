@@ -198,6 +198,7 @@ open class TmdbProvider : MainAPI() {
             recommendations = (this@toLoadResponse.recommendations
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
             addActors(credits?.cast?.toList().toActors())
+            getImageUrl(backdrop_path)
         }
     }
 

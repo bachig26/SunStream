@@ -940,6 +940,7 @@ interface LoadResponse {
     var comingSoon: Boolean
     var syncData: MutableMap<String, String>
     var posterHeaders: Map<String, String>?
+    var backdropUrl: String?
 
     companion object {
         private val malIdPrefix = malApi.idPrefix
@@ -1114,6 +1115,7 @@ data class TorrentLoadResponse(
     override var comingSoon: Boolean = false,
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
+    override var backdropUrl: String? = null
 ) : LoadResponse
 
 data class AnimeLoadResponse(
@@ -1143,6 +1145,7 @@ data class AnimeLoadResponse(
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
     override var nextAiring: NextAiring? = null,
+    override var backdropUrl: String? = null
 ) : LoadResponse, EpisodeResponse
 
 fun AnimeLoadResponse.addEpisodes(status: DubStatus, episodes: List<Episode>?) {
@@ -1190,6 +1193,7 @@ data class LiveStreamLoadResponse(
     override var comingSoon: Boolean = false,
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
+    override var backdropUrl: String? = null
 ) : LoadResponse
 
 data class MovieLoadResponse(
@@ -1212,6 +1216,7 @@ data class MovieLoadResponse(
     override var comingSoon: Boolean = false,
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
+    override var backdropUrl: String? = null
 ) : LoadResponse
 
 suspend fun <T> MainAPI.newMovieLoadResponse(
@@ -1334,6 +1339,7 @@ data class TvSeriesLoadResponse(
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
     override var nextAiring: NextAiring? = null,
+    override var backdropUrl: String? = null
 ) : LoadResponse, EpisodeResponse
 
 suspend fun MainAPI.newTvSeriesLoadResponse(
