@@ -53,6 +53,8 @@
     <string name="subtitles_encoding_key" translatable="false">subtitles_encoding_key</string>
     <string name="override_site_key" translatable="false">override_site_key</string>
     <string name="enabled_providers_key" translatable="false">enabled_providers_key</string>
+    <string name="enable_local_server_key" translatable="false">enable_local_server</string>
+    <string name="show_local_ip_key" translatable="false">show_local_ip_key</string>
 
     <!-- FORMAT MIGHT TRANSLATE, WILL CAUSE CRASH IF APPLIED WRONG -->
     <string name="extra_info_format" translatable="false" formatted="true">%d %s | %sMB</string>
@@ -411,6 +413,17 @@
 
     <string name="nginx_url_pref">Nginx server url</string>
 
+    <string name="enable_local_server_pref">Enable remote control</string>
+    <string name="enable_local_server_sum">Will run a server on your local network when the app starts,
+        With that feature you can control the playback of a media from a different device (when specifing the ip address).
+        Restart to apply
+    </string>
+
+    <string name="show_local_ip_pref">Display the local ip of this device</string>
+    <string name="local_ip_pref">Local ip:</string>
+
+    <string name="show_local_ip_sum">Will ping google.com if the router is not found with the address 192.168.1.1</string>
+
     <string name="display_subbed_dubbed_settings">Display Dubbed/Subbed Anime</string>
 
     <string name="resize_fit">Fit to screen</string>
@@ -456,6 +469,9 @@
     <string name="bottom_title_settings">Poster title location</string>
     <string name="bottom_title_settings_des">Put the title under the poster</string>
 
+    <string name="error_cant_start_server">Can\'t start the server on port 5050, please make sure that no other sunstream app is running in the background</string>
+
+    <string name="device_not_found">Device not found on the network</string>
 
     <!-- account stuff -->
     <string name="anilist_key" translatable="false">anilist_key</string>
@@ -464,6 +480,7 @@
     <string name="nginx_key" translatable="false">nginx_key</string>
     <string name="radarr_key" translatable="false">radarr_key</string>
     <string name="sonarr_key" translatable="false">sonarr_key</string>
+    <string name="remote_key" translatable="false">remote_key</string>
     <string name="example_password">password123</string>
     <string name="example_username">MyCoolUsername</string>
     <string name="example_email">hello@world.com</string>

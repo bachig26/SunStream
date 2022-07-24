@@ -22,6 +22,7 @@ import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.nginxAp
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.radarrApi
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.sonarrApi
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.openSubtitlesApi
+import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.remoteApi
 import com.lagradost.cloudstream3.syncproviders.AuthAPI
 import com.lagradost.cloudstream3.syncproviders.InAppAuthAPI
 import com.lagradost.cloudstream3.syncproviders.OAuth2API
@@ -193,10 +194,11 @@ class SettingsAccount : PreferenceFragmentCompat() {
                 R.string.nginx_key to nginxApi,
                 R.string.radarr_key to radarrApi,
                 R.string.sonarr_key to sonarrApi,
+                R.string.remote_key to remoteApi,
             )
 
         for ((key, api) in syncApis) {
-            getPref(key)?.apply {
+            getPref(key)?.apply { // apply listener on all apis
                 title =
                     getString(R.string.login_format).format(api.name, getString(R.string.account))
                 setOnPreferenceClickListener {

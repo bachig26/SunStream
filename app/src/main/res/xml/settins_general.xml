@@ -18,10 +18,23 @@
             android:title="@string/download_path_pref"
             android:icon="@drawable/netflix_download" />
 
+    <SwitchPreference
+        android:key="@string/enable_local_server_key"
+        android:title="@string/enable_local_server_pref"
+        android:summary="@string/enable_local_server_sum"
+        android:icon="@drawable/ic_remote_control"
+        android:defaultValue="false"/>
+
     <Preference
-            android:key="@string/legal_notice_key"
-            android:title="@string/legal_notice"
-            android:icon="@drawable/ic_baseline_warning_24" />
+        android:key="@string/show_local_ip_key"
+        android:title="@string/show_local_ip_pref"
+        android:summary="@string/show_local_ip_sum"
+        android:icon="@drawable/ic_remote_control" />
+
+    <Preference
+        android:key="@string/legal_notice_key"
+        android:title="@string/legal_notice"
+        android:icon="@drawable/ic_baseline_warning_24" />
 
     <Preference
             android:title="@string/github"
