@@ -31,7 +31,7 @@ enum class CSPlayerEvent(val value: Int) {
     SeekForward(2),
     SeekBack(3),
 
-    //SkipCurrentChapter(4),
+    //SkipCurrentChapter(4), // might cause issues
     NextEpisode(5),
     PrevEpisode(6),
     PlayPauseToggle(7),

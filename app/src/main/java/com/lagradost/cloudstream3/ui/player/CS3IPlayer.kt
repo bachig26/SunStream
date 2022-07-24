@@ -121,6 +121,7 @@ class CS3IPlayer : IPlayer {
         subtitlesUpdates = null
         embeddedSubtitlesFetched = null
         requestSubtitleUpdate = null
+        requestFromRemote = null
     }
 
     override fun initCallbacks(
@@ -164,6 +165,10 @@ class CS3IPlayer : IPlayer {
                 logError(e)
             }
         }
+    }
+
+    private fun handleRemoteAction (event: CSPlayerEvent){
+        handleEvent(event)
     }
 
     fun initSubtitles(subView: SubtitleView?, subHolder: FrameLayout?, style: SaveCaptionStyle?) {
@@ -351,6 +356,8 @@ class CS3IPlayer : IPlayer {
         private var simpleCache: SimpleCache? = null
 
         var requestSubtitleUpdate: (() -> Unit)? = null
+
+        var requestFromRemote: ((CSPlayerEvent) -> Unit)? = null
 
         private fun createOnlineSource(link: ExtractorLink): DataSource.Factory {
             val provider = getApiFromName(link.source)
@@ -655,6 +662,8 @@ class CS3IPlayer : IPlayer {
             )
 
             requestSubtitleUpdate = ::reloadSubs
+
+            requestFromRemote = ::handleRemoteAction
 
             playerUpdated?.invoke(exoPlayer)
             exoPlayer?.prepare()

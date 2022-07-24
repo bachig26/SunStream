@@ -2,9 +2,7 @@ package com.lagradost.cloudstream3.ui.settings
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Environment
+import android.os.*
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +23,8 @@ import com.lagradost.cloudstream3.mvvm.normalSafeApiCall
 import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
+import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
+import com.lagradost.cloudstream3.utils.Coroutines.main
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showDialog
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showMultiDialog
@@ -35,7 +35,15 @@ import com.lagradost.cloudstream3.utils.VideoDownloadManager
 import com.lagradost.cloudstream3.utils.VideoDownloadManager.getBasePath
 import kotlinx.android.synthetic.main.add_remove_sites.*
 import kotlinx.android.synthetic.main.add_site_input.*
+import kotlinx.coroutines.*
 import java.io.File
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.net.Socket
+import java.net.SocketException
+import java.util.*
+import kotlin.collections.HashSet
+
 
 class SettingsGeneral : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -288,5 +296,40 @@ class SettingsGeneral : PreferenceFragmentCompat() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
+        getPref(R.string.show_local_ip_key)?.setOnPreferenceClickListener {
+            val builder: AlertDialog.Builder =
+                AlertDialog.Builder(it.context, R.style.AlertDialogCustom)
+            builder.setTitle(R.string.local_ip_pref)
+            getLocalIpAddress(builder)
+
+            return@setOnPreferenceClickListener true
+        }
     }
+
+
+    private fun getLocalIpAddress(builder: AlertDialog.Builder) {
+        ioSafe {
+            try {
+                val s1 = Socket("192.168.1.1", 80) // will fail if router is not here exactly
+                val address = s1.getLocalAddress().getHostAddress()
+                s1.close()
+                showMessageWithIp(builder, address)
+            } catch (e: Exception) {
+                val s2 = Socket("google.com", 80) // not private
+                showMessageWithIp(builder, s2.getLocalAddress().getHostAddress())
+                s2.close()
+            }
+        }
+    }
+
+
+    private fun showMessageWithIp(builder: AlertDialog.Builder, address: String?) {
+        main {
+            builder.setMessage("your local ip is: $address")
+            builder.show()
+        }
+    }
+
+
 }

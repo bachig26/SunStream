@@ -15,6 +15,7 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
         val nginxApi = NginxApi(0)
         val radarrApi = RadarrApi(0)
         val sonarrApi = SonarrApi(0)
+        val remoteApi = RemoteApi(0)
 
         // used to login via app intent
         val OAuth2Apis
@@ -25,7 +26,7 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
         // this needs init with context and can be accessed in settings
         val accountManagers
             get() = listOf(
-                malApi, aniListApi, openSubtitlesApi, nginxApi, radarrApi, sonarrApi
+                malApi, aniListApi, openSubtitlesApi, nginxApi, radarrApi, sonarrApi, remoteApi
             )
 
         // used for active syncing
@@ -35,7 +36,7 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
             )
 
         val inAppAuths
-            get() = listOf(openSubtitlesApi, nginxApi, sonarrApi, radarrApi)
+            get() = listOf(openSubtitlesApi, nginxApi, sonarrApi, radarrApi, remoteApi)
 
         val subtitleProviders
             get() = listOf(

@@ -83,6 +83,11 @@ android {
         jvmTarget = '1.8'
         freeCompilerArgs = ['-Xjvm-default=compatibility']
     }
+    packagingOptions {
+        exclude 'META-INF/INDEX.LIST' // TODO IDK WHAT THAT IS ??
+        exclude 'META-INF/io.netty.versions.properties' // TODO IDK WHAT THAT IS ??
+    }
+
 }
 
 repositories {
@@ -182,4 +187,7 @@ dependencies {
     implementation 'com.github.TeamNewPipe:NewPipeExtractor:master-SNAPSHOT'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
 
+    // ktor for local network socket
+    implementation("io.ktor:ktor-server-netty:2.0.3")
+    implementation("io.ktor:ktor-network:2.0.3")
 }

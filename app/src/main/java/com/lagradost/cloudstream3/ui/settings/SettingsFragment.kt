@@ -8,21 +8,36 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import androidx.test.core.app.ActivityScenario.launch
+import com.lagradost.cloudstream3.AnimeLoadResponse
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mvvm.logError
+import com.lagradost.cloudstream3.syncproviders.AccountManager
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.accountManagers
 import com.lagradost.cloudstream3.ui.home.HomeFragment
+import com.lagradost.cloudstream3.ui.player.CS3IPlayer
+import com.lagradost.cloudstream3.ui.player.CSPlayerEvent
+import com.lagradost.cloudstream3.utils.Event
 import com.lagradost.cloudstream3.utils.UIHelper.fixPaddingStatusbar
 import com.lagradost.cloudstream3.utils.UIHelper.navigate
 import com.lagradost.cloudstream3.utils.UIHelper.setImage
+import io.ktor.http.*
+import io.netty.handler.codec.http.HttpResponse
 import kotlinx.android.synthetic.main.main_settings.*
 import kotlinx.android.synthetic.main.settings_title_top.*
+import kotlinx.coroutines.runBlocking
+import okhttp3.internal.http.HTTP_BAD_REQUEST
+import okhttp3.internal.http.HttpMethod
 import java.io.File
 
 class SettingsFragment : Fragment() {
@@ -101,6 +116,8 @@ class SettingsFragment : Fragment() {
         }
     }
 
+
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -149,5 +166,38 @@ class SettingsFragment : Fragment() {
                 }
             }
         }
+
+        val dataRemoteDevice = AccountManager.remoteApi.getLatestLoginData()
+
+        if (dataRemoteDevice?.server != null) {
+            remote_container?.isVisible = true // show controls when account available
+            remote_device_name?.isVisible = true // show controls when account available
+            remote_device_name?.text = "Controlling: " + dataRemoteDevice.username // show name of device
+            val server = "http://" + dataRemoteDevice.server + ":5050"
+            val model: SettingsRemoteViewModel by viewModels() // that's black magic to mec
+
+
+            listOf( // never fuck with the future :)
+                Pair(remote_player_pause_play, CSPlayerEvent.PlayPauseToggle),
+                Pair(remote_player_seek_ffwd, CSPlayerEvent.SeekForward),
+                Pair(remote_player_seek_rew, CSPlayerEvent.SeekBack),
+
+                ).forEach { (remote_button, event) ->
+                remote_button?.apply {
+                    setOnClickListener {
+                        try {
+                            model.remoteEvent(server, event)
+                        } catch (e: Exception){
+                            logError(e)
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
     }
 }
+

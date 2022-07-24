@@ -64,6 +64,7 @@ import com.lagradost.cloudstream3.utils.DataStoreHelper.migrateResumeWatching
 import com.lagradost.cloudstream3.utils.DataStoreHelper.setViewPos
 import com.lagradost.cloudstream3.utils.IOnBackPressed
 import com.lagradost.cloudstream3.utils.InAppUpdater.Companion.runAutoUpdate
+import com.lagradost.cloudstream3.utils.LazyRemoteServer
 import com.lagradost.cloudstream3.utils.UIHelper.changeStatusBarState
 import com.lagradost.cloudstream3.utils.UIHelper.checkWrite
 import com.lagradost.cloudstream3.utils.UIHelper.colorFromAttribute
@@ -75,11 +76,10 @@ import com.lagradost.cloudstream3.utils.USER_PROVIDER_API
 import com.lagradost.nicehttp.Requests
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_result_swipe.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.schabi.newpipe.extractor.NewPipe
 import java.io.File
+import java.net.InetSocketAddress
 import kotlin.concurrent.thread
 
 
@@ -473,6 +473,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             false
         }
 
+        val enableLocalServer = try {
+            settingsManager.getBoolean(getString(R.string.enable_local_server_key), false)
+        } catch (e: Exception) {
+            logError(e)
+            false
+        }
+
+
         // must give benenes to get beta providers
         val hasBenene = try {
             val count = settingsManager.getInt(getString(R.string.benene_count), 0)
@@ -482,6 +490,16 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             false
         }
 
+        // START SERVER
+        // TODO add try catch + strings in settings
+        if (enableLocalServer) {
+            try {
+                ioSafe { LazyRemoteServer.server() }
+            } catch (e: Exception){
+                logError(e)
+            }
+
+        }
         // this pulls the latest data so ppl don't have to update to simply change provider url
         if (downloadFromGithub) {
             try {

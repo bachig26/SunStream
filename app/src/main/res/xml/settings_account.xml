@@ -32,4 +32,8 @@
         android:key="@string/sonarr_key"
         android:icon="@drawable/nginx" />
 
+    <Preference
+        android:key="@string/remote_key"
+        android:icon="@drawable/ic_remote_control" />
+
 </PreferenceScreen>
