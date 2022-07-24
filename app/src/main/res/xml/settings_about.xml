@@ -44,13 +44,13 @@
     </Preference>
 
     <Preference
+        android:title="@string/tmdb_name"
+        android:icon="@drawable/ic_tmdb"
+        app:summary="@string/tmdb_desc" />
+
+    <Preference
         android:key="@string/benene_count"
         android:title="@string/benene"
         android:icon="@drawable/benene"
         app:summary="@string/benene_des" />
-
-    <Preference
-        android:title="@string/tmdb_name"
-        android:icon="@drawable/ic_tmdb"
-        app:summary="@string/tmdb_desc" />
 </PreferenceScreen>

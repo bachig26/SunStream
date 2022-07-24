@@ -5,8 +5,4 @@
         android:icon="@drawable/ic_outline_provider"
         android:key="@string/enabled_providers_key"
         android:title="@string/enabled_providers" />
-    <Preference
-        android:title="@string/tmdb_name"
-        android:icon="@drawable/ic_tmdb"
-        app:summary="@string/tmdb_desc" />
 </PreferenceScreen>
