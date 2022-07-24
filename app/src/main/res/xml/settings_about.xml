@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        android:key="@string/legal_notice_key"
+        android:title="@string/legal_notice"
+        android:icon="@drawable/ic_baseline_warning_24" />
+
+    <Preference
+        android:title="@string/github"
+        android:icon="@drawable/ic_github_logo"
+        app:summary="https://github.com/Sarlay/SunStream">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="https://github.com/Sarlay/SunStream" />
+    </Preference>
+
+    <Preference
+        android:title="@string/discord_fork"
+        android:icon="@drawable/ic_baseline_discord_24"
+        app:summary="https://discord.gg/eewncBN4Xh">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="https://discord.gg/eewncBN4Xh" />
+    </Preference>
+
+    <Preference
+        android:title="@string/github_upstream"
+        android:icon="@drawable/ic_github_logo"
+        app:summary="@string/github_upstream_desc">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="https://github.com/LagradOst/CloudStream-3" />
+    </Preference>
+
+    <Preference
+        android:title="@string/lightnovel_fork"
+        android:icon="@drawable/quick_novel_icon"
+        app:summary="https://github.com/LagradOst/QuickNovel">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="https://github.com/LagradOst/QuickNovel" />
+    </Preference>
+
+    <Preference
+        android:key="@string/benene_count"
+        android:title="@string/benene"
+        android:icon="@drawable/benene"
+        app:summary="@string/benene_des" />
+
+    <Preference
+        android:title="@string/tmdb_name"
+        android:icon="@drawable/ic_tmdb"
+        app:summary="@string/tmdb_desc" />
+</PreferenceScreen>
