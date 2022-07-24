@@ -149,7 +149,9 @@ object APIHolder {
             AnimeIndoProvider(),
             //MultiAnimeProvider(),
             AniflixProvider(),
-            KimCartoonProvider()
+
+            KimCartoonProvider(),
+            XcineProvider()
 
 
 
@@ -158,7 +160,6 @@ object APIHolder {
             //RadarrProvider(),
             //SonarrProvider(),
                          */
-
         )
 
 

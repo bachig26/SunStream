@@ -1225,7 +1225,7 @@ class ResultFragment : ResultTrailerPlayer() {
                     sortUrls(
                         currentLinks ?: return@main
                     ),//(currentLinks ?: return@main).filter { !it.isM3u8 },
-                    getString(R.string.episode_action_download_mirror)
+                    context?.getString(R.string.episode_action_download_mirror) ?: ""
                 ) { link ->
                     startDownload(
                         context,
@@ -1253,7 +1253,7 @@ class ResultFragment : ResultTrailerPlayer() {
         result_cast_items?.let {
             PanelsChildGestureRegionObserver.Provider.get().register(it)
         }
-        //result_cast_items?.adapter = ActorAdaptor()
+        result_cast_items?.adapter = ActorAdaptor()
         fixGrid()
         result_recommendations?.spanCount = 3
         result_overlapping_panels?.setStartPanelLockState(OverlappingPanelsLayout.LockState.CLOSE)
