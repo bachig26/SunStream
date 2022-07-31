@@ -142,7 +142,7 @@ open class PelisplusProviderTemplate : MainAPI() {
 
     // This loads the homepage, which is basically a collection of search results with labels.
     // Optional function, but make sure to enable hasMainPage if you program this.
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val urls = homePageUrlList
         val homePageList = ArrayList<HomePageList>()
         // .pmap {} is used to fetch the different pages in parallel
@@ -229,7 +229,7 @@ open class PelisplusProviderTemplate : MainAPI() {
         if (info.contains("Latino")) {
             doc.select(".server-item-1 li").apmap {
                 val serverid = fixUrl(it.attr("data-video")).replace("streaming.php","play")
-                loadExtractor(serverid, data, callback)
+                loadExtractor(serverid, data, subtitleCallback, callback)
                 if (serverid.contains("pelisplus.icu")) {
                     getPelisStream(serverid, callback)
                 }
@@ -239,7 +239,7 @@ open class PelisplusProviderTemplate : MainAPI() {
         if (info.contains("Subtitulado")) {
             doc.select(".server-item-0 li").apmap {
                 val serverid = fixUrl(it.attr("data-video")).replace("streaming.php","play")
-                loadExtractor(serverid, data, callback)
+                loadExtractor(serverid, data, subtitleCallback, callback)
                 if (serverid.contains("pelisplus.icu")) {
                     getPelisStream(serverid, callback)
                 }
@@ -249,7 +249,7 @@ open class PelisplusProviderTemplate : MainAPI() {
         if (info.contains("Castellano")) {
             doc.select(".server-item-2 li").apmap {
                 val serverid = fixUrl(it.attr("data-video")).replace("streaming.php","play")
-                loadExtractor(serverid, data, callback)
+                loadExtractor(serverid, data, subtitleCallback, callback)
                 if (serverid.contains("pelisplus.icu")) {
                     getPelisStream(serverid, callback)
                 }

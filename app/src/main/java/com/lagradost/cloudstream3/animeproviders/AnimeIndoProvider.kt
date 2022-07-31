@@ -8,7 +8,6 @@ import com.lagradost.cloudstream3.utils.loadExtractor
 import com.lagradost.nicehttp.NiceResponse
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import java.util.ArrayList
 
 class AnimeIndoProvider : MainAPI() {
     override var mainUrl = "https://animeindo.sbs"
@@ -63,7 +62,7 @@ class AnimeIndoProvider : MainAPI() {
         }
     }
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val document = request(mainUrl).document
 
         val homePageList = ArrayList<HomePageList>()
@@ -183,7 +182,7 @@ class AnimeIndoProvider : MainAPI() {
                 it
             }
         }.apmap {
-            loadExtractor(it, data, callback)
+            loadExtractor(it, data, subtitleCallback, callback)
         }
 
         return true

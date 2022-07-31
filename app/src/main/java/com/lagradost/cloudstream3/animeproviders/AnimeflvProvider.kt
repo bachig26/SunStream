@@ -34,7 +34,7 @@ class AnimeflvnetProvider : MainAPI() {
         TvType.Anime,
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val urls = listOf(
             Pair("$mainUrl/browse?type[]=movie&order=updated", "Películas"),
             Pair("$mainUrl/browse?status[]=2&order=default", "Animes"),
@@ -173,7 +173,7 @@ class AnimeflvnetProvider : MainAPI() {
                     it.replace("https://embedsb.com/e/", "https://watchsb.com/e/")
                         .replace("https://ok.ru", "http://ok.ru")
                 }.apmap {
-                    loadExtractor(it, data, callback)
+                    loadExtractor(it, data, subtitleCallback, callback)
                 }
             }
         }

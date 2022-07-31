@@ -2,7 +2,6 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
-import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.Qualities
 import org.jsoup.nodes.Element
@@ -41,7 +40,7 @@ class XcineProvider : MainAPI() {
         )
     }
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val document = app.get(mainUrl).document
         val sections = document.select("div.group-film")
         return HomePageResponse(sections.mapNotNull { section ->
@@ -231,30 +230,27 @@ class XcineProvider : MainAPI() {
             cookies = parsed.cookies + cookies,
         ).text
 
-        val jsonRegex = Regex("""(vip_|)source.*?(\[.*);""")
-        val json = jsonRegex.findAll(response)
+        val urlRegex = Regex("""file['"].*?['"]([^'"]*)""")
+        val link = urlRegex.find(response)?.groupValues!![1]
 
-        val files = json.mapNotNull {
-            (it.groupValues.getOrNull(1) == "vip_") to (
-                    tryParseJson<List<File>>(it.groupValues.getOrNull(2)) ?: return@mapNotNull null)
-        }
+//        files.forEach { (isVip, list) ->
+//            list.forEach file@{ file ->
+//                if (file.file == null) return@file
+        callback.invoke(
+            ExtractorLink(
+                this.name,
+                this.name,
+                link.replace("\\", ""),
+                this.mainUrl,
+//                        file.label?.getIntFromText() ?:
+                Qualities.Unknown.value,
+                true
+//                        file.type?.contains("hls", ignoreCase = true) == true,
+            )
+        )
+//            }
+//        }
 
-        files.forEach { (isVip, list) ->
-            list.forEach file@{ file ->
-                if (file.file == null) return@file
-                callback.invoke(
-                    ExtractorLink(
-                        this.name,
-                        this.name + if (isVip) " VIP" else "",
-                        file.file.replace("\\", ""),
-                        this.mainUrl,
-                        file.label?.getIntFromText() ?: Qualities.Unknown.value,
-                        file.type?.contains("hls", ignoreCase = true) == true,
-                    )
-                )
-            }
-        }
-
-        return files.sumOf { it.second.size } > 0
+        return true // files.sumOf { it.second.size } > 0
     }
 }

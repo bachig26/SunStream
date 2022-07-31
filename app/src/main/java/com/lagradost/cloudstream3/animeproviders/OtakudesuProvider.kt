@@ -38,7 +38,7 @@ class OtakudesuProvider : MainAPI() {
         }
     }
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val document = app.get(mainUrl).document
 
         val homePageList = ArrayList<HomePageList>()
@@ -104,7 +104,7 @@ class OtakudesuProvider : MainAPI() {
         val description = document.select("div.sinopc > p").text()
 
         val episodes = document.select("div.episodelist")[1].select("ul > li").mapNotNull {
-            val name = it.selectFirst("a")!!.text().trim()
+            val name = Regex("(Episode\\s?[0-9]+)").find(it.selectFirst("a")?.text().toString())?.groupValues?.getOrNull(0) ?: it.selectFirst("a")?.text()
             val link = fixUrl(it.selectFirst("a")!!.attr("href"))
             Episode(link, name)
         }.reversed()
@@ -189,7 +189,7 @@ class OtakudesuProvider : MainAPI() {
                 }
             }
 
-            loadExtractor(sources, data, callback)
+            loadExtractor(sources, data, subtitleCallback, callback)
 
         }
 

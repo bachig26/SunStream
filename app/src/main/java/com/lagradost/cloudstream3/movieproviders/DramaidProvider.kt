@@ -30,7 +30,7 @@ class DramaidProvider : MainAPI() {
         }
     }
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val document = app.get(mainUrl).document
 
         val homePageList = ArrayList<HomePageList>()
@@ -206,7 +206,7 @@ class DramaidProvider : MainAPI() {
         }.apmap {
             when {
                 it.contains("motonews.club") -> invokeDriveSource(it, this.name, subtitleCallback, callback)
-                else -> loadExtractor(it, data, callback)
+                else -> loadExtractor(it, data, subtitleCallback, callback)
             }
         }
 

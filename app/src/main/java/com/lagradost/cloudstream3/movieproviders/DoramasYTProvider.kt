@@ -31,7 +31,7 @@ class DoramasYTProvider : MainAPI() {
         TvType.AsianDrama,
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val urls = listOf(
             Pair("$mainUrl/emision", "En emisión"),
             Pair(
@@ -147,7 +147,7 @@ class DoramasYTProvider : MainAPI() {
                     callback.invoke(link)
                 }
             } else {
-                loadExtractor(url, mainUrl, callback)
+                loadExtractor(url, mainUrl, subtitleCallback, callback)
             }
         }
         return true

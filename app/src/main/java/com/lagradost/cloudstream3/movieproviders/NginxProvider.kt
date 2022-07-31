@@ -276,6 +276,7 @@ class NginxProvider : MainAPI() {
     }
 
 
+
     private fun cleanElement(elementUrl: String): String {
         return if (elementUrl[0] == '/') {  // if starts by "/", remove it
             elementUrl.drop(1)
@@ -284,7 +285,11 @@ class NginxProvider : MainAPI() {
         }
     }
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(
+        page: Int,
+        categoryName: String,
+        categoryData: String
+    ):  HomePageResponse {
         val authHeader = getAuthHeader()  // reload
         if (mainUrl == "NONE" || mainUrl == "" || mainUrl == "nginx_url_key"){ // mainurl: http://192.168.1.10/media/
             throw ErrorLoadingException("No nginx url specified in the settings: Nginx Settigns > Nginx server url, try again in a few seconds") // getString(R.string.nginx_load_exception) or @strings/nginx_load_exception

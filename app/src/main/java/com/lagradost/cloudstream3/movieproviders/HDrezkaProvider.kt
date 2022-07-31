@@ -16,7 +16,7 @@ import org.jsoup.nodes.Element
 import java.util.*
 
 class HDrezkaProvider : MainAPI() {
-    override var mainUrl = "https://rezka.ag"
+    override var mainUrl = "https://hdrezka19139.org"
     override var name = "HDrezka"
     override val hasMainPage = true
     override var lang = "ru"
@@ -28,7 +28,7 @@ class HDrezkaProvider : MainAPI() {
         TvType.AsianDrama
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
 
         val items = ArrayList<HomePageList>()
 

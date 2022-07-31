@@ -67,8 +67,10 @@ open class VidstreamProviderTemplate : MainAPI() {
     open val iv: String? = null
     open val secretKey: String? = null
     open val secretDecryptKey: String? = null
+
     /** Generated the key from IV and ID */
     open val isUsingAdaptiveKeys: Boolean = false
+
     /**
      * Generate data for the encrypt-ajax automatically (only on supported sites)
      * See $("script[data-name='episode']")[0].dataset.value
@@ -208,7 +210,7 @@ open class VidstreamProviderTemplate : MainAPI() {
 
     // This loads the homepage, which is basically a collection of search results with labels.
     // Optional function, but make sure to enable hasMainPage if you program this.
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val urls = homePageUrlList
         val homePageList = ArrayList<HomePageList>()
         // .pmap {} is used to fetch the different pages in parallel
@@ -260,7 +262,16 @@ open class VidstreamProviderTemplate : MainAPI() {
         val iframeLink =
             Jsoup.parse(app.get(data).text).selectFirst("iframe")?.attr("src") ?: return false
 
-        extractVidstream(iframeLink, this.name, callback, iv, secretKey, secretDecryptKey, isUsingAdaptiveKeys, isUsingAdaptiveData)
+        extractVidstream(
+            iframeLink,
+            this.name,
+            callback,
+            iv,
+            secretKey,
+            secretDecryptKey,
+            isUsingAdaptiveKeys,
+            isUsingAdaptiveData
+        )
         // In this case the video player is a vidstream clone and can be handled by the vidstream extractor.
         // This case is a both unorthodox and you normally do not call extractors as they detect the url returned and does the rest.
         val vidstreamObject = Vidstream(vidstreamExtractorUrl ?: mainUrl)
@@ -268,7 +279,7 @@ open class VidstreamProviderTemplate : MainAPI() {
         val id = Regex("""id=([^&]*)""").find(iframeLink)?.groupValues?.get(1)
 
         if (id != null) {
-            vidstreamObject.getUrl(id, isCasting, callback)
+            vidstreamObject.getUrl(id, isCasting, subtitleCallback, callback)
         }
 
         val html = app.get(fixUrl(iframeLink)).text

@@ -10,7 +10,7 @@ import org.jsoup.nodes.Element
 import java.util.*
 
 class LayarKacaProvider : MainAPI() {
-    override var mainUrl = "https://149.56.24.226"
+    override var mainUrl = "https://lk21.xn--6frz82g"
     override var name = "LayarKaca"
     override val hasMainPage = true
     override var lang = "id"
@@ -21,7 +21,7 @@ class LayarKacaProvider : MainAPI() {
         TvType.AsianDrama
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val document = app.get(mainUrl).document
 
         val homePageList = ArrayList<HomePageList>()
@@ -214,7 +214,12 @@ class LayarKacaProvider : MainAPI() {
         }
 
         sources.apmap {
-            loadExtractor(it, data, callback)
+            val link = if(it.startsWith("https://layarkacaxxi.icu")) {
+                it.substringBeforeLast("/")
+            } else {
+                it
+            }
+            loadExtractor(link, data, subtitleCallback, callback)
         }
 
         return true

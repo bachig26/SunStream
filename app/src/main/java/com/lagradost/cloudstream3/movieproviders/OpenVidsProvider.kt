@@ -2,7 +2,6 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.animeproviders.GogoanimeProvider
 import com.lagradost.cloudstream3.animeproviders.GogoanimeProvider.Companion.extractVidstream
 import com.lagradost.cloudstream3.metaproviders.TmdbLink
 import com.lagradost.cloudstream3.metaproviders.TmdbProvider
@@ -126,7 +125,7 @@ class OpenVidsProvider:TmdbProvider() {
                     membed.isUsingAdaptiveKeys,
                     membed.isUsingAdaptiveData)
             } else
-                loadExtractor(links, data, callback)
+                loadExtractor(links, data, subtitleCallback, callback)
         }
         return true
     }

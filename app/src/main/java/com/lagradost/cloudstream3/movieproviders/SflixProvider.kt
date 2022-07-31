@@ -9,6 +9,8 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.animeproviders.ZoroProvider
+import com.lagradost.cloudstream3.mvvm.normalSafeApiCall
+import com.lagradost.cloudstream3.mvvm.safeApiCall
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
@@ -24,7 +26,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.net.URI
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.system.measureTimeMillis
 
 open class SflixProvider : MainAPI() {
@@ -42,7 +43,7 @@ open class SflixProvider : MainAPI() {
     )
     override val vpnStatus = VPNStatus.None
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val html = app.get("$mainUrl/home").text
         val document = Jsoup.parse(html)
 
@@ -346,7 +347,7 @@ open class SflixProvider : MainAPI() {
                     "https://ws11.rabbitstream.net/socket.io/?EIO=4&transport=polling"
 
                 if (iframeLink.contains("streamlare", ignoreCase = true)) {
-                    loadExtractor(iframeLink, null).forEach(callback)
+                    loadExtractor(iframeLink, null, subtitleCallback, callback)
                 } else {
                     extractRabbitStream(iframeLink, subtitleCallback, callback, false) { it }
                 }
@@ -585,7 +586,7 @@ open class SflixProvider : MainAPI() {
         }
 
         // For re-use in Zoro
-        private fun Sources.toExtractorLink(
+        private suspend fun Sources.toExtractorLink(
             caller: MainAPI,
             name: String,
             extractorData: String? = null,
@@ -596,19 +597,38 @@ open class SflixProvider : MainAPI() {
                     "hls",
                     ignoreCase = true
                 )
-                if (isM3u8) {
-                    M3u8Helper().m3u8Generation(M3u8Helper.M3u8Stream(this.file, null), null)
-                        .map { stream ->
-                            ExtractorLink(
-                                caller.name,
-                                "${caller.name} $name",
-                                stream.streamUrl,
-                                caller.mainUrl,
-                                getQualityFromName(stream.quality?.toString()),
-                                true,
-                                extractorData = extractorData
-                            )
-                        }
+                return if (isM3u8) {
+                    suspendSafeApiCall {
+                        M3u8Helper().m3u8Generation(
+                            M3u8Helper.M3u8Stream(
+                                this.file,
+                                null,
+                                mapOf("Referer" to "https://mzzcloud.life/")
+                            ), false
+                        )
+                            .map { stream ->
+                                ExtractorLink(
+                                    caller.name,
+                                    "${caller.name} $name",
+                                    stream.streamUrl,
+                                    caller.mainUrl,
+                                    getQualityFromName(stream.quality?.toString()),
+                                    true,
+                                    extractorData = extractorData
+                                )
+                            }
+                    } ?: listOf(
+                        // Fallback if m3u8 extractor fails
+                        ExtractorLink(
+                            caller.name,
+                            "${caller.name} $name",
+                            this.file,
+                            caller.mainUrl,
+                            getQualityFromName(this.label),
+                            isM3u8,
+                            extractorData = extractorData
+                        )
+                    )
                 } else {
                     listOf(
                         ExtractorLink(

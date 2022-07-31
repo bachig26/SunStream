@@ -21,6 +21,9 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.android.gms.cast.framework.*
 import com.google.android.material.navigationrail.NavigationRailView
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
@@ -37,6 +40,7 @@ import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.CommonActivity.updateLocale
 import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
 import com.lagradost.cloudstream3.mvvm.logError
+import com.lagradost.cloudstream3.mvvm.normalSafeApiCall
 import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.receivers.VideoDownloadRestartReceiver
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.OAuth2Apis
@@ -50,6 +54,7 @@ import com.lagradost.cloudstream3.ui.search.SearchResultBuilder
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isEmulatorSettings
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTvSettings
 import com.lagradost.cloudstream3.ui.settings.SettingsGeneral
+import com.lagradost.cloudstream3.ui.setup.HAS_DONE_SETUP_KEY
 import com.lagradost.cloudstream3.utils.AppUtils.isCastApiAvailable
 import com.lagradost.cloudstream3.utils.AppUtils.loadCache
 import com.lagradost.cloudstream3.utils.AppUtils.loadResult
@@ -57,6 +62,7 @@ import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.BackupUtils.setUpBackup
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Coroutines.main
+import com.lagradost.cloudstream3.utils.DataStore
 import com.lagradost.cloudstream3.utils.DataStore.getKey
 import com.lagradost.cloudstream3.utils.DataStore.removeKey
 import com.lagradost.cloudstream3.utils.DataStore.setKey
@@ -74,6 +80,7 @@ import com.lagradost.cloudstream3.utils.UIHelper.navigate
 import com.lagradost.cloudstream3.utils.UIHelper.requestRW
 import com.lagradost.cloudstream3.utils.USER_PROVIDER_API
 import com.lagradost.nicehttp.Requests
+import com.lagradost.nicehttp.ResponseParser
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_result_swipe.*
 import kotlinx.coroutines.*
@@ -81,6 +88,7 @@ import org.schabi.newpipe.extractor.NewPipe
 import java.io.File
 import java.net.InetSocketAddress
 import kotlin.concurrent.thread
+import kotlin.reflect.KClass
 
 
 const val VLC_PACKAGE = "org.videolan.vlc"
@@ -96,7 +104,29 @@ const val VLC_EXTRA_DURATION_OUT = "extra_duration"
 const val VLC_LAST_ID_KEY = "vlc_last_open_id"
 
 // Short name for requests client to make it nicer to use
-var app = Requests().apply {
+
+var app = Requests(responseParser = object : ResponseParser {
+    val mapper: ObjectMapper = jacksonObjectMapper().configure(
+        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+        false
+    )
+
+    override fun <T : Any> parse(text: String, kClass: KClass<T>): T {
+        return mapper.readValue(text, kClass.java)
+    }
+
+    override fun <T : Any> parseSafe(text: String, kClass: KClass<T>): T? {
+        return try {
+            mapper.readValue(text, kClass.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    override fun writeValueAsString(obj: Any): String {
+        return mapper.writeValueAsString(obj)
+    }
+}).apply {
     defaultHeaders = mapOf("user-agent" to USER_AGENT)
 }
 
@@ -655,7 +685,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
         loadCache()
         test()
-        NewPipe.init(DownloaderTestImpl.getInstance())
         updateHasTrailers()
         /*nav_view.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
@@ -784,7 +813,18 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         ioSafe {
             migrateResumeWatching()
         }
+
+        try {
+            if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
+                navController.navigate(R.id.navigation_setup_language)
+            }
+        } catch (e: Exception) {
+            logError(e)
+        } finally {
+            setKey(HAS_DONE_SETUP_KEY, true)
+        }
 /*
+
         val relativePath = (Environment.DIRECTORY_DOWNLOADS) + File.separatorChar
         val displayName = "output.dex" //""output.dex"
         val file =  getExternalFilesDir(null)?.absolutePath + File.separatorChar + displayName//"${Environment.getExternalStorageDirectory()}${File.separatorChar}$relativePath$displayName"

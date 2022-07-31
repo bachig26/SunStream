@@ -7,6 +7,7 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addAniListId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addMalId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
+import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.JsUnpacker
 import com.lagradost.cloudstream3.utils.getQualityFromName
@@ -57,7 +58,7 @@ class AnimePaheProvider : MainAPI() {
         TvType.OVA
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         data class Data(
             @JsonProperty("id") val id: Int,
             @JsonProperty("anime_id") val animeId: Int,
@@ -82,7 +83,7 @@ class AnimePaheProvider : MainAPI() {
         for (i in urls) {
             try {
                 val response = app.get(i.first).text
-                val episodes = mapper.readValue<AnimePaheLatestReleases>(response).data.map {
+                val episodes = parseJson<AnimePaheLatestReleases>(response).data.map {
                     newAnimeSearchResponse(
                         it.animeTitle,
                         "https://pahe.win/a/${it.animeId}?slug=${it.animeTitle}",
@@ -127,7 +128,7 @@ class AnimePaheProvider : MainAPI() {
         val headers = mapOf("referer" to "$mainUrl/")
 
         val req = app.get(url, headers = headers).text
-        val data = req.let { mapper.readValue<AnimePaheSearch>(it) }
+        val data = parseJson<AnimePaheSearch>(req)
         for (anime in data.data) {
             if (anime.id == animeId) {
                 return "https://animepahe.com/anime/${anime.session}"
@@ -142,7 +143,7 @@ class AnimePaheProvider : MainAPI() {
         val headers = mapOf("referer" to "$mainUrl/")
 
         val req = app.get(url, headers = headers).text
-        val data = req.let { mapper.readValue<AnimePaheSearch>(it) }
+        val data = parseJson<AnimePaheSearch>(req)
 
         return data.data.map {
             newAnimeSearchResponse(
@@ -188,7 +189,7 @@ class AnimePaheProvider : MainAPI() {
             val headers = mapOf("referer" to "$mainUrl/")
 
             val req = app.get(uri, headers = headers).text
-            val data = req.let { mapper.readValue<AnimePaheAnimeData>(it) }
+            val data = parseJson<AnimePaheAnimeData>(req)
 
             val lastPage = data.lastPage
             val perPage = data.perPage
@@ -518,7 +519,7 @@ class AnimePaheProvider : MainAPI() {
             link = link.replace(regex, "")
 
             val req = app.get(link, headers = headers).text
-            val jsonResponse = req.let { mapper.readValue<AnimePaheAnimeData>(it) }
+            val jsonResponse = parseJson<AnimePaheAnimeData>(req)
             val ep = ((jsonResponse.data.map {
                 if (it.episode == episodeNum) {
                     it

@@ -22,7 +22,7 @@ class IdlixProvider : MainAPI() {
         TvType.TvSeries,
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
         val document = app.get(mainUrl).document
 
         val homePageList = ArrayList<HomePageList>()
@@ -365,7 +365,7 @@ class IdlixProvider : MainAPI() {
                         if (source.startsWith("https://uservideo.xyz")) {
                             source = app.get(source).document.select("iframe").attr("src")
                         }
-                        loadExtractor(source, data, callback)
+                        loadExtractor(source, data, subtitleCallback, callback)
                     }
                 }
             }
