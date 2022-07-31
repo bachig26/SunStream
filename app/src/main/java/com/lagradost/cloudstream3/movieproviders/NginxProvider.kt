@@ -2,14 +2,17 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
-import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
+import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.SubtitleHelper
+import com.lagradost.cloudstream3.utils.loadExtractor
 
 class NginxProvider : MainAPI() {
     override var name = "Nginx"
     override val hasQuickSearch = false
+    override val hasSearch = false
     override val hasMainPage = true
     override val supportedTypes = setOf(TvType.AnimeMovie, TvType.TvSeries, TvType.Movie)
 
@@ -18,7 +21,6 @@ class NginxProvider : MainAPI() {
         var overrideUrl: String? = null
         const val ERROR_STRING = "No nginx url specified in the settings"
     }
-
 
     private fun getAuthHeader(): Map<String, String> {
         val url = overrideUrl ?: throw ErrorLoadingException(ERROR_STRING)
@@ -34,53 +36,61 @@ class NginxProvider : MainAPI() {
         }
 
         val basicAuthToken =
-            base64Encode(localCredentials.toByteArray())  // will this be loaded when not using the provider ??? can increase load
+            base64Encode(localCredentials.toByteArray())
 
         return mapOf("Authorization" to "Basic $basicAuthToken")
     }
 
+
     override suspend fun load(url: String): LoadResponse? {
-        val authHeader = getAuthHeader()
-        // url can be tvshow.nfo for series or mediaRootUrl for movies
 
-        val mediaRootDocument = app.get(url, authHeader).document
-        val isAFolder = url.endsWith("/")
+        val authHeader = getAuthHeader()  // reload
 
-        val metadataFile = mediaRootDocument.getElementsByAttributeValueContaining("href", ".nfo").attr("href").toString()
-        val nfoUrl = url + metadataFile  // metadata url fil
+        val isValid = url.contains(".nfo")
+        val isSerie = url.contains("tvshow.nfo")
 
+        val metadataDocument =  app.get(url, authHeader).document  // get the metadata nfo file
 
-        val isSerie = nfoUrl.contains("tvshow.nfo")
+        val title = metadataDocument.selectFirst("title")?.text() ?: url.substringBeforeLast("/").substringAfterLast("/")
+        // gets the content between slashes: https://g.com/nameOfShow/tvshow.nfo
 
-        val metadataDocument =  if (metadataFile != null) {  // if metadata exist
-            app.get(nfoUrl, authHeader).document  // get the metadata nfo file
-        } else {
-            null
+        val description = metadataDocument.selectFirst("plot")?.text()
+
+        val mediaRootUrl = url.substringBeforeLast("/") + "/"
+        val mediaRootDocument = app.get(mediaRootUrl, authHeader).document
+
+        if (!isValid) {
+            if (".mp4" in url || ".mkv" in url) {
+                val fixedUrl = fixUrl(url)
+                return newMovieLoadResponse(
+                    title,
+                    fixedUrl,
+                    TvType.Movie,
+                    fixedUrl,
+                )
+            }
+            return null
         }
 
-        val title = metadataDocument?.selectFirst("title")?.text() ?: url.substring(url.lastIndexOf("/") + 1)
+         // There is metadata and library is correctly organised!
+            if (!isSerie) {  // Movie
 
-        val description = metadataDocument?.selectFirst("plot")?.text()
-
-
-        if (!isSerie) {  // it's not a serie, its a movie (or smthing else idk)
-            if (metadataFile != "" && isAFolder) {  // There is metadata and library is correctly organised!
-                val poster = metadataDocument?.selectFirst("thumb")?.text()
-                val trailer = metadataDocument?.select("trailer")?.mapNotNull {
-                    it?.text()?.replace(
+                val poster = metadataDocument.selectFirst("thumb[aspect=poster]")?.text()
+                val fanart = metadataDocument.selectFirst("fanart > thumb")?.text()
+                val trailer = metadataDocument.selectFirst("trailer")?.text()?.replace(
                         "plugin://plugin.video.youtube/play/?video_id=",
                         "https://www.youtube.com/watch?v="
                     )
-                }
 
-                val date = metadataDocument?.selectFirst("year")?.text()?.toIntOrNull()
-                val durationInMinutes = metadataDocument?.selectFirst("duration")?.text()?.toIntOrNull()
-                val ratingAverage = metadataDocument?.selectFirst("value")?.text()?.toIntOrNull()
-                val tagsList = metadataDocument?.select("genre")
-                    ?.mapNotNull {   // all the tags like action, thriller ...
+
+                val date = metadataDocument.selectFirst("year")?.text()?.toIntOrNull()
+                val durationInMinutes = metadataDocument.selectFirst("duration")?.text()?.toIntOrNull()
+                val ratingAverage = metadataDocument.selectFirst("value")?.text()?.toIntOrNull()
+                val tagsList = metadataDocument.select("genre")
+                    .mapNotNull {   // all the tags like action, thriller ...
                         it?.text()
                     }
-                val actors = metadataDocument?.select("actor")?.mapNotNull {
+                val actors = metadataDocument.select("actor").mapNotNull {
                     val name = it?.selectFirst("name")?.text() ?: return@mapNotNull null
                     val image = it.selectFirst("thumb")?.text() ?: return@mapNotNull null
                     Actor(name, image)
@@ -96,12 +106,11 @@ class NginxProvider : MainAPI() {
                     ".mp4"
                 )
 
-
                 val dataList = if (mkvElementsResult.isNotEmpty()) {  // there is probably a better way to do it
-                    mkvElementsResult[0].attr("href").toString()  // get the first mkv link
+                    mkvElementsResult[0].attr("href").toString()
                 } else {
                     if(mp4ElementsResult.isNotEmpty()) {
-                        mp4ElementsResult[0].attr("href").toString()// get the first mp4 link
+                        mp4ElementsResult[0].attr("href").toString()
                     } else {
                         null
                     }
@@ -111,121 +120,113 @@ class NginxProvider : MainAPI() {
                 if (dataList != null) {
                     return newMovieLoadResponse(
                         title,
-                        url,
+                        mediaRootUrl,
                         TvType.Movie,
-                        url + dataList,
+                        mediaRootUrl + dataList,
                     ) {
                         this.year = date
                         this.plot = description
                         this.rating = ratingAverage
                         this.tags = tagsList
+                        this.backdropUrl = fanart
                         this.duration = durationInMinutes
-                        addTrailer(trailer)
                         addPoster(poster, authHeader)
                         addActors(actors)
+                        addTrailer(trailer)
                     }
 
-                } else {
-                    return null
                 }
             } else {
-                if (".mp4" in url || ".mkv" in url) {  // not in a folder, directly a media file
-                    val fixedUrl = fixUrl(url)
-                    return newMovieLoadResponse(
-                        title,
-                        fixedUrl,
-                        TvType.Movie,
-                        fixedUrl,
-                    )
-                } else { return null }  // link not recognised
-            }
-        } else  // a tv serie
-        {
-            val list = ArrayList<Pair<Int, String>>()
-            val mediaRootUrl = url.replace("tvshow.nfo", "")
-            val posterUrl = mediaRootUrl + "poster.jpg"
-            val mediaRootDocument = app.get(mediaRootUrl, authHeader).document
-            val seasons =
-                mediaRootDocument.getElementsByAttributeValueContaining("href", "Season%20")
+                // a tv show
 
 
-            val tagsList = metadataDocument?.select("genre")
-                ?.mapNotNull {   // all the tags like action, thriller ...; unused variable
-                    it?.text()
+                val list = ArrayList<Pair<Int, String>>()
+
+                val posterUrl = mediaRootUrl + "poster.jpg"
+
+
+
+                val tagsList = metadataDocument.select("genre")
+                    .mapNotNull {   // all the tags like action, thriller ...; unused variable
+                        it?.text()
+                    }
+
+                val actorsList = metadataDocument.select("actor")
+                    .mapNotNull {   // all the tags like action, thriller ...; unused variable
+                        if (it.selectFirst("name")?.text() != null && it.selectFirst("role")?.text() != null) {
+
+                            it.selectFirst("name")?.text()
+                            it.selectFirst("role")?.text()
+                        } else null
+                    }
+
+                val seasons =
+                    mediaRootDocument.getElementsByAttributeValueContaining("href", "Season%20")
+
+
+                seasons.forEach { element ->
+                    val season =
+                        element.attr("href").replace("Season%20", "").replace("/", "").toIntOrNull()
+                    val href = mediaRootUrl + element.attr("href")
+                    if (season != null && season > 0 && href.isNotBlank()) {
+                        list.add(Pair(season, href))
+                    }
                 }
 
-            //val actorsList = document.select("actor")
-            //    ?.mapNotNull {   // all the tags like action, thriller ...; unused variable
-            //        it?.text()
-            //    }
+                if (list.isEmpty()) throw ErrorLoadingException("No Seasons Found, make sure to use season folders")
 
-            seasons.forEach { element ->
-                val season =
-                    element.attr("href").replace("Season%20", "").replace("/", "").toIntOrNull()
-                val href = mediaRootUrl + element.attr("href")
-                if (season != null && season > 0 && href.isNotBlank()) {
-                    list.add(Pair(season, href))
-                }
-            }
-
-            if (list.isEmpty()) throw ErrorLoadingException("No Seasons Found")
-
-            val episodeList = ArrayList<Episode>()
+                val episodeList = ArrayList<Episode>()
 
 
-            list.apmap { (seasonInt, seasonString) ->
-                val seasonDocument = app.get(seasonString, authHeader).document
-                val episodes = seasonDocument.getElementsByAttributeValueContaining(
-                    "href",
-                    ".nfo"
-                ) // get metadata
-                episodes.forEach { episode ->
-                    val nfoDocument = app.get(
-                        seasonString + episode.attr("href"),
-                        authHeader
-                    ).document // get episode metadata file
-                    val epNum = nfoDocument.selectFirst("episode")?.text()?.toIntOrNull()
-                    val poster =
-                        seasonString + episode.attr("href").replace(".nfo", "-thumb.jpg")
-                    val name = nfoDocument.selectFirst("title")!!.text()
-                    // val seasonInt = nfoDocument.selectFirst("season").text().toIntOrNull()
-                    val date = nfoDocument.selectFirst("aired")?.text()
-                    val plot = nfoDocument.selectFirst("plot")?.text()
-
-                    val dataList = seasonDocument.getElementsByAttributeValueContaining(
+                list.apmap { (seasonInt, seasonString) ->
+                    val seasonDocument = app.get(seasonString, authHeader).document
+                    val episodes = seasonDocument.getElementsByAttributeValueContaining(
                         "href",
-                        episode.attr("href").replace(".nfo", "")
-                    )
+                        ".nfo"
+                    ) // get metadata
+                    episodes.forEach { episode ->
+                        val nfoDocument = app.get(seasonString + episode.attr("href"), authHeader).document // get episode metadata file
+                        val epNum = nfoDocument.selectFirst("episode")?.text()?.toIntOrNull()
+                        val poster =
+                            seasonString + episode.attr("href").replace(".nfo", "-thumb.jpg")
+                        val name = nfoDocument.selectFirst("title")?.text()
+                        // val seasonInt = nfoDocument.selectFirst("season").text().toIntOrNull()
+                        val date = nfoDocument.selectFirst("aired")?.text()
+                        val plot = nfoDocument.selectFirst("plot")?.text()
 
-                    val data = seasonString + dataList.firstNotNullOf { item ->
-                        item.takeIf {
-                            (!it.attr("href").contains(".nfo") && !it.attr("href").contains(".jpg"))
-                        }
-                    }.attr("href").toString()  // exclude poster and nfo (metadata) file
+                        val dataList = seasonDocument.getElementsByAttributeValueContaining(
+                            "href",
+                            episode.attr("href").replace(".nfo", "")
+                        )
+                        val data = seasonString + dataList.firstNotNullOf { item -> item.takeIf { (!it.attr("href").contains(".nfo") &&  !it.attr("href").contains(".jpg"))} }.attr("href").toString()  // exclude poster and nfo (metadata) file
 
-                    episodeList.add(
-                        newEpisode(data) {
-                            this.name = name
-                            this.season = seasonInt
-                            this.episode = epNum
-                            this.posterUrl = poster  // will require headers too
-                            this.description = plot
-                            addDate(date)
-                        }
-                    )
+                        episodeList.add(
+                            newEpisode(data) {
+                                this.name = name
+                                this.season = seasonInt
+                                this.episode = epNum
+                                this.posterUrl = poster  // will require headers too
+                                this.description = plot
+                                addDate(date)
+                            }
+                        )
+                    }
+                }
+                return newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodeList) {
+                    this.name = title
+                    this.url = url
+                    this.episodes = episodeList
+                    this.plot = description
+                    this.tags = tagsList
+                    addPoster(posterUrl, authHeader)
+                    addActors(actorsList)
                 }
             }
-            return newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodeList) {
-                this.name = title
-                this.url = url
-                this.episodes = episodeList
-                this.plot = description
-                this.tags = tagsList
-                addPoster(posterUrl, authHeader)
-            }
-        }
-
+                ///
+            return null
     }
+
+
 
 
     override suspend fun loadLinks(
@@ -234,14 +235,38 @@ class NginxProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        // loadExtractor(data, null) { callback(it.copy(headers=authHeader)) }
-        val authHeader = getAuthHeader()
-        callback.invoke(
+        println("loadling link $data")
+
+        val authHeader = getAuthHeader()  // refresh crendentials
+
+        try {
+            val mediaRootUrl = data.substringBeforeLast("/") + "/"
+            val mediaRootDocument = app.get(mediaRootUrl, authHeader).document
+
+            val subtitlesElements = mediaRootDocument.getElementsByAttributeValueContaining(
+                // list of all urls of the mkv url in the webpage
+                "href",
+                ".srt", // all of subtitles files in the folder
+            )
+
+            subtitlesElements.forEach {
+                subtitleCallback.invoke(
+                    SubtitleFile(
+                        SubtitleHelper.fromTwoLettersToLanguage(it.attr("href").replace(".srt", "").substringAfterLast(".")) ?: "English",
+                        mediaRootUrl + "/" + it.attr("href")
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            logError(e)
+        }
+
+        callback.invoke (
             ExtractorLink(
                 name,
                 name,
                 data,
-                data,  // referer not needed
+                "",  // referer not needed
                 Qualities.Unknown.value,
                 false,
                 authHeader,
@@ -260,7 +285,10 @@ class NginxProvider : MainAPI() {
     }
 
     override suspend fun getMainPage(): HomePageResponse {
-        val authHeader = getAuthHeader()  // call again because it isn't reloaded if in main class and storedCredentials loads after
+        val authHeader = getAuthHeader()  // reload
+        if (mainUrl == "NONE" || mainUrl == "" || mainUrl == "nginx_url_key"){ // mainurl: http://192.168.1.10/media/
+            throw ErrorLoadingException("No nginx url specified in the settings: Nginx Settigns > Nginx server url, try again in a few seconds") // getString(R.string.nginx_load_exception) or @strings/nginx_load_exception
+        }
         val document = app.get(mainUrl, authHeader).document
         val categories = document.select("a") // select all of the categories
         val returnList = categories.mapNotNull {  // for each category
@@ -302,36 +330,39 @@ class NginxProvider : MainAPI() {
                                 val isSerieType =
                                     nfoFilename.toString() == "tvshow.nfo" // will be a movie if no metadata
 
+
                                 val nfoPath = if (nfoFilename != null) {
-                                    mediaRootUrl + nfoFilename // must exist or will raise errors, only the first one is taken
+                                    mediaRootUrl + nfoFilename // metadata must exist
                                 } else {
-                                    null
+                                    return@mapNotNull newMovieSearchResponse(
+                                        linkToElement,
+                                        mediaRootUrl,
+                                        TvType.Movie,
+                                    )
                                 }
 
-                                val nfoContent = if (nfoPath != null) {
-                                    app.get(nfoPath, authHeader).document  // get all the metadata
-                                } else {
-                                    null
-                                }
+                                val nfoContent = app.get(nfoPath, authHeader).document  // get all the metadata
+
 
                                 if (isSerieType) {
-                                    val serieName = nfoContent?.select("title")?.text() ?: linkToElement  // name of the media root foler
+                                    val serieName = nfoContent.select("title").text() ?: linkToElement  // name of the tv show
 
                                     val posterUrl = mediaRootUrl + "poster.jpg"  // poster.jpg in the same folder
 
                                     newTvSeriesSearchResponse(
                                         serieName,
-                                        mediaRootUrl,
+                                        nfoPath,
                                         TvType.TvSeries,
                                     ) {
                                         addPoster(posterUrl, authHeader)
                                     }
                                 } else {  // Movie
-                                    val movieName = nfoContent?.select("title")?.text() ?: linkToElement
-                                    val posterUrl = mediaRootUrl + "poster.jpg" // poster should be stored in the same folder
+                                    val movieName = nfoContent.select("title").text() ?: linkToElement
+                                    val posterUrl = nfoContent.selectFirst("thumb[aspect=poster]")?.text() // poster should be stored in the same folder
+                                    // val fanartUrl = mediaRootUrl + "fanart.jpg" // backdrop should be stored in the same folder
                                     return@mapNotNull newMovieSearchResponse(
                                         movieName,
-                                        mediaRootUrl,
+                                        nfoPath,
                                         TvType.Movie,
                                     ) {
                                         addPoster(posterUrl, authHeader)
@@ -355,6 +386,8 @@ class NginxProvider : MainAPI() {
                             null
                             //logError(e) // not working because it changes the return type of currentList to Any
                         }
+
+
                     } else null
                 }
                 if (currentList.isNotEmpty() && categoryTitle != "../" && categoryTitle != "/") {  // exclude upper dir

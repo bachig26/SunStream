@@ -156,10 +156,11 @@ object APIHolder {
 
 
             // SELF HOSTED providers
-            //NginxProvider(),
+
             //RadarrProvider(),
             //SonarrProvider(),
                          */
+            NginxProvider(),
         )
 
 

@@ -50,7 +50,8 @@ class NginxApi(index: Int) : InAppAuthAPIManager(index) {
             NginxProvider.loginCredentials = null
             return
         }
-        NginxProvider.overrideUrl = data.server?.removeSuffix("/")
+
+        NginxProvider.overrideUrl = data.server?.removeSuffix("/") + "/" // add suffix all the time
         NginxProvider.loginCredentials = "${data.username ?: ""}:${data.password ?: ""}"
     }
 
