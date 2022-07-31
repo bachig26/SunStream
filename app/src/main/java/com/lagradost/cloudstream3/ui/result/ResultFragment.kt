@@ -684,7 +684,9 @@ class ResultFragment : ResultTrailerPlayer() {
             } ?: run {
                 false
             }
+
         result_trailer_loading?.isVisible = isSuccess
+        backdrop_trailer_button_container?.isVisible = !isSuccess // hide poster when success
         result_smallscreen_holder?.isVisible = !isSuccess && !isFullScreenPlayer
 
         // We don't want the trailer to be focusable if it's not visible
@@ -699,8 +701,10 @@ class ResultFragment : ResultTrailerPlayer() {
     private fun setTrailers(trailers: List<ExtractorLink>?) {
         context?.updateHasTrailers()
         if (!LoadResponse.isTrailersEnabled) return
+        trailer_button.visibility = VISIBLE
+        trailer_button?.text = getString(R.string.play_trailer_button_content)
         currentTrailers = trailers?.sortedBy { -it.quality } ?: emptyList()
-        loadTrailer()
+        trailer_button.setOnClickListener { loadTrailer() } // show trailer when clicking button
     }
 
     private fun setNextEpisode(nextAiring: NextAiring?) {
@@ -1948,7 +1952,12 @@ class ResultFragment : ResultTrailerPlayer() {
                         //result_poster_blur?.setImageResource(R.drawable.default_cover)
                     }
 
-                    result_poster_holder?.visibility = VISIBLE
+                    home_blur_poster?.isVisible = d.backdropUrl != null
+
+                    val backdropImageLink = d.backdropUrl
+                    if (!backdropImageLink.isNullOrEmpty()) {
+                        home_blur_poster?.setImage(backdropImageLink, d.posterHeaders) // todo add backdrop headers
+                    }
 
                     result_play_movie?.text =
                         if (d.type == TvType.Live) getString(R.string.play_livestream_button) else getString(

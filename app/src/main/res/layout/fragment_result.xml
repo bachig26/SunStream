@@ -9,6 +9,7 @@
         android:clickable="true"
         android:focusable="true">
 
+
     <com.facebook.shimmer.ShimmerFrameLayout
             android:id="@+id/result_loading"
             android:layout_width="match_parent"
@@ -132,11 +133,45 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/primaryGrayBackground">
 
+
+
+
             <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="?attr/primaryBlackBackground"
                     android:orientation="vertical">
+
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/backdrop_trailer_button_container">
+
+
+
+                    <ImageView
+                        android:scaleType="centerCrop"
+                        tools:src="@drawable/example_poster"
+                        android:id="@+id/home_blur_poster"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp" />
+
+                    <ImageView
+                        android:id="@+id/shadow_overlay_poster"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:background="@drawable/background_shadow" />
+
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/trailer_button"
+                        style="@style/MediumBlackButtonTransparent"
+                        android:layout_gravity="center"
+                        tools:text="Trailer"
+                        android:visibility="gone"/>
+
+                </FrameLayout>
 
                 <com.facebook.shimmer.ShimmerFrameLayout
                         tools:visibility="gone"

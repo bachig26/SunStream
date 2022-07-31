@@ -53,6 +53,12 @@ open class TmdbProvider : MainAPI() {
         return if (link.startsWith("/")) "https://image.tmdb.org/t/p/w500/$link" else link
     }
 
+    private fun getBackdropUrl(link: String?): String? {
+        if (link == null) return null
+        return if (link.startsWith("/")) "https://image.tmdb.org/t/p/original$link" else link
+    }
+
+
     private fun getUrl(id: Int?, tvShow: Boolean): String {
         return if (tvShow) "https://www.themoviedb.org/tv/${id ?: -1}"
         else "https://www.themoviedb.org/movie/${id ?: -1}"
@@ -157,6 +163,8 @@ open class TmdbProvider : MainAPI() {
             recommendations = (this@toLoadResponse.recommendations
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
             addActors(credits?.cast?.toList().toActors())
+            // backdropUrl = getBackdropUrl(images?.backdrops?.first()?.file_path) get all backdrops
+            backdropUrl = getBackdropUrl(backdrop_path)
         }
     }
 
@@ -198,7 +206,8 @@ open class TmdbProvider : MainAPI() {
             recommendations = (this@toLoadResponse.recommendations
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
             addActors(credits?.cast?.toList().toActors())
-            getImageUrl(backdrop_path)
+            //backdropUrl = getBackdropUrl(images?.backdrops?.first()?.file_path)
+            backdropUrl = getBackdropUrl(backdrop_path)
         }
     }
 
@@ -317,7 +326,9 @@ open class TmdbProvider : MainAPI() {
                             AppendToResponseItem.EXTERNAL_IDS,
                             AppendToResponseItem.VIDEOS,
                             AppendToResponseItem.CREDITS,
-                        )
+                            // AppendToResponseItem.IMAGES, // display all posters
+                        ),
+                        // mapOf("include_image_language" to "null"), // display all posters
                     )
                     .awaitResponse().body()
                 val response = body?.toLoadResponse()
@@ -346,7 +357,9 @@ open class TmdbProvider : MainAPI() {
                             AppendToResponseItem.EXTERNAL_IDS,
                             AppendToResponseItem.VIDEOS,
                             AppendToResponseItem.CREDITS,
-                        )
+                            // AppendToResponseItem.IMAGES, // display all posters
+                        ),
+                        // mapOf("include_image_language" to "null") //  display all posters
                     )
                     .awaitResponse().body()
                 val response = body?.toLoadResponse()

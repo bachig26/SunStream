@@ -175,6 +175,7 @@
     <string name="sort_save">Save</string>
 
     <string name="player_speed">Player Speed</string>
+    <string name="play_trailer_button_content">Trailer</string>
 
     <string name="subtitles_settings">Subtitle Settings</string>
     <string name="subs_text_color">Text Color</string>

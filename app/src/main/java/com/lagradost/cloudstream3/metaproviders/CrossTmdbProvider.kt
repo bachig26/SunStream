@@ -117,6 +117,7 @@ class CrossTmdbProvider : TmdbProvider() {
 
 
                     this.dataUrl = CrossMetaData(true, this.dataUrl, validApisName).toJson() // sent to loadLinks
+                    //this.backdropUrl =
 
                 }
 
