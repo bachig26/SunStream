@@ -487,12 +487,13 @@
     </style>
 
 
-    <style name="TransparentBlackButton" parent="NiceButton">
+    <style name="TransparentBlackButtonRounded" parent="NiceButton">
         <item name="strokeColor">?attr/textColor</item>
         <item name="backgroundTint">#9E1C1C20</item>
         <item name="iconTint">?attr/textColor</item>
         <item name="android:textColor">?attr/textColor</item>
         <item name="rippleColor">?attr/textColor</item>
+        <item name="cornerRadius">20dp</item>
     </style>
 
     <style name="SmallBlackButton" parent="BlackButton">
@@ -508,7 +509,7 @@
         <item name="android:minWidth">0dp</item>
     </style>
 
-    <style name="MediumBlackButtonTransparent" parent="TransparentBlackButton">
+    <style name="MediumBlackButtonTransparent" parent="TransparentBlackButtonRounded">
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:textSize">25sp</item>

@@ -163,13 +163,16 @@
                         android:layout_height="200dp"
                         android:background="@drawable/background_shadow" />
 
-
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/trailer_button"
                         style="@style/MediumBlackButtonTransparent"
                         android:layout_gravity="center"
-                        tools:text="Trailer"
-                        android:visibility="gone"/>
+                        android:visibility="visible"
+                        app:iconPadding="8dp"
+                        android:text="@string/play_trailer_button_content"
+                        app:icon="@drawable/ic_play_no_fill"
+                        android:clickable="true"
+                        android:focusable="true" />
 
                 </FrameLayout>
 

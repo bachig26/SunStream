@@ -675,7 +675,7 @@ class ResultFragment : ResultTrailerPlayer() {
                         startPosition = 0L,
                         subtitles = emptySet(),
                         subtitle = null,
-                        autoPlay = false
+                        autoPlay = true
                     )
                     true
                 } ?: run {
@@ -696,15 +696,21 @@ class ResultFragment : ResultTrailerPlayer() {
             ViewGroup.FOCUS_BLOCK_DESCENDANTS
         }
         result_fullscreen_holder?.isVisible = !isSuccess && isFullScreenPlayer
+
+        player_intro_play?.isGone = true
+        player.handleEvent(CSPlayerEvent.Play)
+        // updateUIVisibility()
     }
 
     private fun setTrailers(trailers: List<ExtractorLink>?) {
         context?.updateHasTrailers()
         if (!LoadResponse.isTrailersEnabled) return
         trailer_button.visibility = VISIBLE
-        trailer_button?.text = getString(R.string.play_trailer_button_content)
         currentTrailers = trailers?.sortedBy { -it.quality } ?: emptyList()
-        trailer_button.setOnClickListener { loadTrailer() } // show trailer when clicking button
+        trailer_button.setOnClickListener {
+            loadTrailer()
+
+        } // show trailer when clicking button
     }
 
     private fun setNextEpisode(nextAiring: NextAiring?) {
