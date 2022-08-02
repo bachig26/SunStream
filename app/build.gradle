@@ -165,7 +165,7 @@ dependencies {
     implementation "com.github.tachiyomiorg:unifile:17bec43"
 
     // API because cba maintaining it myself
-    implementation "com.uwetrottmann.tmdb2:tmdb-java:2.6.0"
+    implementation "com.uwetrottmann.tmdb2:tmdb-java:2.7.0"
 
     implementation 'com.github.discord:OverlappingPanels:0.1.3'
     // debugImplementation because LeakCanary should only run in debug builds.
