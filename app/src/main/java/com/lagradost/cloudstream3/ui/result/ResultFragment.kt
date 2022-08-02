@@ -704,7 +704,7 @@ class ResultFragment : ResultTrailerPlayer() {
 
     private fun setTrailers(trailers: List<ExtractorLink>?) {
         context?.updateHasTrailers()
-        if (!LoadResponse.isTrailersEnabled) return
+        if (!LoadResponse.isTrailersEnabled) return // if trailers disabled, don't display it
         trailer_button.visibility = VISIBLE
         currentTrailers = trailers?.sortedBy { -it.quality } ?: emptyList()
         trailer_button.setOnClickListener {
@@ -1851,11 +1851,14 @@ class ResultFragment : ResultTrailerPlayer() {
                         else -> ""
                     }
                     result_vpn?.isGone = api.vpnStatus == VPNStatus.None
-
+                    /*
                     result_info?.text = when (api.providerType) {
                         ProviderType.MetaProvider -> getString(R.string.provider_info_meta)
                         else -> ""
                     }
+                    */
+                    result_info?.text = "" // metadata is always provided by tmdb, no need to display warning
+
                     result_info?.isVisible = api.providerType == ProviderType.MetaProvider
 
                     if (d.type.isEpisodeBased()) {

@@ -6,7 +6,7 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.LoadResponse.Companion.addImdbId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
-import com.uwetrottmann.tmdb2.Tmdb
+    import com.uwetrottmann.tmdb2.Tmdb
 import com.uwetrottmann.tmdb2.entities.*
 import com.uwetrottmann.tmdb2.entities.DiscoverFilter
 import com.uwetrottmann.tmdb2.enumerations.AppendToResponseItem
@@ -211,22 +211,26 @@ open class TmdbProvider : MainAPI() {
         }
     }
 
-    override suspend fun getMainPage(page: Int, categoryName: String, categoryData: String): HomePageResponse {
+
+    override val mainPage = mainPageOf(
+        Pair("discoverMovies", "Popular Movies"),
+        Pair("discoverSeries", "Popular Series"),
+        Pair("topMovies", "Top Movies"),
+        Pair("topSeries", "Top Series"),
+    )
+
+    override suspend fun getMainPage(
+        page: Int,
+        categoryName: String,
+        categoryData: String
+    ): HomePageResponse {
 
         // SAME AS DISCOVER IT SEEMS
 //        val popularSeries = tmdb.tvService().popular(1, "en-US").execute().body()?.results?.map {
-//            it.toSearchResponse()
+//           it.toSearchResponse()
 //        } ?: listOf()
 //
-//        val popularMovies =
-//            tmdb.moviesService().popular(1, "en-US", "840").execute().body()?.results?.map {
-//                it.toSearchResponse()
-//            } ?: listOf()
 
-        var discoverMovies: List<MovieSearchResponse> = listOf()
-        var discoverSeries: List<TvSeriesSearchResponse> = listOf()
-        var topMovies: List<MovieSearchResponse> = listOf()
-        var topSeries: List<TvSeriesSearchResponse> = listOf()
 
         // tmdb java wrapper api exemple https://useof.org/java-open-source/com.uwetrottmann.tmdb2.entities.DiscoverFilter
 
@@ -251,40 +255,36 @@ open class TmdbProvider : MainAPI() {
          */
 
         val releasedOnlineFilter = DiscoverFilter(DiscoverFilter.Separator.OR, ReleaseType.PHYSICAL, ReleaseType.DIGITAL) // only show physical release and digital (hide theater cams: those are really annoying)
-        val releasedBeforeDate = TmdbDate(LocalDate.now().minusDays(5).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))) // get date of 5 days ago
-        argamap(
-            {
-                discoverMovies = tmdb.discoverMovie().with_release_type(releasedOnlineFilter).release_date_lte(releasedBeforeDate).build().awaitResponse().body()?.results?.map { // show movies released in physical or digital at least five days ago (time to upload rip)
-                    it.toSearchResponse()
-                } ?: listOf()
-            }, {
-                discoverSeries = tmdb.discoverTv().build().awaitResponse().body()?.results?.map { // no need for release type for tv show
-                    it.toSearchResponse()
-                } ?: listOf()
-            }, {
-                // https://en.wikipedia.org/wiki/ISO_3166-1
-                topMovies =
-                    tmdb.moviesService().topRated(1, "en-US", "US").awaitResponse() // TODO change region
-                        .body()?.results?.map {
-                            it.toSearchResponse()
-                        } ?: listOf()
-            }, {
-                topSeries =
-                    tmdb.tvService().topRated(1, "en-US").awaitResponse().body()?.results?.map {// TODO change region
+        val releasedBeforeDate = TmdbDate(LocalDate.now().minusDays(3).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))) // get date of 3 days ago
+
+        val responseContent = when (categoryData) {
+
+            "discoverMovies" -> tmdb.discoverMovie().page(page).with_release_type(releasedOnlineFilter).release_date_lte(releasedBeforeDate).build().awaitResponse().body()?.results?.map { // show movies released in physical or digital at least three days ago (time to upload rip)
+                it.toSearchResponse()
+            } ?: listOf()
+
+            "discoverSeries" ->  tmdb.discoverTv().page(page).build().awaitResponse().body()?.results?.map { // no need for release type for tv show
+                it.toSearchResponse()
+            } ?: listOf()
+
+            "topMovies" -> tmdb.moviesService().topRated(page, "en-US", "US").awaitResponse() // TODO change region
+                    .body()?.results?.map {
                         it.toSearchResponse()
                     } ?: listOf()
-            }
-        )
 
-        return HomePageResponse(
-            listOf(
-//                HomePageList("Popular Series", popularSeries),
-//                HomePageList("Popular Movies", popularMovies),
-                HomePageList("Popular Movies", discoverMovies),
-                HomePageList("Popular Series", discoverSeries),
-                HomePageList("Top Movies", topMovies),
-                HomePageList("Top Series", topSeries),
-            )
+
+            "topSeries" -> tmdb.tvService().topRated(page, "en-US").awaitResponse().body()?.results?.map {// TODO change region
+                it.toSearchResponse()
+            } ?: listOf()
+            else -> throw ErrorLoadingException()
+        }
+
+        return newHomePageResponse(
+            HomePageList(
+                categoryName,
+                responseContent,
+            ),
+            true // todo fix ?
         )
     }
 

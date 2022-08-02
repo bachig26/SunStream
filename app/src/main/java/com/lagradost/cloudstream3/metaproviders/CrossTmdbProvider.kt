@@ -44,7 +44,7 @@ class CrossTmdbProvider : TmdbProvider() {
         tryParseJson<CrossMetaData>(data)?.let { metaData ->
             if (!metaData.isSuccess) return false
             val dataUrl = metaData.dataUrl
-            metaData.availableApis?.map { apiName ->
+            metaData.availableApis?.apmap { apiName ->
                 getApiFromNameNull(apiName)?.let {
                     try {
                         it.loadLinks(dataUrl, isCasting, subtitleCallback, callback)
@@ -66,7 +66,7 @@ class CrossTmdbProvider : TmdbProvider() {
         val base = super.load(url)?.apply {
             this.recommendations = this.recommendations
             //val matchName = filterName(this.name)
-            val validApisName = getAllEnabledProviders().map {it.name}
+            val validApisName = getAllEnabledProviders().apmap {it.name}
             when (this) {
                 is MovieLoadResponse -> {
 
