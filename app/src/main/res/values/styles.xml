@@ -480,11 +480,13 @@
 
     <style name="BlackButton" parent="NiceButton">
         <item name="strokeColor">?attr/textColor</item>
-        <item name="backgroundTint">?attr/iconGrayBackground</item>
         <item name="iconTint">?attr/textColor</item>
         <item name="android:textColor">?attr/textColor</item>
         <item name="rippleColor">?attr/textColor</item>
+        <item name="backgroundTint">?attr/iconGrayBackground</item>
     </style>
+
+
 
 
     <style name="TransparentBlackButtonRounded" parent="NiceButton">

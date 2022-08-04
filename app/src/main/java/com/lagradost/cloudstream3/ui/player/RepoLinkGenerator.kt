@@ -104,7 +104,7 @@ class RepoLinkGenerator(
         }
 
         val result = APIRepository(
-            getApiFromNameNull(current.apiName) ?: throw Exception("This provider does not exist")
+            getApiFromNameNull(current.apiName) ?: throw Exception("This provider does not exist") // here .loadLinks ======= !!!!!!!!!!! ====
         ).loadLinks(current.data,
             isCasting,
             { file ->

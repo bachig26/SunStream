@@ -15,6 +15,7 @@ class NginxApi(index: Int) : InAppAuthAPIManager(index) {
     override val requiresUsername = true
     override val requiresPassword = true
     override val requiresServer = true
+    override val requiresPath = true
     override val createAccountUrl = "https://www.sarlays.com/use-nginx-with-cloudstream/"
 
     companion object {
@@ -48,11 +49,13 @@ class NginxApi(index: Int) : InAppAuthAPIManager(index) {
         val data = getLatestLoginData() ?: run {
             NginxProvider.overrideUrl = null
             NginxProvider.loginCredentials = null
+            NginxProvider.pathToLibrary = null
             return
         }
 
         NginxProvider.overrideUrl = data.server?.removeSuffix("/") + "/" // add suffix all the time
         NginxProvider.loginCredentials = "${data.username ?: ""}:${data.password ?: ""}"
+        NginxProvider.pathToLibrary = data.path?.removeSuffix("/") + "/"
     }
 
     override suspend fun initialize() {

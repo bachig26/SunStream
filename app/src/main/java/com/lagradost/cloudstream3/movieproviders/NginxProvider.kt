@@ -17,9 +17,24 @@ class NginxProvider : MainAPI() {
     override val supportedTypes = setOf(TvType.AnimeMovie, TvType.TvSeries, TvType.Movie)
 
     companion object {
+        var companionName = "Nginx"
         var loginCredentials: String? = null
         var overrideUrl: String? = null
+        var pathToLibrary: String? = null // the library displayed when getting overrideUrl /home/username/media/
         const val ERROR_STRING = "No nginx url specified in the settings"
+
+        fun getDirectMediaLink(path: String): String? {
+            val storedPathToLibrary = pathToLibrary
+            val storedOverrideUrl = overrideUrl // may be null if change value later
+            if (storedPathToLibrary == null || storedOverrideUrl == null) {
+                return null
+            }
+            return path.replace(storedPathToLibrary, storedOverrideUrl)
+        // /home/username/media/Movies/The Northman (2022)/The.Northman.2022.MULTi.1080p.AMZN.WEBRip.DDP5.1.Atmos.x264-VROOMM.mkv
+        // becomes:
+        // https://website.hosting.com/Movies/The Northman (2022)/The.Northman.2022.MULTi.1080p.AMZN.WEBRip.DDP5.1.Atmos.x264-VROOMM.mkv
+
+        }
     }
 
     private fun getAuthHeader(): Map<String, String> {
@@ -128,7 +143,7 @@ class NginxProvider : MainAPI() {
                         this.plot = description
                         this.rating = ratingAverage
                         this.tags = tagsList
-                        this.backdropUrl = fanart
+                        this.backgroundPosterUrl = fanart
                         this.duration = durationInMinutes
                         addPoster(poster, authHeader)
                         addActors(actors)
@@ -235,7 +250,7 @@ class NginxProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        println("loadling link $data")
+        // println("loadling link $data")
 
         val authHeader = getAuthHeader()  // refresh crendentials
 
@@ -276,7 +291,6 @@ class NginxProvider : MainAPI() {
     }
 
 
-
     private fun cleanElement(elementUrl: String): String {
         return if (elementUrl[0] == '/') {  // if starts by "/", remove it
             elementUrl.drop(1)
@@ -287,8 +301,7 @@ class NginxProvider : MainAPI() {
 
     override suspend fun getMainPage(
         page: Int,
-        categoryName: String,
-        categoryData: String
+        request : MainPageRequest,
     ):  HomePageResponse {
         val authHeader = getAuthHeader()  // reload
         if (mainUrl == "NONE" || mainUrl == "" || mainUrl == "nginx_url_key"){ // mainurl: http://192.168.1.10/media/

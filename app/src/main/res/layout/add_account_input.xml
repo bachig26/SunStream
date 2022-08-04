@@ -123,7 +123,7 @@
             android:nextFocusRight="@id/cancel_btt"
             android:nextFocusLeft="@id/apply_btt"
             android:nextFocusUp="@id/login_path_input"
-            android:nextFocusDown="@id/apply_btt"
+            android:nextFocusDown="@id/login_quality_profile_input"
 
             android:requiresFadingEdge="vertical"
             android:layout_width="match_parent"
@@ -131,6 +131,20 @@
             android:inputType="textVisiblePassword"
             tools:ignore="LabelFor"
             android:autofillHints="password" />
+        <EditText
+            android:textColorHint="?attr/grayTextColor"
+            android:hint="@string/example_arr_quality_profile"
+            android:id="@+id/login_quality_profile_input"
+            android:nextFocusRight="@id/cancel_btt"
+            android:nextFocusLeft="@id/apply_btt"
+            android:nextFocusUp="@id/login_apikey_input"
+            android:nextFocusDown="@id/apply_btt"
+
+            android:requiresFadingEdge="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            tools:ignore="LabelFor"/>
     </LinearLayout>
 
 

@@ -164,7 +164,7 @@ open class TmdbProvider : MainAPI() {
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
             addActors(credits?.cast?.toList().toActors())
             // backdropUrl = getBackdropUrl(images?.backdrops?.first()?.file_path) get all backdrops
-            backdropUrl = getBackdropUrl(backdrop_path)
+            backgroundPosterUrl = getBackdropUrl(backdrop_path)
         }
     }
 
@@ -207,9 +207,10 @@ open class TmdbProvider : MainAPI() {
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
             addActors(credits?.cast?.toList().toActors())
             //backdropUrl = getBackdropUrl(images?.backdrops?.first()?.file_path)
-            backdropUrl = getBackdropUrl(backdrop_path)
+            backgroundPosterUrl = getBackdropUrl(backdrop_path)
         }
     }
+
 
 
     override val mainPage = mainPageOf(
@@ -217,13 +218,10 @@ open class TmdbProvider : MainAPI() {
         Pair("discoverSeries", "Popular Series"),
         Pair("topMovies", "Top Movies"),
         Pair("topSeries", "Top Series"),
+        Pair("airingToday", "Series airing today"),
     )
 
-    override suspend fun getMainPage(
-        page: Int,
-        categoryName: String,
-        categoryData: String
-    ): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
 
         // SAME AS DISCOVER IT SEEMS
 //        val popularSeries = tmdb.tvService().popular(1, "en-US").execute().body()?.results?.map {
@@ -257,8 +255,7 @@ open class TmdbProvider : MainAPI() {
         val releasedOnlineFilter = DiscoverFilter(DiscoverFilter.Separator.OR, ReleaseType.PHYSICAL, ReleaseType.DIGITAL) // only show physical release and digital (hide theater cams: those are really annoying)
         val releasedBeforeDate = TmdbDate(LocalDate.now().minusDays(3).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))) // get date of 3 days ago
 
-        val responseContent = when (categoryData) {
-
+        val responseContent = when (request.data) {
             "discoverMovies" -> tmdb.discoverMovie().page(page).with_release_type(releasedOnlineFilter).release_date_lte(releasedBeforeDate).build().awaitResponse().body()?.results?.map { // show movies released in physical or digital at least three days ago (time to upload rip)
                 it.toSearchResponse()
             } ?: listOf()
@@ -276,15 +273,20 @@ open class TmdbProvider : MainAPI() {
             "topSeries" -> tmdb.tvService().topRated(page, "en-US").awaitResponse().body()?.results?.map {// TODO change region
                 it.toSearchResponse()
             } ?: listOf()
+
+            "airingToday" -> tmdb.tvService().airingToday(page, "en-US").awaitResponse().body()?.results?.map {// TODO change region
+                it.toSearchResponse()
+            } ?: listOf()
+
             else -> throw ErrorLoadingException()
         }
 
         return newHomePageResponse(
             HomePageList(
-                categoryName,
+                request.name,
                 responseContent,
             ),
-            true // todo fix ?
+            true // todo, get remaining pages from remote
         )
     }
 

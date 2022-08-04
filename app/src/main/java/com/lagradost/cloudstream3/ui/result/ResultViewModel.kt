@@ -337,7 +337,7 @@ class ResultViewModel : ViewModel() {
         return generator
     }
 
-    private fun updateEpisodes(localId: Int?, list: List<ResultEpisode>, selection: Int?) {
+    private fun updateEpisodes(localId: Int?, list: List<ResultEpisode>, selection: Int?) { // here
         _episodes.postValue(list)
         generator = RepoLinkGenerator(list)
 
@@ -373,7 +373,7 @@ class ResultViewModel : ViewModel() {
     }
 
     var lastShowFillers = false
-    private suspend fun updateEpisodes(loadResponse: LoadResponse, showFillers: Boolean) {
+    private suspend fun updateEpisodes(loadResponse: LoadResponse, showFillers: Boolean) { // here too ?
         Log.i(TAG, "updateEpisodes")
         try {
             lastShowFillers = showFillers

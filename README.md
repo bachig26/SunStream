@@ -1,15 +1,7 @@
 # SunStream
-Based on the awesome [Cloudstream-3](https://github.com/LagradOst/CloudStream-3)
-
-**DOWNLOAD:**
-https://github.com/Sarlay/SunStream/releases
-
 
 ***Features:***
-+ Every feature Cloudstream-3 has
-+ removed 93.5% of Cloudstream-3 providers 😂 
 + All providers show up as one (called MultiMedia) thanks to TMDB
-
 
 ***TODO:***
 + Add filters to add back removed providers
@@ -45,6 +37,8 @@ https://github.com/Sarlay/SunStream/releases
 * 🇻🇳 Vietnamese
 
 ***Disclaimer:***
+
+__**WE DO NOT HOST CONTENT**__
 
 Any legal issues regarding the content on this application should be taken up with the actual file hosts and providers themselves as we are not affiliated with them.
 

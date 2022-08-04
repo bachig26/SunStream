@@ -44,15 +44,15 @@ import com.lagradost.cloudstream3.APIHolder.updateHasTrailers
 import com.lagradost.cloudstream3.AcraApplication.Companion.setKey
 import com.lagradost.cloudstream3.CommonActivity.getCastSession
 import com.lagradost.cloudstream3.CommonActivity.showToast
+import com.lagradost.cloudstream3.movieproviders.NginxProvider
+import com.lagradost.cloudstream3.movieproviders.RadarrProvider
 import com.lagradost.cloudstream3.mvvm.*
 import com.lagradost.cloudstream3.syncproviders.providers.Kitsu
+import com.lagradost.cloudstream3.ui.APIRepository
 import com.lagradost.cloudstream3.ui.WatchType
 import com.lagradost.cloudstream3.ui.download.*
 import com.lagradost.cloudstream3.ui.download.DownloadButtonSetup.handleDownloadClick
-import com.lagradost.cloudstream3.ui.player.CSPlayerEvent
-import com.lagradost.cloudstream3.ui.player.GeneratorPlayer
-import com.lagradost.cloudstream3.ui.player.RepoLinkGenerator
-import com.lagradost.cloudstream3.ui.player.SubtitleData
+import com.lagradost.cloudstream3.ui.player.*
 import com.lagradost.cloudstream3.ui.quicksearch.QuickSearchFragment
 import com.lagradost.cloudstream3.ui.search.SearchAdapter
 import com.lagradost.cloudstream3.ui.search.SearchHelper
@@ -478,7 +478,7 @@ class ResultFragment : ResultTrailerPlayer() {
         updateUIListener = null
         (result_episodes?.adapter as EpisodeAdapter?)?.killAdapter()
         downloadButton?.dispose()
-        //somehow this still leaks and I dont know why????
+        //somehow this still leaks and I dont know why??????
         // todo look at https://github.com/discord/OverlappingPanels/blob/70b4a7cf43c6771873b1e091029d332896d41a1a/sample_app/src/main/java/com/discord/sampleapp/MainActivity.kt
         PanelsChildGestureRegionObserver.Provider.get().removeGestureRegionsUpdateListener(this)
         result_cast_items?.let {
@@ -1835,6 +1835,8 @@ class ResultFragment : ResultTrailerPlayer() {
             currentId = it
         }
 
+
+
         observe(viewModel.result) { data ->
             when (data) {
                 is Resource.Success -> {
@@ -1913,7 +1915,7 @@ class ResultFragment : ResultTrailerPlayer() {
                     setYear(d.year)
                     setRating(d.rating)
                     setRecommendations(d.recommendations, null)
-                    setActors(d.actors) // TODO FIX actors not showing up
+                    setActors(d.actors)
                     setNextEpisode(if (d is EpisodeResponse) d.nextAiring else null)
                     setTrailers(d.trailers.flatMap { it.mirros }) // I dont care about subtitles yet!
 
@@ -1961,9 +1963,9 @@ class ResultFragment : ResultTrailerPlayer() {
                         //result_poster_blur?.setImageResource(R.drawable.default_cover)
                     }
 
-                    home_blur_poster?.isVisible = d.backdropUrl != null
+                    home_blur_poster?.isVisible = d.backgroundPosterUrl != null
 
-                    val backdropImageLink = d.backdropUrl
+                    val backdropImageLink = d.backgroundPosterUrl
                     if (!backdropImageLink.isNullOrEmpty()) {
                         home_blur_poster?.setImage(backdropImageLink, d.posterHeaders) // todo add backdrop headers
                     }
@@ -2016,7 +2018,78 @@ class ResultFragment : ResultTrailerPlayer() {
                         }
                     }
 
-                    if (d.type.isMovieType()) {
+
+
+                    fun handleOutput(success: Boolean) {
+                        main {
+                            radarr_collection_status.text = if (success) {
+
+                                getString(R.string.add_to_arr_collection_success)
+
+                            } else {
+                                getString(R.string.add_to_arr_collection_fail)
+                            }
+                        }
+                    }
+
+
+                    fun showStatusIcon(isAvailable: Boolean, tmdbid: String, radarrPath: String?) {
+                        main {
+                            radarr_collection_status.visibility = VISIBLE
+                            radarr_collection_status.isVisible = true
+                            if (isAvailable) {
+                                radarr_collection_status.text = getString(R.string.in_arr_collection)
+                                /*
+                                if (NginxProvider.overrideUrl != null && radarrPath != null) {
+                                    getString(R.string.play_with_nginx) // nginx available
+                                    radarr_collection_status.setOnClickListener {
+
+
+                                        val card = currentEpisodes?.firstOrNull() ?: return@setOnClickListener
+                                        println("old: ")
+                                        println(card.name)
+                                        println(card.apiName)
+                                        println(card.data)
+
+                                        val direcLink = NginxProvider.getDirectMediaLink(radarrPath)?.replace (" ", "%20") ?: throw ErrorLoadingException()
+                                        val fixedCard = card.copy(apiName=NginxProvider.companionName, data = direcLink) // not clean bah
+                                        println("new: ")
+                                        println(fixedCard.name)
+                                        println(fixedCard.apiName)
+                                        println(fixedCard.data)
+                                        // currentEpisodes.first() = fixedCard
+                                        handleAction(EpisodeClickEvent(ACTION_CLICK_DEFAULT, fixedCard))
+                                    }
+
+
+                                } else {
+                                    radarr_collection_status.text =
+                                        getString(R.string.in_arr_collection)
+                                }
+
+                                 */
+                            } else {
+
+                                radarr_collection_status.text =
+                                    getString(R.string.add_to_arr_collection)
+
+                                radarr_collection_status.setOnClickListener {
+                                    val handleRadarrOutput: ((Boolean) -> Unit) = ::handleOutput
+                                    ioSafe {
+                                        RadarrProvider.addToCollection(tmdbid, handleRadarrOutput)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    val setRadarrCollectionStatus: ((Boolean, String, String?) -> Unit) = ::showStatusIcon
+
+
+
+
+
+                    if (d.type.isMovieType()) { // TODO MOVE OT HERE !!!
                         val hasDownloadSupport = api.hasDownloadSupport
                         lateFixDownloadButton(true)
 
@@ -2038,6 +2111,14 @@ class ResultFragment : ResultTrailerPlayer() {
                                 ?: return@setOnLongClickListener true
                             handleAction(EpisodeClickEvent(ACTION_SHOW_OPTIONS, card))
                             return@setOnLongClickListener true
+                        }
+
+                        if (RadarrProvider.apiKey != null ) { // add to collection button if radarr enabled
+                            println("APIKEY: ${RadarrProvider.apiKey}")
+                            ioSafe {
+                                val tmdbid = d.url.substringAfterLast("/")
+                                RadarrProvider.isInCollection(tmdbid, setRadarrCollectionStatus)
+                            }
                         }
 
 //                            result_options.setOnClickListener {
@@ -2205,7 +2286,7 @@ class ResultFragment : ResultTrailerPlayer() {
             val tempUrl = url
             if (tempUrl != null) {
                 result_reload_connectionerror.setOnClickListener {
-                    viewModel.load(tempUrl, apiName, showFillers)
+                    viewModel.load(tempUrl, apiName, showFillers) // load the api
                 }
 
                 result_reload_connection_open_in_browser?.setOnClickListener {

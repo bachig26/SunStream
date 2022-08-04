@@ -94,6 +94,7 @@ object APIHolder {
             StreamingcommunityProvider(),
             TantifilmProvider(),
             CineblogProvider(),
+            IlGenioDelloStreamingProvider(),
             AltadefinizioneProvider(),
             FilmpertuttiProvider(),
             HDMovie5(),
@@ -107,6 +108,9 @@ object APIHolder {
             PhimmoichillProvider(),
             HDrezkaProvider(),
             YomoviesProvider(),
+            DubokuProvider(),
+            KisskhProvider(),
+
              */
 
 
@@ -154,6 +158,7 @@ object APIHolder {
             AnimeIndoProvider(),
             AnimeSailProvider(),
             TocanimeProvider(),
+            WcofunProvider(),
             //MultiAnimeProvider(),
             AniflixProvider(),
 
@@ -164,10 +169,11 @@ object APIHolder {
 
             // SELF HOSTED providers
 
-            //RadarrProvider(),
+
             //SonarrProvider(),
                          */
             NginxProvider(),
+            RadarrProvider(),
         )
 
 
@@ -405,6 +411,11 @@ data class MainPageData(
     val data: String,
 )
 
+data class MainPageRequest(
+    val name: String,
+    val data: String,
+)
+
 /** return list of MainPageData with url to name, make for more readable code */
 fun mainPageOf(vararg elements: Pair<String, String>): List<MainPageData> {
     return elements.map { (url, name) -> MainPageData(name = name, data = url) }
@@ -484,8 +495,7 @@ abstract class MainAPI {
     @WorkerThread
     open suspend fun getMainPage(
         page: Int,
-        categoryName: String,
-        categoryData: String
+        request: MainPageRequest,
     ): HomePageResponse? {
         throw NotImplementedError()
     }
@@ -1005,7 +1015,7 @@ interface LoadResponse {
     var comingSoon: Boolean
     var syncData: MutableMap<String, String>
     var posterHeaders: Map<String, String>?
-    var backdropUrl: String?
+    var backgroundPosterUrl: String?
 
     companion object {
         private val malIdPrefix = malApi.idPrefix
@@ -1149,9 +1159,30 @@ data class NextAiring(
     val unixTime: Long,
 )
 
+data class SeasonData(
+    val season: Int,
+    val name: String? = null,
+)
+
 interface EpisodeResponse {
     var showStatus: ShowStatus?
     var nextAiring: NextAiring?
+    var seasonNames: List<SeasonData>?
+}
+
+@JvmName("addSeasonNamesString")
+fun EpisodeResponse.addSeasonNames(names: List<String>) {
+    this.seasonNames = if (names.isEmpty()) null else names.mapIndexed { index, s ->
+        SeasonData(
+            season = index + 1,
+            s
+        )
+    }
+}
+
+@JvmName("addSeasonNamesSeasonData")
+fun EpisodeResponse.addSeasonNames(names: List<SeasonData>) {
+    this.seasonNames = names.ifEmpty { null }
 }
 
 data class TorrentLoadResponse(
@@ -1173,7 +1204,7 @@ data class TorrentLoadResponse(
     override var comingSoon: Boolean = false,
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
-    override var backdropUrl: String? = null
+    override var backgroundPosterUrl: String? = null,
 ) : LoadResponse
 
 data class AnimeLoadResponse(
@@ -1203,7 +1234,8 @@ data class AnimeLoadResponse(
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
     override var nextAiring: NextAiring? = null,
-    override var backdropUrl: String? = null
+    override var seasonNames: List<SeasonData>? = null,
+    override var backgroundPosterUrl: String? = null,
 ) : LoadResponse, EpisodeResponse
 
 fun AnimeLoadResponse.addEpisodes(status: DubStatus, episodes: List<Episode>?) {
@@ -1251,7 +1283,7 @@ data class LiveStreamLoadResponse(
     override var comingSoon: Boolean = false,
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
-    override var backdropUrl: String? = null
+    override var backgroundPosterUrl: String? = null,
 ) : LoadResponse
 
 data class MovieLoadResponse(
@@ -1274,7 +1306,7 @@ data class MovieLoadResponse(
     override var comingSoon: Boolean = false,
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
-    override var backdropUrl: String? = null
+    override var backgroundPosterUrl: String? = null,
 ) : LoadResponse
 
 suspend fun <T> MainAPI.newMovieLoadResponse(
@@ -1397,7 +1429,8 @@ data class TvSeriesLoadResponse(
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
     override var nextAiring: NextAiring? = null,
-    override var backdropUrl: String? = null
+    override var seasonNames: List<SeasonData>? = null,
+    override var backgroundPosterUrl: String? = null,
 ) : LoadResponse, EpisodeResponse
 
 suspend fun MainAPI.newTvSeriesLoadResponse(

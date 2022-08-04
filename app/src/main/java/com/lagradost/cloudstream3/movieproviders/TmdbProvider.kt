@@ -1,3 +1,4 @@
+/*
 package com.lagradost.cloudstream3.movieproviders
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -206,3 +207,4 @@ class TmdbProvider : MainAPI() {
         return HomePageResponse(items)
     }
 }
+*/

@@ -431,7 +431,9 @@
                         </LinearLayout>
                     </LinearLayout>
 
-
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
                     <com.google.android.material.button.MaterialButton
                             android:id="@+id/result_bookmark_button"
                             style="@style/BlackButton"
@@ -454,6 +456,18 @@
                             app:icon="@drawable/ic_baseline_bookmark_24"
                             tools:text="Bookmark"
                             tools:visibility="visible" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/radarr_collection_status"
+                            style="@style/BlackButton"
+                            android:layout_height="40dp"
+                            android:layout_width="wrap_content"
+                            android:gravity="center_vertical"
+                            android:foreground="@drawable/outline_drawable"
+                            android:layout_marginStart="25dp"
+                            android:visibility="gone"
+                            app:icon="@drawable/ic_checked_checkbox" />
+                    </LinearLayout>
 
 
                     <TextView

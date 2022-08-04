@@ -1,15 +1,12 @@
 package com.lagradost.cloudstream3.movieproviders
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.google.common.net.MediaType
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
 
 
@@ -29,7 +26,53 @@ class RadarrProvider : MainAPI() {
         var overrideUrl: String? = null
         var apiKey: String? = null
         var rootFolderPath: String? = null
+        var qualityProfile: String? = null
         const val ERROR_STRING = "No valid radarr account ! Please check your configuration"
+
+        suspend fun isInCollection(tmdbId: String, myCallback: (Boolean, String, String?) -> Unit?) {
+            val response = app.get("$overrideUrl/api/v3/movie/lookup?term=tmdb:$tmdbId&apikey=$apiKey").text
+
+            val resultsResponse: List<loadCollectionInfo> = mapper.readValue(response)
+
+            if (resultsResponse[0].hasFile && resultsResponse[0].movieFile?.path != null) {
+                // invoque callback to set status
+                myCallback.invoke(true, tmdbId, resultsResponse[0].movieFile?.path)
+            } else {
+                myCallback.invoke(false, tmdbId, null)
+            }
+        }
+
+        suspend fun addToCollection(tmdbId: String, handleOutput: (Boolean) -> Unit?) {
+            val storedApiKey = apiKey
+            val response = app.get("$overrideUrl/api/v3/movie/lookup?term=tmdb:$tmdbId&apikey=$storedApiKey").text
+
+            val movieObject = JSONArray(response).getJSONObject(0) // nice
+            movieObject.put("qualityProfileId", qualityProfile) // todo add an interactive selector but thats --hard-- work
+            // GET:  /api/v3/qualityprofile
+            movieObject.put("monitored", true)
+            movieObject.put("rootFolderPath", rootFolderPath)
+
+            val body = movieObject.toString()
+                .toRequestBody("application/json;charset=UTF-8".toMediaTypeOrNull())
+
+            if (storedApiKey == null) {
+                handleOutput.invoke(false)
+                return
+            }
+
+            val postRequest = app.post(
+                "$overrideUrl/api/v3/movie?apikey=$apiKey",
+                headers = mapOf(
+                    "Accept" to "application/json",
+                    "X-Api-Key" to storedApiKey,
+                ),
+                requestBody = body
+            )
+            handleOutput.invoke(postRequest.isSuccessful)
+
+        }
+
+
     }
 
 
@@ -69,12 +112,22 @@ class RadarrProvider : MainAPI() {
         //@JsonProperty("genres") var genres: List<String?>?,
     )
 
+    data class MovieFile (
+        @JsonProperty("path") var path: String?,
+    )
+
+    data class loadCollectionInfo(
+        @JsonProperty("hasFile") var hasFile: Boolean,
+        //@JsonProperty("path") var path: String?,
+        @JsonProperty("movieFile") var movieFile: MovieFile?,
+    )
+
     override suspend fun load(url: String): LoadResponse {
         val (apiKey, path) = getApiKeyAndPath()
         val tmdbId = url.replace(mainUrl, "").replace("/", "")
         val loadResponse =
             app.get("$mainUrl/api/v3/movie/lookup/tmdb?tmdbId=$tmdbId&apikey=$apiKey").text
-        println(loadResponse)
+        //println(loadResponse)
         val resultsResponse: loadJson = mapper.readValue(loadResponse)
         val returnedPoster = resultsResponse.posterUrl?.first { it?.coverType == "poster" }?.url
         return newMovieLoadResponse(
@@ -117,23 +170,7 @@ class RadarrProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val (apiKey, path) = getApiKeyAndPath()
-        val movieObject = JSONObject(data)
-        movieObject.put("profileId", "1") // should add an option
-        movieObject.put("monitored", true)
-        movieObject.put("rootFolderPath", path)
-        val body = movieObject.toString()
-            .toRequestBody("application/json;charset=UTF-8".toMediaTypeOrNull())
 
-
-        val postRequest = app.post(
-            "$mainUrl/api/v3/movie?apikey=$apiKey",
-            headers = mapOf(
-                "Accept" to "application/json",
-                "X-Api-Key" to apiKey,
-            ),
-            requestBody = body
-        )
         /*
         if (postRequest.isSuccessful) {
             println("working well")

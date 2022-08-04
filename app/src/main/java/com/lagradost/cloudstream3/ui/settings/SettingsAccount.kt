@@ -115,6 +115,7 @@ class SettingsAccount : PreferenceFragmentCompat() {
                     dialog.login_username_input?.isVisible = api.requiresUsername
                     dialog.login_path_input?.isVisible = api.requiresPath
                     dialog.login_apikey_input?.isVisible = api.requiresApiKey
+                    dialog.login_quality_profile_input?.isVisible = api.requiresQualityProfile
                     dialog.create_account?.isGone = api.createAccountUrl.isNullOrBlank()
                     dialog.create_account?.setOnClickListener {
                         val i = Intent(Intent.ACTION_VIEW)
@@ -144,6 +145,7 @@ class SettingsAccount : PreferenceFragmentCompat() {
                             server = if (api.requiresServer) dialog.login_server_input?.text?.toString() else null,
                             path = if (api.requiresPath) dialog.login_path_input?.text?.toString() else null,
                             apiKey = if (api.requiresApiKey) dialog.login_apikey_input?.text?.toString() else null,
+                            qualityProfile = if (api.requiresQualityProfile) dialog.login_quality_profile_input?.text?.toString() else null,
                         )
                         ioSafe {
                             val isSuccessful = try {

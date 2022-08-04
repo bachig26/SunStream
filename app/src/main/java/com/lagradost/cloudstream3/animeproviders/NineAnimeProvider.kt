@@ -20,25 +20,16 @@ class NineAnimeProvider : MainAPI() {
     // taken from https://github.com/saikou-app/saikou/blob/b35364c8c2a00364178a472fccf1ab72f09815b4/app/src/main/java/ani/saikou/parsers/anime/NineAnime.kt
     // GNU General Public License v3.0 https://github.com/saikou-app/saikou/blob/main/LICENSE.md
     companion object {
-        fun getDubStatus(title: String): DubStatus {
-            return if (title.contains("(dub)", ignoreCase = true)) {
-                DubStatus.Dubbed
-            } else {
-                DubStatus.Subbed
-            }
-        }
-
-
         private const val nineAnimeKey =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-        private const val cipherKey = "rTKp3auwu0ULA6II"
+        private const val cipherKey = "kMXzgyNzT3k5dYab"
 
         fun encodeVrf(text: String, mainKey: String): String {
             return encode(
                 encrypt(
                     cipher(mainKey, encode(text)),
                     nineAnimeKey
-                ).replace("""=+$""".toRegex(), "")
+            )//.replace("""=+$""".toRegex(), "")
             )
         }
 
@@ -148,10 +139,9 @@ class NineAnimeProvider : MainAPI() {
 
     override suspend fun getMainPage(
         page: Int,
-        categoryName: String,
-        categoryData: String
+        request: MainPageRequest
     ): HomePageResponse {
-        val url = categoryData + page
+        val url = request.data + page
         val home = Jsoup.parse(
             app.get(
                 url
@@ -175,7 +165,7 @@ class NineAnimeProvider : MainAPI() {
             }
         }
 
-        return newHomePageResponse(categoryName, home)
+        return newHomePageResponse(request.name, home)
     }
 
     data class Response(
@@ -238,9 +228,11 @@ class NineAnimeProvider : MainAPI() {
         val title = (info.selectFirst(".title") ?: info.selectFirst(".d-title"))?.text()
             ?: throw ErrorLoadingException("Could not find title")
 
+        val vrf = encodeVrf(id, cipherKey)
+        val episodeListUrl = "$mainUrl/ajax/episode/list/$id?vrf=$vrf"
         val body =
-            app.get("$mainUrl/ajax/episode/list/$id?vrf=${encodeVrf(id, cipherKey)}")
-                .parsed<Response>().html
+            app.get(episodeListUrl).parsedSafe<Response>()?.html
+            ?: throw ErrorLoadingException("Could not parse json with cipherKey=$cipherKey id=$id url=\n$episodeListUrl")
 
         val subEpisodes = ArrayList<Episode>()
         val dubEpisodes = ArrayList<Episode>()

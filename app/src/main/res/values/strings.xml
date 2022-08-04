@@ -207,6 +207,12 @@
     <string name="vpn_might_be_needed">A VPN might be needed for this provider to work correctly</string>
     <string name="vpn_torrent">This provider is a torrent, a VPN is recommended</string>
 
+    <string name="in_arr_collection">In Collection</string>
+    <string name="play_with_nginx">Play with nginx</string>
+    <string name="add_to_arr_collection">Add to Collection</string>
+    <string name="add_to_arr_collection_success">Movie added !</string>
+    <string name="add_to_arr_collection_fail">Request failed !</string>
+
     <string name="provider_info_meta">Metadata is not provided by site, video loading will fail if it does not exist on site.</string>
 
     <string name="torrent_plot">Description</string>
@@ -499,6 +505,7 @@
     <string name="example_api_key">868826cc01a165761d2624</string>
     <string name="example_site_name">MyCoolSite</string>
     <string name="example_site_url">example.com</string>
+    <string name="example_arr_quality_profile">1</string>
     <string name="example_lang_name">Language code (en)</string>
 
     <!-- providers_stuff -->
