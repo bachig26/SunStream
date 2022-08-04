@@ -31,6 +31,9 @@ import kotlin.concurrent.thread
 
 class InAppUpdater {
     companion object {
+        const val GITHUB_USER_NAME = "Sarlay"
+        const val GITHUB_REPO = "SunStream"
+
         // === IN APP UPDATER ===
         data class GithubAsset(
             @JsonProperty("name") val name: String,
@@ -81,7 +84,7 @@ class InAppUpdater {
         }
 
         private fun Activity.getReleaseUpdate(): Update {
-            val url = "https://api.github.com/repos/Sarlay/SunStream/releases"
+            val url = "https://api.github.com/repos/$GITHUB_USER_NAME/$GITHUB_REPO/releases"
             val headers = mapOf("Accept" to "application/vnd.github.v3+json")
             val response =
                 parseJson<List<GithubRelease>>(runBlocking {
@@ -148,8 +151,9 @@ class InAppUpdater {
 
         private fun Activity.getPreReleaseUpdate(): Update = runBlocking {
             val tagUrl =
-                "https://api.github.com/repos/Sarlay/SunStream/git/ref/tags/pre-release"
-            val releaseUrl = "https://api.github.com/repos/Sarlay/SunStream/releases"
+                "https://api.github.com/repos/$GITHUB_USER_NAME/$GITHUB_REPO/git/ref/tags/pre-release"
+            val releaseUrl = "https://api.github.com/repos/$GITHUB_USER_NAME/$GITHUB_REPO/releases"
+
             val headers = mapOf("Accept" to "application/vnd.github.v3+json")
             val response =
                 parseJson<List<GithubRelease>>(app.get(releaseUrl, headers = headers).text)

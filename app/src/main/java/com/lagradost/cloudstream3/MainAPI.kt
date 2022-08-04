@@ -174,6 +174,10 @@ object APIHolder {
                          */
             NginxProvider(),
             RadarrProvider(),
+
+            // XcineProvider(),
+            // SuperStream()
+
         )
 
 
@@ -184,6 +188,10 @@ object APIHolder {
             api.init()
         }
         apiMap = null
+    }
+
+    fun String.capitalize(): String {
+        return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
 
     var apis: List<MainAPI> = arrayListOf()
@@ -393,7 +401,7 @@ object APIHolder {
  */
 const val PROVIDER_STATUS_KEY = "PROVIDER_STATUS_KEY"
 const val PROVIDER_STATUS_URL =
-    "https://raw.githubusercontent.com/LagradOst/CloudStream-3/master/docs/providers.json"
+    "https://raw.githubusercontent.com/reduplicated/Cloudstream/master/docs/providers.json"
 const val PROVIDER_STATUS_BETA_ONLY = 3
 const val PROVIDER_STATUS_SLOW = 2
 const val PROVIDER_STATUS_OK = 1
@@ -584,7 +592,10 @@ fun MainAPI.fixUrlNull(url: String?): String? {
 }
 
 fun MainAPI.fixUrl(url: String): String {
-    if (url.startsWith("http")) {
+    if (url.startsWith("http") ||
+        // Do not fix JSON objects when passed as urls.
+        url.startsWith("{\"")
+    ) {
         return url
     }
     if (url.isEmpty()) {
@@ -956,7 +967,7 @@ data class MovieSearchResponse(
     override var type: TvType? = null,
 
     override var posterUrl: String? = null,
-    val year: Int? = null,
+    var year: Int? = null,
     override var id: Int? = null,
     override var quality: SearchQuality? = null,
     override var posterHeaders: Map<String, String>? = null,
