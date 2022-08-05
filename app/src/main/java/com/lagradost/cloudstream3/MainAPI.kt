@@ -176,12 +176,12 @@ object APIHolder {
             RadarrProvider(),
 
             // XcineProvider(),
-            // SuperStream()
-
+            SuperStream(),
         )
 
 
-    var allEnabledProviders: List<MainAPI> = arrayListOf()
+    var allEnabledDirectProviders: List<MainAPI> = arrayListOf()
+    var allEnabledMetaProviders: List<MainAPI> = arrayListOf()
 
     fun initAll() {
         for (api in allProviders) {
@@ -486,6 +486,8 @@ abstract class MainAPI {
     open val hasMainPage = false
     open val hasQuickSearch = false
     open val hasSearch = true
+
+    open val hasSearchFilter = false
 
     open val supportedTypes = setOf(
         TvType.Movie,
@@ -995,7 +997,7 @@ data class TvSeriesSearchResponse(
     override var type: TvType? = null,
 
     override var posterUrl: String? = null,
-    val year: Int? = null,
+    var year: Int? = null,
     val episodes: Int? = null,
     override var id: Int? = null,
     override var quality: SearchQuality? = null,

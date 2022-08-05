@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # SunStream
 
 ***Features:***

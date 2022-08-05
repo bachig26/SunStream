@@ -3,6 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Preference
         android:icon="@drawable/ic_outline_provider"
-        android:key="@string/enabled_providers_key"
-        android:title="@string/enabled_providers" />
+        android:key="@string/enabled_meta_providers_key"
+        android:title="@string/enabled_meta_providers"
+        android:summary="@string/enabled_meta_providers_summary"/>
+
+    <Preference
+        android:icon="@drawable/ic_outline_provider"
+        android:key="@string/enabled_direct_providers_key"
+        android:title="@string/enabled_direct_providers"
+        android:summary="@string/enabled_direct_providers_summary" />
 </PreferenceScreen>

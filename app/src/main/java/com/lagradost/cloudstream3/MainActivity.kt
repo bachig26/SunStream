@@ -478,8 +478,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
-        val enabledProvidersName = try {
-            settingsManager.getStringSet(getString(R.string.enabled_providers_key), null)?.toList()
+        val enabledMetaProvidersName = try {
+            settingsManager.getStringSet(getString(R.string.enabled_meta_providers_key), null)?.toList()
                 ?: allProviders.filter{ it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java }.map { it.name }
         } catch (e: Exception) {
             logError(e)
@@ -488,8 +488,26 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
 
         // Gets the enabled providers in the settings and apply it
-        APIHolder.allEnabledProviders = if(enabledProvidersName.isNotEmpty()) {
-            ArrayList(enabledProvidersName.map { APIHolder.getProviderFromName(it) }) // find from settigs
+        APIHolder.allEnabledMetaProviders = if(enabledMetaProvidersName.isNotEmpty()) {
+            ArrayList(enabledMetaProvidersName.map { APIHolder.getProviderFromName(it) }) // find from settigs
+        } else {
+            arrayListOf<MainAPI>()
+        }
+
+
+
+        val enabledDirectProvidersName = try {
+            settingsManager.getStringSet(getString(R.string.enabled_direct_providers_key), null)?.toList()
+                ?: allProviders.filter{ it.providerType == ProviderType.DirectProvider && it::class.java != CrossTmdbProvider::class.java && it.hasSearchFilter}.map { it.name }
+        } catch (e: Exception) {
+            logError(e)
+            allProviders.filter {it.providerType == ProviderType.DirectProvider && it::class.java != CrossTmdbProvider::class.java && it.hasSearchFilter}.map { it.name }
+        }
+
+
+        // Gets the enabled providers in the settings and apply it
+        APIHolder.allEnabledDirectProviders = if(enabledDirectProvidersName.isNotEmpty()) {
+            ArrayList(enabledDirectProvidersName.map { APIHolder.getProviderFromName(it) })
         } else {
             arrayListOf<MainAPI>()
         }

@@ -3,12 +3,16 @@ package com.lagradost.cloudstream3.metaproviders
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.APIHolder.apis
-import com.lagradost.cloudstream3.APIHolder.allEnabledProviders
+import com.lagradost.cloudstream3.APIHolder.allEnabledMetaProviders
+import com.lagradost.cloudstream3.APIHolder.allEnabledDirectProviders
+import com.lagradost.cloudstream3.APIHolder.allProviders
 import com.lagradost.cloudstream3.APIHolder.getApiFromNameNull
+import com.lagradost.cloudstream3.movieproviders.SuperStream
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.uwetrottmann.tmdb2.entities.Movie
 
 class CrossTmdbProvider : TmdbProvider() {
     override var name = "MultiMedia"
@@ -25,14 +29,29 @@ class CrossTmdbProvider : TmdbProvider() {
     }
 
 
-    private fun getAllEnabledProviders(): List<MainAPI> {
-        return allEnabledProviders.filter { it.lang == this.lang && it::class.java != this::class.java && this.providerType == ProviderType.MetaProvider }
+    private fun getAllEnabledMetaProviders(): List<MainAPI> {
+        return allEnabledMetaProviders.filter { it::class.java != this::class.java && it.providerType == ProviderType.MetaProvider }
+        // it.lang == this.lang &&
     }
 
-    data class CrossMetaData(  // movies and series
+    private fun getAllEnabledDirectProviders(): List<MainAPI> {
+        return allEnabledDirectProviders
+    }
+
+    data class CrossMetaData(
         @JsonProperty("isSuccess") val isSuccess: Boolean,
-        @JsonProperty("dataUrl") val dataUrl: String,
-        @JsonProperty("availableApis") val availableApis: List<String>? = null, // list<apiName, dataUrl>
+        @JsonProperty("directApis") val directApis: List<Pair<String?, String?>?>? = null, // list<Pair<apiName, dataUrl>>
+        @JsonProperty("metaUrl") val metaUrl: String?,
+        @JsonProperty("enabledMetaProviders") val enabledMetaProviderNames: List<String>?,
+    )
+
+    data class TmdbProviderSearchFilter(
+        // to find a movie with specific elements
+        @JsonProperty("title") val title: String,
+        @JsonProperty("tmdbYear") val tmdbYear: Int?,
+        @JsonProperty("tmdbPlot") val tmdbPlot: String?,
+        @JsonProperty("duration") val duration: Int?,
+        @JsonProperty("type") val type: TvType?,
     )
 
     override suspend fun loadLinks(
@@ -43,8 +62,8 @@ class CrossTmdbProvider : TmdbProvider() {
     ): Boolean {
         tryParseJson<CrossMetaData>(data)?.let { metaData ->
             if (!metaData.isSuccess) return false
-            val dataUrl = metaData.dataUrl
-            metaData.availableApis?.apmap { apiName ->
+            val dataUrl = metaData.metaUrl ?: return false
+            metaData.enabledMetaProviderNames?.apmap { apiName ->
                 getApiFromNameNull(apiName)?.let {
                     try {
                         it.loadLinks(dataUrl, isCasting, subtitleCallback, callback)
@@ -53,6 +72,18 @@ class CrossTmdbProvider : TmdbProvider() {
                     }
                 }
             }
+            val directApis = metaData.directApis
+            directApis?.apmap { content -> // content: <Pair<apiName?, dataUrl?>>
+                val directLink = content?.second ?: return@apmap false
+                getApiFromNameNull(content.first)?.let {
+                    try {
+                        it.loadLinks(directLink, isCasting, subtitleCallback, callback)
+                    } catch (e: Exception) {
+                        logError(e)
+                    }
+                }
+            }
+
             return true
         }
         return false
@@ -62,114 +93,133 @@ class CrossTmdbProvider : TmdbProvider() {
         return super.search(query)
     }
 
+
+    private fun loadMainApiProvidersTvSerie(response: LoadResponse?): List<TvSeriesLoadResponse?>? {
+
+        val filter = TmdbProviderSearchFilter(
+            response?.name ?: return null,
+            response.year,
+            response.plot,
+            response.duration,
+            response.type,
+        )
+
+        val additionalProvider = getAllEnabledDirectProviders()
+        val matchName = filterName(filter.title)
+
+        return additionalProvider.apmap { api ->
+            try {
+                if (api.supportedTypes.contains(response.type)) {
+                    return@apmap api.search(filter.toJson())?.first {
+                        if (filterName(it.name).equals(
+                                matchName,
+                                ignoreCase = true
+                            )
+                        ) {
+                            return@first true
+                        }
+                        false
+                    }?.let { search ->
+                        val loadedResult = api.load(search.url)
+                        if (loadedResult is TvSeriesLoadResponse) {
+                            loadedResult
+                        } else {
+                            null
+                        }
+                    }
+                }
+                null
+            } catch (e: Exception) {
+                logError(e)
+                null
+            }
+        }.filterNotNull()
+    }
+
+    private fun loadMainApiProvidersMovie(response: LoadResponse?): List<MovieLoadResponse?>? {
+
+        val filter = TmdbProviderSearchFilter(
+            response?.name ?: return null,
+            response.year,
+            response.plot,
+            response.duration,
+            response.type,
+        )
+
+        val additionalProvider = getAllEnabledDirectProviders()
+        val matchName = filterName(filter.title)
+
+        return additionalProvider.apmap { api ->
+            try {
+                if (api.supportedTypes.contains(response.type)) {
+                    return@apmap api.search(filter.toJson())?.first {
+                        if (filterName(it.name).equals(
+                                matchName,
+                                ignoreCase = true
+                            )
+                        ) {
+                            return@first true
+                        }
+                        false
+                    }?.let { search ->
+                        val loadedResult = api.load(search.url)
+                        if (loadedResult is MovieLoadResponse) {
+                            loadedResult
+                        } else {
+                            null
+                        }
+                    }
+                }
+                null
+            } catch (e: Exception) {
+                logError(e)
+                null
+            }
+        }.filterNotNull()
+    }
+
     override suspend fun load(url: String): LoadResponse? {
         val base = super.load(url)?.apply {
             this.recommendations = this.recommendations
             //val matchName = filterName(this.name)
-            val validApisName = getAllEnabledProviders().apmap {it.name}
-            when (this) {
+            val validApisName = getAllEnabledMetaProviders().apmap { it.name }
+            when(this) {
                 is MovieLoadResponse -> {
 
-                    /*
-                    val data = validApis.mapNotNull { api -> // TODO FIX
-
-                    try {
-
-
-                    // usefull when searching movie on other (non tmdb) providers
-                        if (api.supportedTypes.contains(TvType.Movie)) { //|| api.supportedTypes.contains(TvType.AnimeMovie)
-                            return@apmap api.search(this.name)?.first { movieSearchResponse -> // first result
-                                if (filterName(movieSearchResponse.name).equals(
-                                        matchName,
-                                        ignoreCase = true
-                                    )
-                                ) {
-                                    if (movieSearchResponse is MovieSearchResponse)
-                                        if (movieSearchResponse.year != null && this.year != null && movieSearchResponse.year != this.year) // if year exist then do a check
-                                            return@first false // could be false negative due to different release year according to resion and prerelease
-
-                                    return@first true // same movie: Success
-                                }
-                                false // nope
-                            }?.let { search ->
-                                val response = api.load(search.url)
-                                if (response is MovieLoadResponse) {
-                                    response
-                                } else {
-                                    null
-                                }
-                            }
-                        }
-                        null
-
-                    } catch (e: Exception) {
-                        logError(e)
-                        null
+                    val directProvidersContent = loadMainApiProvidersMovie(this)?.apmap {
+                        it?.apiName to it?.dataUrl
                     }
-                    }
-                    println(data)
-                    this.dataUrl =
-                    CrossMetaData(true, data.map { it.apiName to it.dataUrl }).toJson() // sent to loadLinks
+                    this.dataUrl = CrossMetaData(
+                        true,
+                        directProvidersContent,
+                        this.dataUrl,
+                        validApisName
+                    ).toJson() // sent to loadLinks
                     // (old content of data before update): {"isSuccess":true,"movies":[{"first":"VidSrc","second":"{\"imdbID\":\"tt9419884\",\"tmdbID\":453395,\"episode\":null,\"season\":null,\"movieName\":\"Doctor Strange in the Multiverse of Madness\"}"},{"first":"OpenVids","second":"{\"imdbID\":\"tt9419884\",\"tmdbID\":453395,\"episode\":null,\"season\":null,\"movieName\":\"Doctor Strange in the Multiverse of Madness\"}"}]}
-                                    }
-*/
-
-
-
-                    this.dataUrl = CrossMetaData(true, this.dataUrl, validApisName).toJson() // sent to loadLinks
-                    //this.backdropUrl =
-
                 }
-
                 is TvSeriesLoadResponse -> {
-                    /*
-                    val data = validApis.apmap { api -> // all tvseries load response apis without a null response
+                    val providerLoadResponses = loadMainApiProvidersTvSerie(this)
+                    this.episodes.forEachIndexed { Index, Episode ->
+                        val episodeData: List<Pair<String, String>>? = providerLoadResponses?.mapNotNull { providerResponse ->
+                            val apiName = providerResponse?.apiName ?: return@mapNotNull null
+                            Pair(apiName, providerResponse.episodes[Index].data)
+                        }
                         try {
-                            if (api.supportedTypes.contains(TvType.TvSeries) || api.supportedTypes.contains(
-                                    TvType.Anime
-                                )
-                            ) {
-                                return@apmap api.search(this.name)?.first {
-                                    if (filterName(it.name).equals(
-                                            matchName,
-                                            ignoreCase = true
-                                        )
-                                    ) {
-                                        if (it is TvSeriesSearchResponse)
-                                            if (it.year != null && this.year != null && it.year != this.year) // if year exist then do a check
-                                                return@first false
-
-                                        return@first true // same tv show
-                                    }
-                                    false
-                                }?.let { search ->
-                                    val response = api.load(search.url)  // query provider with url
-                                    if (response is TvSeriesLoadResponse) {
-                                        response
-                                    } else {
-                                        null
-                                    }
-                                }
-                            }
-                            null
+                            Episode.data = CrossMetaData(
+                                true,
+                                episodeData, // element must have the same number of episodes // TODO FIX
+                                Episode.data,
+                                validApisName
+                            ).toJson() // sent to loadLinks
                         } catch (e: Exception) {
                             logError(e)
-                            null
                         }
-                    }.filterNotNull()
-                    this.episodes.forEach() { Episode -> //MAY BE SLOW !
-                        Episode.data = CrossMetaData(true, data.map { it.apiName to Episode.data }).toJson() // sent to loadLinks
-                    }
-
-                     */
-
-                    this.episodes.forEach() { Episode -> //MIGHT BE SLOW !
-                        Episode.data = CrossMetaData(true, Episode.data, validApisName).toJson() // sent to loadLinks
                     }
                 }
+
+
             }
         }
-
         return base
     }
 }

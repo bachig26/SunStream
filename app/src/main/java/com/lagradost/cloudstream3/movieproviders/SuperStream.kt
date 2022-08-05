@@ -7,9 +7,11 @@ import com.lagradost.cloudstream3.APIHolder.capitalize
 import com.lagradost.cloudstream3.APIHolder.unixTime
 import com.lagradost.cloudstream3.LoadResponse.Companion.addImdbId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
+import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
 import com.lagradost.cloudstream3.movieproviders.SuperStream.CipherUtils.getVerify
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
+import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.getQualityFromName
 import com.lagradost.nicehttp.NiceResponse
@@ -28,6 +30,7 @@ class SuperStream : MainAPI() {
     override var name = "SuperStream"
     override val hasMainPage = true
     override val hasChromecastSupport = true
+    override val hasSearchFilter = true
     override val supportedTypes = setOf(
         TvType.Movie,
         TvType.TvSeries,
@@ -255,6 +258,8 @@ class SuperStream : MainAPI() {
         @JsonProperty("year") val year: Int? = null,
         @JsonProperty("imdb_rating") val imdbRating: String? = null,
         @JsonProperty("quality_tag") val qualityTag: String? = null,
+        @JsonProperty("description") val description: String? = null,
+        @JsonProperty("runtime") val runtime: Int? = null,
     )
 
     private data class MainData(
@@ -262,24 +267,54 @@ class SuperStream : MainAPI() {
     )
 
     override suspend fun search(query: String): List<SearchResponse> {
+        val content = tryParseJson<CrossTmdbProvider.TmdbProviderSearchFilter>(query)
+        val mediaTitle = content?.title ?: throw ErrorLoadingException()
+        val searchType = when (content.type) {
+            TvType.TvSeries -> TYPE_SERIES
 
+            TvType.Movie -> TYPE_MOVIES
+
+            else -> "all"
+        }.toString()
         val apiQuery =
             // Originally 8 pagelimit
-            """{"childmode":"$hideNsfw","app_version":"11.5","appid":"$appId","module":"Search3","channel":"Website","page":"1","lang":"en","type":"all","keyword":"$query","pagelimit":"20","expired_date":"${getExpiryDate()}","platform":"android"}"""
-        val searchResponse = parseJson<MainData>(queryApi(apiQuery).text).data.mapNotNull {
-            val type = if (it.boxType == 1) TvType.Movie else TvType.TvSeries
-            newMovieSearchResponse(
-                name = it.title ?: return@mapNotNull null,
-                url = LoadData(it.id ?: return@mapNotNull null, it.boxType).toJson(),
+            """{"childmode":"$hideNsfw","app_version":"11.5","appid":"$appId","module":"Search3","channel":"Website","page":"1","lang":"en","type":$searchType,"keyword":"$mediaTitle","pagelimit":"20","expired_date":"${getExpiryDate()}","platform":"android"}"""
+        val output = queryApi(apiQuery).text
+
+        val searchResponse = parseJson<MainData>(output).data.first {
+            it.year == content.tmdbYear // description (plot) may be different than imdb and tmdb
+        }
+        val type = if (searchResponse.boxType == 1) TvType.Movie else TvType.TvSeries
+
+        if (content.type == TvType.Movie) {
+            return listOf(newMovieSearchResponse(
+                name = searchResponse.title ?: throw ErrorLoadingException(),
+                url = LoadData(
+                    searchResponse.id ?: throw ErrorLoadingException(),
+                    searchResponse.boxType
+                ).toJson(),
                 type = type,
                 fix = false
             ) {
-                posterUrl = it.posterOrg ?: it.poster
-                year = it.year
-                quality = getQualityFromString(it.qualityTag?.replace("-", "") ?: "")
-            }
+                posterUrl = searchResponse.posterOrg ?: searchResponse.poster
+                year = searchResponse.year
+                quality = getQualityFromString(searchResponse.qualityTag?.replace("-", "") ?: "")
+            })
+        } else { // tv show
+            return listOf(newTvSeriesSearchResponse(
+                name = searchResponse.title ?: throw ErrorLoadingException(),
+                url = LoadData(
+                    searchResponse.id ?: throw ErrorLoadingException(),
+                    searchResponse.boxType
+                ).toJson(),
+                type = type,
+                fix = false
+            ) {
+                posterUrl = searchResponse.posterOrg ?: searchResponse.poster
+                year = searchResponse.year
+                quality = getQualityFromString(searchResponse.qualityTag?.replace("-", "") ?: "")
+            })
         }
-        return searchResponse
     }
 
     private data class LoadData(

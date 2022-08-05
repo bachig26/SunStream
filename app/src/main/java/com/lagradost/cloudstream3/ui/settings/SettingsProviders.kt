@@ -9,17 +9,10 @@ import com.lagradost.cloudstream3.APIHolder.allProviders
 import com.lagradost.cloudstream3.APIHolder.getApiFromName
 import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
 import com.lagradost.cloudstream3.mvvm.logError
-import com.lagradost.cloudstream3.network.initClient
-import com.lagradost.cloudstream3.ui.search.SEARCH_PREF_PROVIDERS
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
-import com.lagradost.cloudstream3.utils.DataStore.getKey
-import com.lagradost.cloudstream3.utils.DataStore.setKey
-import com.lagradost.cloudstream3.utils.HOMEPAGE_API
-import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showMultiDialog
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
-import com.lagradost.cloudstream3.utils.getExtractorApiFromName
 
 
 class SettingsProviders : PreferenceFragmentCompat() {
@@ -35,19 +28,21 @@ class SettingsProviders : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.settings_providers, rootKey)
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
-        getPref(R.string.enabled_providers_key)?.setOnPreferenceClickListener {
+        getPref(R.string.enabled_meta_providers_key)?.setOnPreferenceClickListener {
 
-            val savedSettingsProviders = settingsManager.getStringSet(getString(R.string.enabled_providers_key), null)?.toList()
-            val savedEnabledProviders: List<String> = if (!savedSettingsProviders.isNullOrEmpty()) {
-                savedSettingsProviders
-            } else {
-                APIHolder.allProviders.filter{ it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java }.map { it.name }
-            }
+            val savedEnabledProviders: List<String> =
+                settingsManager.getStringSet(getString(R.string.enabled_meta_providers_key), null)
+                    ?.toList()
+                    ?: allProviders.filter {
+                        it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java
+                    }.map { it.name }
 
             var index = 0 // TODO maybe should use the .withIndex() function but I lazy
             val enabledProvidersIndex = mutableListOf<Int>()
 
-            val allAvailableProviders: List<String> = allProviders.filter{ it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java}.map { it.name }
+            val allAvailableProviders: List<String> =
+                allProviders.filter { it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java }
+                    .map { it.name }
 
             allAvailableProviders.forEach { provider -> // their is probably a better way to do it
                 if (provider in savedEnabledProviders) {
@@ -59,19 +54,74 @@ class SettingsProviders : PreferenceFragmentCompat() {
             activity?.showMultiDialog(
                 allAvailableProviders,
                 enabledProvidersIndex.toList(),
-                getString(R.string.enabled_providers),
+                getString(R.string.enabled_meta_providers),
                 {}) { selectedList ->
-                val enabledProviders: ArrayList<String> = ArrayList(selectedList.mapNotNull { indexOfSelectedProvider ->
-                    try {
-                        allAvailableProviders[indexOfSelectedProvider]
-                    } catch (e: Exception) {
-                        logError(e)
-                        null
-                    }
-                })
+                val enabledProviders: ArrayList<String> =
+                    ArrayList(selectedList.mapNotNull { indexOfSelectedProvider ->
+                        try {
+                            allAvailableProviders[indexOfSelectedProvider]
+                        } catch (e: Exception) {
+                            logError(e)
+                            null
+                        }
+                    })
 
-                APIHolder.allEnabledProviders = ArrayList(enabledProviders.map{ getApiFromName(it) })
-                settingsManager.edit().putStringSet(getString(R.string.enabled_providers_key), enabledProviders.toMutableSet()).apply() // YES APPLY PLS
+                APIHolder.allEnabledMetaProviders =
+                    ArrayList(enabledProviders.map { getApiFromName(it) })
+                settingsManager.edit().putStringSet(
+                    getString(R.string.enabled_meta_providers_key),
+                    enabledProviders.toMutableSet()
+                ).apply() // YES APPLY PLS
+            }
+
+            return@setOnPreferenceClickListener true
+        }
+
+
+
+        getPref(R.string.enabled_direct_providers_key)?.setOnPreferenceClickListener {
+
+            val savedEnabledProviders: List<String> =
+                settingsManager.getStringSet(getString(R.string.enabled_direct_providers_key), null)
+                    ?.toList()
+                    ?: allProviders.filter { it.providerType == ProviderType.DirectProvider && it::class.java != CrossTmdbProvider::class.java && it.hasSearchFilter }
+                        .map { it.name }
+
+            var index = 0 // TODO maybe should use the .withIndex() function but I lazy
+            val enabledProvidersIndex = mutableListOf<Int>()
+
+            val allAvailableProviders: List<String> =
+                allProviders.filter { it.providerType == ProviderType.DirectProvider && it::class.java != CrossTmdbProvider::class.java && it.hasSearchFilter }
+                    .map { it.name }
+
+            allAvailableProviders.forEach { provider -> // their is probably a better way to do it
+                if (provider in savedEnabledProviders) {
+                    enabledProvidersIndex += index
+                }
+                index++
+            }
+
+            activity?.showMultiDialog(
+                allAvailableProviders,
+                enabledProvidersIndex.toList(),
+                getString(R.string.enabled_direct_providers),
+                {}) { selectedList ->
+                val enabledProviders: ArrayList<String> =
+                    ArrayList(selectedList.mapNotNull { indexOfSelectedProvider ->
+                        try {
+                            allAvailableProviders[indexOfSelectedProvider]
+                        } catch (e: Exception) {
+                            logError(e)
+                            null
+                        }
+                    })
+
+                APIHolder.allEnabledDirectProviders =
+                    ArrayList(enabledProviders.map { getApiFromName(it) })
+                settingsManager.edit().putStringSet(
+                    getString(R.string.enabled_direct_providers_key),
+                    enabledProviders.toMutableSet()
+                ).apply() // YES APPLY PLS
             }
 
             return@setOnPreferenceClickListener true

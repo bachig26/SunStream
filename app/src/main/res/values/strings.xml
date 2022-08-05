@@ -52,7 +52,8 @@
     <string name="poster_ui_key" translatable="false">poster_ui_key</string>
     <string name="subtitles_encoding_key" translatable="false">subtitles_encoding_key</string>
     <string name="override_site_key" translatable="false">override_site_key</string>
-    <string name="enabled_providers_key" translatable="false">enabled_providers_key</string>
+    <string name="enabled_meta_providers_key" translatable="false">enabled_meta_providers_key</string>
+    <string name="enabled_direct_providers_key" translatable="false">enabled_direct_providers_key</string>
     <string name="enable_local_server_key" translatable="false">enable_local_server</string>
     <string name="show_local_ip_key" translatable="false">show_local_ip_key</string>
     <string name="redo_setup_key" translatable="false">redo_setup_key</string>
@@ -509,7 +510,17 @@
     <string name="example_lang_name">Language code (en)</string>
 
     <!-- providers_stuff -->
-    <string name="enabled_providers">Enabled Providers</string>
+    <string name="enabled_meta_providers">Enabled Meta Providers</string>
+    <string name="enabled_meta_providers_summary">Those providers are natively compatible with TMDB
+
+        Note: The more provider you enable, the longer the time required to load links will be
+    </string>
+    <string name="enabled_direct_providers">Enabled Direct Providers</string>
+    <string name="enabled_direct_providers_summary">Those providers are using search filters,
+    They take a longer time to load the main page
+
+    The more provider you enable, the slower it will be to load the main page of a media
+    </string>
 
     <!--
     <string name="mal_account_settings" translatable="false">MAL</string>

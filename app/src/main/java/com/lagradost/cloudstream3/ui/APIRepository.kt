@@ -32,6 +32,7 @@ class APIRepository(val api: MainAPI) {
     val mainPage = api.mainPage
     val hasQuickSearch = api.hasQuickSearch
     val hasSearch = api.hasSearch
+    val hasSearchFilter = api.hasSearchFilter
 
     suspend fun load(url: String): Resource<LoadResponse> {
         return safeApiCall {
