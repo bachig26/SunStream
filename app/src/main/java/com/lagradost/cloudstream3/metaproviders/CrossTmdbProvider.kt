@@ -15,8 +15,8 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.uwetrottmann.tmdb2.entities.Movie
 
 class CrossTmdbProvider : TmdbProvider() {
-    override var name = "MultiMedia"
-    override val apiName = "MultiMedia"
+    override var name = "TheMovieDatabase"
+    override val apiName = "TheMovieDatabase"
     override var lang = "en"
     override val useMetaLoadResponse = true
     override val usesWebView = true

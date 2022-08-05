@@ -70,7 +70,7 @@
         "status": 1
     },
     "CrossTmdbProvider": {
-        "name": "MultiMovie",
+        "name": "TheMovieDatabase",
         "url": "NONE",
         "status": 1
     },

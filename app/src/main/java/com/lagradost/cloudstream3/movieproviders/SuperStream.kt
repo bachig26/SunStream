@@ -28,7 +28,8 @@ const val TYPE_MOVIES = 1
 
 class SuperStream : MainAPI() {
     override var name = "SuperStream"
-    override val hasMainPage = true
+    override val hasMainPage = false // hide main page other than crosstmdb
+    override val hasSearch = false // hide from search
     override val hasChromecastSupport = true
     override val hasSearchFilter = true
     override val supportedTypes = setOf(
