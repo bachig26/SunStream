@@ -426,11 +426,12 @@ object VideoDownloadManager {
     }
 
     private const val reservedChars = "|\\?*<\":>+[]/\'"
-    fun sanitizeFilename(name: String): String {
+    fun sanitizeFilename(name: String, removeSpaces: Boolean= false): String {
         var tempName = name
         for (c in reservedChars) {
             tempName = tempName.replace(c, ' ')
         }
+        if (removeSpaces) tempName = tempName.replace(" ", "")
         return tempName.replace("  ", " ").trim(' ')
     }
 
@@ -1611,8 +1612,8 @@ object VideoDownloadManager {
                     .mapIndexed { index, any -> DownloadQueueResumePackage(index, any) }
                     .toTypedArray()
             setKey(KEY_RESUME_QUEUE_PACKAGES, dQueue)
-        } catch (e : Exception) {
-            logError(e)
+        } catch (t : Throwable) {
+            logError(t)
         }
     }
 

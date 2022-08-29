@@ -1,12 +1,8 @@
 package com.lagradost.cloudstream3.syncproviders.providers
 
-import androidx.preference.PreferenceManager
-import com.lagradost.cloudstream3.AcraApplication.Companion.context
 import com.lagradost.cloudstream3.AcraApplication.Companion.getKey
 import com.lagradost.cloudstream3.AcraApplication.Companion.setKey
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.movieproviders.NginxProvider
-import com.lagradost.cloudstream3.movieproviders.SonarrProvider
 import com.lagradost.cloudstream3.syncproviders.AuthAPI
 import com.lagradost.cloudstream3.syncproviders.InAppAuthAPI
 import com.lagradost.cloudstream3.syncproviders.InAppAuthAPIManager

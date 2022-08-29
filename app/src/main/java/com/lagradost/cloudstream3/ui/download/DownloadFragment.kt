@@ -37,16 +37,13 @@ import com.lagradost.cloudstream3.utils.VideoDownloadHelper
 import com.lagradost.cloudstream3.utils.VideoDownloadManager
 import kotlinx.android.synthetic.main.fragment_downloads.*
 import kotlinx.android.synthetic.main.stream_input.*
+import android.text.format.Formatter.formatShortFileSize
 
 
 const val DOWNLOAD_NAVIGATE_TO = "downloadpage"
 
 class DownloadFragment : Fragment() {
     private lateinit var downloadsViewModel: DownloadViewModel
-
-    private fun getBytesAsText(bytes: Long): String {
-        return "%.1f".format(bytes / 1000000000f)
-    }
 
     private fun View.setLayoutWidth(weight: Long) {
         val param = LinearLayout.LayoutParams(
@@ -101,7 +98,7 @@ class DownloadFragment : Fragment() {
             download_free_txt?.text =
                 getString(R.string.storage_size_format).format(
                     getString(R.string.free_storage),
-                    getBytesAsText(it)
+                    formatShortFileSize(view.context, it)
                 )
             download_free?.setLayoutWidth(it)
         }
@@ -109,18 +106,18 @@ class DownloadFragment : Fragment() {
             download_used_txt?.text =
                 getString(R.string.storage_size_format).format(
                     getString(R.string.used_storage),
-                    getBytesAsText(it)
+                    formatShortFileSize(view.context, it)
                 )
             download_used?.setLayoutWidth(it)
+            download_storage_appbar?.isVisible = it > 0
         }
         observe(downloadsViewModel.downloadBytes) {
             download_app_txt?.text =
                 getString(R.string.storage_size_format).format(
                     getString(R.string.app_storage),
-                    getBytesAsText(it)
+                    formatShortFileSize(view.context, it)
                 )
             download_app?.setLayoutWidth(it)
-            download_storage_appbar?.isVisible = it > 0
         }
 
         val adapter: RecyclerView.Adapter<RecyclerView.ViewHolder> =
@@ -153,7 +150,7 @@ class DownloadFragment : Fragment() {
                 },
                 { downloadClickEvent ->
                     if (downloadClickEvent.data !is VideoDownloadHelper.DownloadEpisodeCached) return@DownloadHeaderAdapter
-                    handleDownloadClick(activity, downloadClickEvent.data.name, downloadClickEvent)
+                    handleDownloadClick(activity, downloadClickEvent)
                     if (downloadClickEvent.action == DOWNLOAD_ACTION_DELETE_FILE) {
                         context?.let { ctx ->
                             downloadsViewModel.updateList(ctx)

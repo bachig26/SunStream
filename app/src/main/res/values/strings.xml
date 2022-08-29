@@ -5,6 +5,7 @@
     <string name="locale_key" translatable="false">app_locale</string>
     <string name="search_types_list_key" translatable="false">search_type_list</string>
     <string name="auto_update_key" translatable="false">auto_update</string>
+    <string name="auto_update_plugins_key" translatable="false">auto_update_plugins</string>
     <string name="skip_update_key" translatable="false">skip_update_key</string>
     <string name="prerelease_update_key" translatable="false">prerelease_update</string>
     <string name="manual_check_update_key" translatable="false">manual_check_update</string>
@@ -19,7 +20,6 @@
     <string name="video_buffer_length_key" translatable="false">video_buffer_length_key</string>
     <string name="video_buffer_clear_key" translatable="false">video_buffer_clear_key</string>
     <string name="video_buffer_disk_key" translatable="false">video_buffer_disk_key</string>
-    <string name="prerelease_commit_hash" translatable="false">unknown_prerelease</string>
     <string name="use_system_brightness_key" translatable="false">use_system_brightness_key</string>
     <string name="swipe_enabled_key" translatable="false">swipe_enabled_key</string>
     <string name="playback_speed_enabled_key" translatable="false">playback_speed_enabled_key</string>
@@ -29,6 +29,7 @@
     <string name="double_tap_pause_enabled_key" translatable="false">double_tap_pause_enabled_key</string>
     <string name="double_tap_seek_time_key" translatable="false">double_tap_seek_time_key</string>
     <string name="swipe_vertical_enabled_key" translatable="false">swipe_vertical_enabled_key</string>
+    <string name="autoplay_next_key" translatable="false">autoplay_next_key</string>
     <string name="display_sub_key" translatable="false">display_sub_key</string>
     <string name="show_fillers_key" translatable="false">show_fillers_key</string>
     <string name="show_trailers_key" translatable="false">show_trailers_key</string>
@@ -41,9 +42,8 @@
     <string name="app_layout_key" translatable="false">app_layout_key</string>
     <string name="primary_color_key" translatable="false">primary_color_key</string>
     <string name="restore_key" translatable="false">restore_key</string>
-    <string name="killswitch_key" translatable="false">killswitch_key</string>
     <string name="backup_key" translatable="false">backup_key</string>
-    <string name="prefer_media_type_key" translatable="false">prefer_media_type_key</string>
+    <string name="prefer_media_type_key" translatable="false">prefer_media_type_key_2</string>
     <string name="app_theme_key" translatable="false">app_theme_key</string>
     <string name="episode_sync_enabled_key" translatable="false">episode_sync_enabled_key</string>
     <string name="log_enabled_key" translatable="false">log_enabled_key</string>
@@ -57,12 +57,13 @@
     <string name="enable_local_server_key" translatable="false">enable_local_server</string>
     <string name="show_local_ip_key" translatable="false">show_local_ip_key</string>
     <string name="redo_setup_key" translatable="false">redo_setup_key</string>
+    <string name="filter_sub_lang_key" translatable="false">filter_sub_lang_key</string>
+    <string name="pref_filter_search_quality_key" translatable="false">pref_filter_search_quality_key</string>
 
     <!-- FORMAT MIGHT TRANSLATE, WILL CAUSE CRASH IF APPLIED WRONG -->
-    <string name="extra_info_format" formatted="true" translatable="false">%d %s | %sMB</string>
-    <string name="storage_size_format" formatted="true" translatable="false">%s • %sGB</string>
-    <string name="download_size_format" formatted="true" translatable="false">%sMB / %sMB</string>
-    <string name="mb_format" formatted="true" translatable="false">%dMB</string>
+    <string name="extra_info_format" formatted="true" translatable="false">%d %s | %s</string>
+    <string name="storage_size_format" formatted="true" translatable="false">%s • %s</string>
+    <string name="download_size_format" formatted="true" translatable="false">%s / %s</string>
     <string name="episode_name_format" formatted="true" translatable="false">%s %s</string>
     <string name="ffw_text_format" formatted="true" translatable="false">+%d</string>
     <string name="rew_text_format" formatted="true" translatable="false">-%d</string>
@@ -117,7 +118,7 @@
     <string name="result_share">Share</string>
     <string name="result_open_in_browser">Open In Browser</string>
     <string name="skip_loading">Skip Loading</string>
-    <string name="loading_chromecast">Loading…</string>
+    <string name="loading">Loading…</string>
 
     <string name="type_watching">Watching</string>
     <string name="type_on_hold">On-Hold</string>
@@ -237,6 +238,10 @@
     <string name="swipe_to_seek_settings_des">Swipe left or right to control time in the videoplayer</string>
     <string name="swipe_to_change_settings">Swipe to change settings</string>
     <string name="swipe_to_change_settings_des">Swipe on the left or right side to change brightness or volume</string>
+
+    <string name="autoplay_next_settings">Autoplay next episode</string>
+    <string name="autoplay_next_settings_des">Start the next episode when the current one ends</string>
+
     <string name="double_tap_to_seek_settings">Double tap to seek</string>
     <string name="double_tap_to_pause_settings">Double tap to pause</string>
     <string name="double_tap_to_seek_amount_settings">Player seek amount</string>
@@ -252,8 +257,6 @@
     <string name="episode_sync_settings_des">Automatically sync your current episode progress</string>
 
     <string name="restore_settings">Restore data from backup</string>
-    <string name="killswitch_settings">Download latest metadata from github</string>
-    <string name="killswitch_settings_des">If you want access to all providers (even broken ones) turn this off</string>
 
     <string name="backup_settings">Backup data</string>
     <string name="restore_success">Loaded backup file</string>
@@ -265,9 +268,7 @@
     <string name="search">Search</string>
     <string name="category_account">Accounts</string>
     <string name="category_updates">Updates and backup</string>
-    <string name="nginx_info_title">What is Nginx ?</string>
-    <string name="nginx_info_summary">Nginx is a software that can be used to display files from a server that you own. Click to see a Nginx setup guide</string>
-
+    
     <string name="settings_info">Info</string>
     <string name="advanced_search">Advanced Search</string>
     <string name="advanced_search_des">Gives you the search results separated by provider</string>
@@ -277,7 +278,9 @@
     <string name="show_trailers_settings">Show trailers</string>
     <string name="show_trailers_settings_summary">Will affect loading time when turned on</string>
     <string name="kitsu_settings">Show posters from kitsu</string>
+    <string name="pref_filter_search_quality">Hide selected video quality on Search results</string>
 
+    <string name="automatic_plugin_updates">Automatic plugin updates</string>
     <string name="updates_settings">Show app updates</string>
     <string name="updates_settings_des">Automatically search for new updates on start</string>
     <string name="uprereleases_settings">Update to prereleases</string>
@@ -309,9 +312,12 @@
     </string>
 
     <string name="season">Season</string>
+    <string name="season_format">%s %d</string>
     <string name="no_season">No Season</string>
     <string name="episode">Episode</string>
     <string name="episodes">Episodes</string>
+    <string name="episodes_range">%d-%d</string>
+    <string name="episode_format" formatted="true">%d %s</string>
     <string name="season_short">S</string>
     <string name="episode_short">E</string>
     <string name="no_episodes_found">No Episodes found</string>
@@ -354,6 +360,8 @@
     <string name="ova">OVA</string>
     <string name="asian_drama">Asian Dramas</string>
     <string name="livestreams">Livestreams</string>
+    <string name="nsfw">NSFW</string>
+    <string name="others">Others</string>
 
     <!--singular-->
     <string name="movies_singular">Movie</string>
@@ -365,6 +373,8 @@
     <string name="documentaries_singular">Documentary</string>
     <string name="asian_drama_singular">Asian Drama</string>
     <string name="live_singular">Livestream</string>
+    <string name="nsfw_singular">NSFW</string>
+    <string name="other_singular">Video</string>
 
     <string name="source_error">Source error</string>
     <string name="remote_error">Remote error</string>
@@ -615,6 +625,7 @@
     <string name="error">Error</string>
     <string name="subtitles_remove_captions">Remove closed captions from subtitles</string>
     <string name="subtitles_remove_bloat">Remove bloat from subtitles</string>
+    <string name="subtitles_filter_lang">Filter by preferred media language</string>
     <string name="extras">Extras</string>
     <string name="trailer">Trailer</string>
     <string name="network_adress_example">Link to stream</string>
@@ -629,4 +640,31 @@
     <string name="crash_reporting_title">Crash reporting</string>
     <string name="preferred_media_subtext">What do you want to see</string>
     <string name="setup_done">Done</string>
+    <string name="extensions">Extensions</string>
+    <string name="add_repository">Add repository</string>
+    <string name="repository_name_hint">Repository name</string>
+    <string name="repository_url_hint">Repository url</string>
+    <string name="plugin_loaded">Plugin Loaded</string>
+    <string name="plugin_deleted">Plugin Deleted</string>
+    <string name="plugin_load_fail" formatted="true">Failed to load %s</string>
+    <string name="is_adult">18+</string>
+    <string name="batch_download_start_format" formatted="true">Started downloading %d %s</string>
+    <string name="batch_download_finish_format" formatted="true">Downloaded %d %s successfully</string>
+    <string name="batch_download_nothing_to_download_format" formatted="true">All %s already downloaded</string>
+    <string name="batch_download">Batch download</string>
+    <string name="plugin_singular">plugin</string>
+    <string name="plugin">plugins</string>
+    <string name="delete_repository_plugins">This will also delete all repository plugins</string>
+    <string name="delete_repository">Delete repository</string>
+    <string name="setup_extensions_subtext">Download the list of sites you want to use</string>
+    <string name="plugins_downloaded" formatted="true">Downloaded: %d</string>
+    <string name="plugins_disabled" formatted="true">Disabled: %d</string>
+    <string name="plugins_not_downloaded" formatted="true">Not downloaded: %d</string>
+    <string name="blank_repo_message">Add a repository to install site extensions</string>
+    <string name="view_public_repositories_button">View community repositories</string>
+    <string name="view_public_repositories_button_short">Public list</string>
+    <string name="uppercase_all_subtitles">Uppercase all subtitles</string>
+
+    <string name="download_all_plugins_from_repo">Download all plugins from this repository?</string>
+    <string name="single_plugin_disabled" formatted="true">%s (Disabled)</string>
 </resources>

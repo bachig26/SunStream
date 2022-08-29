@@ -5,7 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lagradost.cloudstream3.APIHolder.apis
+import com.lagradost.cloudstream3.APIHolder.filterHomePageListByFilmQuality
 import com.lagradost.cloudstream3.APIHolder.filterProviderByPreferredMedia
+import com.lagradost.cloudstream3.APIHolder.filterSearchResultByFilmQuality
 import com.lagradost.cloudstream3.APIHolder.getApiFromNameNull
 import com.lagradost.cloudstream3.AcraApplication.Companion.context
 import com.lagradost.cloudstream3.AcraApplication.Companion.getKey
@@ -13,10 +15,7 @@ import com.lagradost.cloudstream3.AcraApplication.Companion.setKey
 import com.lagradost.cloudstream3.HomePageList
 import com.lagradost.cloudstream3.MainAPI
 import com.lagradost.cloudstream3.SearchResponse
-import com.lagradost.cloudstream3.mvvm.Resource
-import com.lagradost.cloudstream3.mvvm.debugAssert
-import com.lagradost.cloudstream3.mvvm.debugWarning
-import com.lagradost.cloudstream3.mvvm.logError
+import com.lagradost.cloudstream3.mvvm.*
 import com.lagradost.cloudstream3.ui.APIRepository
 import com.lagradost.cloudstream3.ui.APIRepository.Companion.noneApi
 import com.lagradost.cloudstream3.ui.APIRepository.Companion.randomApi
@@ -29,7 +28,7 @@ import com.lagradost.cloudstream3.utils.DataStoreHelper.getBookmarkedData
 import com.lagradost.cloudstream3.utils.DataStoreHelper.getLastWatched
 import com.lagradost.cloudstream3.utils.DataStoreHelper.getResultWatchState
 import com.lagradost.cloudstream3.utils.DataStoreHelper.getViewPos
-import com.lagradost.cloudstream3.utils.HOMEPAGE_API
+import com.lagradost.cloudstream3.utils.USER_SELECTED_HOMEPAGE_API
 import com.lagradost.cloudstream3.utils.VideoDownloadHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -61,7 +60,7 @@ class HomeViewModel : ViewModel() {
     private val _resumeWatching = MutableLiveData<List<SearchResponse>>()
     val resumeWatching: LiveData<List<SearchResponse>> = _resumeWatching
 
-    fun loadResumeWatching() = viewModelScope.launch {
+    fun loadResumeWatching() = viewModelScope.launchSafe {
         val resumeWatching = withContext(Dispatchers.IO) {
             getAllResumeStateIds()?.mapNotNull { id ->
                 getLastWatched(id)
@@ -97,12 +96,12 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun loadStoredData(preferredWatchStatus: EnumSet<WatchType>?) = viewModelScope.launch {
+    fun loadStoredData(preferredWatchStatus: EnumSet<WatchType>?) = viewModelScope.launchSafe {
         val watchStatusIds = withContext(Dispatchers.IO) {
             getAllWatchStateIds()?.map { id ->
                 Pair(id, getResultWatchState(id))
             }
-        }?.distinctBy { it.first } ?: return@launch
+        }?.distinctBy { it.first } ?: return@launchSafe
 
         val length = WatchType.values().size
         val currentWatchTypes = EnumSet.noneOf(WatchType::class.java)
@@ -118,7 +117,7 @@ class HomeViewModel : ViewModel() {
 
         if (currentWatchTypes.size <= 0) {
             _bookmarks.postValue(Pair(false, ArrayList()))
-            return@launch
+            return@launchSafe
         }
 
         val watchPrefNotNull = preferredWatchStatus ?: EnumSet.of(currentWatchTypes.first())
@@ -202,11 +201,11 @@ class HomeViewModel : ViewModel() {
     }
 
     // this is soo over engineered, but idk how I can make it clean without making the main api harder to use :pensive:
-    fun expand(name: String) = viewModelScope.launch {
+    fun expand(name: String) = viewModelScope.launchSafe {
         expandAndReturn(name)
     }
 
-    private fun load(api: MainAPI?) = viewModelScope.launch {
+    private fun load(api: MainAPI?) = viewModelScope.launchSafe {
         repo = if (api != null) {
             APIRepository(api)
         } else {
@@ -225,8 +224,10 @@ class HomeViewModel : ViewModel() {
                         expandable.clear()
                         data.value.forEach { home ->
                             home?.items?.forEach { list ->
+                                val filteredList =
+                                    context?.filterHomePageListByFilmQuality(list) ?: list
                                 expandable[list.name] =
-                                    ExpandableHomepageList(list, 1, home.hasNext)
+                                    ExpandableHomepageList(filteredList, 1, home.hasNext)
                             }
                         }
                         _page.postValue(Resource.Success(expandable))
@@ -241,7 +242,9 @@ class HomeViewModel : ViewModel() {
                                     .toList()
 
                             if (currentList.isNotEmpty()) {
-                                val randomItems = currentList.shuffled()
+                                val randomItems =
+                                    context?.filterSearchResultByFilmQuality(currentList.shuffled())
+                                        ?: currentList.shuffled()
 
                                 _randomItems.postValue(randomItems)
                             }
@@ -261,21 +264,33 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun loadAndCancel(preferredApiName: String?) = viewModelScope.launch {
-        val api = getApiFromNameNull(preferredApiName)
-        if (preferredApiName == noneApi.name)
-            loadAndCancel(noneApi)
-        else if (preferredApiName == randomApi.name || api == null) {
-            val validAPIs = context?.filterProviderByPreferredMedia()
-            if (validAPIs.isNullOrEmpty()) {
-                loadAndCancel(noneApi)
-            } else {
-                val apiRandom = validAPIs.random()
-                loadAndCancel(apiRandom)
-                setKey(HOMEPAGE_API, apiRandom.name)
+    fun loadAndCancel(preferredApiName: String?, forceReload: Boolean = true) =
+        viewModelScope.launchSafe {
+            // Since plugins are loaded in stages this function can get called multiple times.
+            // The issue with this is that the homepage may be fetched multiple times while the first request is loading
+            val api = getApiFromNameNull(preferredApiName)
+            if (!forceReload && api?.let { expandable[it.name]?.list?.list?.isNotEmpty() } == true) {
+                return@launchSafe
             }
-        } else {
-            loadAndCancel(api)
+            // If the plugin isn't loaded yet. (Does not set the key)
+            if (api == null) {
+                loadAndCancel(noneApi)
+            } else if (preferredApiName == noneApi.name) {
+                setKey(USER_SELECTED_HOMEPAGE_API, noneApi.name)
+                loadAndCancel(noneApi)
+            } else if (preferredApiName == randomApi.name) {
+                val validAPIs = context?.filterProviderByPreferredMedia()
+                if (validAPIs.isNullOrEmpty()) {
+                    // Do not set USER_SELECTED_HOMEPAGE_API when there is no plugins loaded
+                    loadAndCancel(noneApi)
+                } else {
+                    val apiRandom = validAPIs.random()
+                    loadAndCancel(apiRandom)
+                    setKey(USER_SELECTED_HOMEPAGE_API, apiRandom.name)
+                }
+            } else {
+                setKey(USER_SELECTED_HOMEPAGE_API, api.name)
+                loadAndCancel(api)
+            }
         }
-    }
 }

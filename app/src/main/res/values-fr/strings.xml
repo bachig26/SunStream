@@ -16,7 +16,7 @@
     <string name="result_share">Partager</string>
     <string name="result_open_in_browser">Ouvrir dans le naviguateur</string>
     <string name="skip_loading">Passer le chargement</string>
-    <string name="loading_chromecast">Chargement…</string>
+    <string name="loading">Chargement…</string>
     <string name="type_watching">En visionnage</string>
     <string name="type_on_hold">En pose</string>
     <string name="type_completed">Terminé</string>
@@ -291,11 +291,6 @@
     <string name="home_random">Aléatoire</string>
     <string name="coming_soon">A venir ...</string>
     <string name="poster_image">Image de l\'affiche</string>
-    <string name="killswitch_settings">Télécharger les dernières métadonnées depuis Github</string>
-    <string name="killswitch_settings_des">Pour accéder à tous les fournisseurs (y compris les fournisseurs défectueux), désactivez ce paramètre</string>
     <string name="authenticated_user">Connecté %s</string>
     <string name="action_add_to_bookmarks">Définir le statut de visionage</string>
-    <string name="nginx_info_title">Qu\'est-ce qu\'Nginx ?</string>
-    <string name="nginx_info_summary">Nginx est un logiciel utilisé pour afficher les fichier d\'un server que vous possèdez. Cliquez pour voir un guide de mise en place.</string>
-    <string name="nginx_url_pref">Addresse du serveur Nginx</string>
 </resources>

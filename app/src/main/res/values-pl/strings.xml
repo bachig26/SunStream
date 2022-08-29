@@ -31,7 +31,7 @@
     <string name="result_share">Udostępnij</string>
     <string name="result_open_in_browser">Otwórz w przeglądarce</string>
     <string name="skip_loading">Pomiń ładowanie</string>
-    <string name="loading_chromecast">Ładowanie…</string>
+    <string name="loading">Ładowanie…</string>
 
     <string name="type_watching">W trakcie</string>
     <string name="type_on_hold">Zawieszone</string>
@@ -42,7 +42,7 @@
     <string name="type_re_watching">Ponowne oglądanie</string>
 
     <string name="play_movie_button">Odtwórz film</string>
-    <string name="play_livestream_button">Odtwórz Livestream</string>
+    <string name="play_livestream_button">Odtwórz transmisję na żywo</string>
     <string name="play_torrent_button">Otwórz torrent</string>
     <string name="pick_source">Źródła</string>
     <string name="pick_subtitle">Napisy</string>
@@ -60,7 +60,7 @@
     <string name="download_canceled">Anulowano pobieranie</string>
     <string name="download_done">Zakończono pobieranie</string>
 
-    <string name="stream">Streamuj</string>
+    <string name="stream">Stream</string>
     <string name="error_loading_links_toast">Błąd przy ładowaniu linków</string>
     <string name="download_storage_text">Pamięć wewnętrzna</string>
 
@@ -152,8 +152,6 @@
     <string name="episode_sync_settings">Aktualizuj postęp oglądania</string>
     <string name="episode_sync_settings_des">Automatycznie synchronizuj postęp aktualnego odcinka</string>
     <string name="restore_settings">Przywracanie danych z kopii zapasowej</string>
-    <string name="killswitch_settings">Pobierz najnowsze metadane z Githuba</string>
-    <string name="killswitch_settings_des">Jeśli chcesz mieć dostęp do wszystkich dostawców (nawet tych uszkodzonych), wyłącz tę opcję</string>
 
     <string name="backup_settings">Kopia zapasowa danych</string>
     <string name="restore_success">Wczytano plik kopii zapasowej</string>
@@ -165,8 +163,7 @@
     <string name="search">Szukaj</string>
     <string name="category_account">Konta</string>
     <string name="category_updates">Aktualizacje i kopia zapasowa</string>
-    <string name="nginx_info_title">Co to Nginx?</string>
-    <string name="nginx_info_summary">Nginx to oprogramowanie, które może być używane do wyświetlania plików z serwera, którego jesteś właścicielem. Kliknij, aby zobaczyć przewodnik konfiguracji Nginx</string>
+    
     <string name="settings_info">Informacje</string>
     <string name="advanced_search">Zaawansowane wyszukiwanie</string>
     <string name="advanced_search_des">Szukaj z podziałem na dostawców</string>
@@ -238,7 +235,7 @@
     <string name="ova">OVA</string>
     <string name="asian_drama">Filmy azjatyckie</string>
 
-    <string name="livestreams">Livestreamy</string>
+    <string name="livestreams">Transmisje na żywo</string>
     <string name="movies_singular">Film</string>
     <string name="tv_series_singular">Serial telewizyjny</string>
     <string name="cartoons_singular">Kreskówka</string>
@@ -398,4 +395,45 @@
     <string name="app_layout_subtext">Dostosuj wygląd aplikacji do urządzenia</string>
     <string name="preferred_media_subtext">Preferowany rodzaj filmów</string>
     <string name="setup_done">Gotowe</string>
+    <string name="extras">Dodatki</string>
+    <string name="trailer">Zwiastun</string>
+    <string name="play_with_app_name">Odtwórz w CloudStream</string>
+    <string name="live_singular">Transmisja na żywo</string>
+    <string name="network_adress_example">Link to streamu</string>
+    <string name="referer">Odsyłacz</string>
+    <string name="crash_reporting_title">Przekazywanie błędów</string>
+    <string name="automatic_plugin_updates">Automatyczne aktualizacje rozszerzeń</string>
+    <string name="extensions">Rozszerzenia</string>
+    <string name="add_repository">Dodaj repozytorium</string>
+    <string name="repository_name_hint">Nazwa repozytorium</string>
+    <string name="repository_url_hint">Adres url repozytorium</string>
+    <string name="plugin_loaded">Rozszerzenie załadowane</string>
+    <string name="plugin_deleted">Rozszerzenie usunięte</string>
+    <string name="plugin_load_fail">Błąd ładowania %s</string>
+    <string name="is_adult">+18</string>
+    <string name="batch_download_start_format">Zaczęto pobieranie %d %s</string>
+    <string name="batch_download_finish_format">Pobrano %d %s</string>
+    <string name="batch_download_nothing_to_download_format">Wszystkie %s już pobrane</string>
+    <string name="batch_download">Pobierz wszystko</string>
+    <string name="plugin_singular">rozszerzenie</string>
+    <string name="plugin">rozszerzenia</string>
+    <string name="delete_repository_plugins">Ta akcja usunie także wszystkie rozszerzenia z repozytorium</string>
+    <string name="delete_repository">Usuń repozytorium</string>
+    <string name="setup_extensions_subtext">Pobierz strony które Cię interesują</string>
+    <string name="plugins_downloaded">Pobrano: %d</string>
+    <string name="plugins_disabled">Wyłączono: %d</string>
+    <string name="plugins_not_downloaded">Nie pobrano: %d</string>
+    <string name="blank_repo_message">Dodaj repozytorium aby zainstalować rozszerzenia</string>
+    <string name="sync_score">Ocenione</string>
+    <string name="sync_score_format">%d na 10</string>
+    <string name="others">Inne</string>
+    <string name="other_singular">Wideo</string>
+    <string name="view_public_repositories_button">Zobacz repozytoria społeczności</string>
+    <string name="view_public_repositories_button_short">Publiczna lista</string>
+    <string name="example_lang_name">Kod języka (en)</string>
+    <string name="subtitles_filter_lang">Filtrowanie wg preferowanego języka mediów</string>
+    <string name="uppercase_all_subtitles">Wszystkie napisy wielką literą</string>
+    <string name="download_all_plugins_from_repo">Pobrać wszystkie rozszerzenia z tego repozytorium?</string>
+    <string name="single_plugin_disabled">%s (Wyłączone)</string>
+    <string name="pref_filter_search_quality">Ukryj wybraną jakość wideo w wynikach wyszukiwania</string>
 </resources>

@@ -3,7 +3,6 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
 
-        android:nextFocusLeft="@id/episode_poster"
         android:nextFocusRight="@id/result_episode_download"
         android:id="@+id/episode_holder_large"
 
@@ -12,7 +11,6 @@
         app:cardCornerRadius="@dimen/rounded_image_radius"
         app:cardBackgroundColor="?attr/boxItemBackground"
 
-        android:foreground="@drawable/outline_drawable"
         android:layout_marginBottom="10dp">
 
     <LinearLayout
@@ -33,8 +31,7 @@
                     android:foreground="@drawable/outline_drawable">
 
                 <ImageView
-                        android:nextFocusLeft="@id/result_episode_download"
-                        android:nextFocusRight="@id/episode_holder"
+                        android:nextFocusRight="@id/result_episode_download"
 
                         android:id="@+id/episode_poster"
                         tools:src="@drawable/example_poster"
@@ -126,7 +123,6 @@
 
                 <ImageView
                         android:nextFocusLeft="@id/episode_poster"
-                        android:nextFocusRight="@id/episode_holder"
                         android:id="@+id/result_episode_download"
 
                         android:visibility="visible"

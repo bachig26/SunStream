@@ -31,6 +31,7 @@ import com.lagradost.cloudstream3.utils.Event
 import com.lagradost.cloudstream3.utils.UIHelper.fixPaddingStatusbar
 import com.lagradost.cloudstream3.utils.UIHelper.navigate
 import com.lagradost.cloudstream3.utils.UIHelper.setImage
+
 import io.ktor.http.*
 import io.netty.handler.codec.http.HttpResponse
 import kotlinx.android.synthetic.main.main_settings.*
@@ -38,6 +39,11 @@ import kotlinx.android.synthetic.main.settings_title_top.*
 import kotlinx.coroutines.runBlocking
 import okhttp3.internal.http.HTTP_BAD_REQUEST
 import okhttp3.internal.http.HttpMethod
+
+import com.lagradost.cloudstream3.utils.UIHelper.toPx
+import kotlinx.android.synthetic.main.main_settings.*
+import kotlinx.android.synthetic.main.standard_toolbar.*
+
 import java.io.File
 
 class SettingsFragment : Fragment() {
@@ -55,7 +61,28 @@ class SettingsFragment : Fragment() {
             }
         }
 
-        fun PreferenceFragmentCompat?.setUpToolbar(@StringRes title: Int) {
+        /**
+         * On TV you cannot properly scroll to the bottom of settings, this fixes that.
+         * */
+        fun PreferenceFragmentCompat.setPaddingBottom() {
+            if (this.context?.isTvSettings() == true) {
+                listView?.setPadding(0, 0, 0, 100.toPx)
+            }
+        }
+
+        fun Fragment?.setUpToolbar(title: String) {
+            if (this == null) return
+            settings_toolbar?.apply {
+                setTitle(title)
+                setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
+                setNavigationOnClickListener {
+                    activity?.onBackPressed()
+                }
+            }
+            context.fixPaddingStatusbar(settings_toolbar)
+        }
+
+        fun Fragment?.setUpToolbar(@StringRes title: Int) {
             if (this == null) return
             settings_toolbar?.apply {
                 setTitle(title)
@@ -154,8 +181,12 @@ class SettingsFragment : Fragment() {
             Pair(settings_ui, R.id.action_navigation_settings_to_navigation_settings_ui),
             Pair(settings_lang, R.id.action_navigation_settings_to_navigation_settings_lang),
             Pair(settings_updates, R.id.action_navigation_settings_to_navigation_settings_updates),
-            Pair(settings_providers, R.id.action_navigation_settings_to_navigation_settings_providers),
+            Pair(
+                settings_extensions,
+                R.id.action_navigation_settings_to_navigation_settings_extensions
+            ),
             Pair(settings_about, R.id.action_navigation_settings_to_navigation_settings_about),
+
         ).forEach { (view, navigationId) ->
             view?.apply {
                 setOnClickListener {

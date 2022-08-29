@@ -42,7 +42,7 @@ open class TmdbProvider : MainAPI() {
 
     override val providerType = ProviderType.MetaProvider
 
-    override val hasSearch: Boolean = false // only CrossTmdbProvider has search (called MultiMedia)
+    override val hasSearch: Boolean = false // only CrossTmdbProvider has search
 
     // Fuck it, public private api key because github actions won't co-operate.
     // Please no stealy.

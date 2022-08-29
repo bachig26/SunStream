@@ -1,5 +1,8 @@
 # SunStream
 
+
+**⚠️ Warning: By default this app doesn't provide any video sources, you have to install extensions in order to add functionality to the app.**
+
 ***Features:***
 + All providers show up as one (called MultiMedia) thanks to TMDB
 
@@ -46,5 +49,3 @@ In case of copyright infringement, please directly contact the responsible parti
 The app is purely for educational and personal use.
 
 SunStream does not host any content on the app, and has no control over what media is put up or taken down. SunStream functions like any other search engine, such as Google. SunStream does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface.
-
-It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use SunStream at your own risk.

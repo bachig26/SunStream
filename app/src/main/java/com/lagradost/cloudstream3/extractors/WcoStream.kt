@@ -2,8 +2,8 @@ package com.lagradost.cloudstream3.extractors
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.ErrorLoadingException
-import com.lagradost.cloudstream3.animeproviders.NineAnimeProvider.Companion.cipher
-import com.lagradost.cloudstream3.animeproviders.NineAnimeProvider.Companion.encrypt
+import com.lagradost.cloudstream3.extractors.helper.NineAnimeHelper.cipher
+import com.lagradost.cloudstream3.extractors.helper.NineAnimeHelper.encrypt
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.utils.ExtractorApi
 import com.lagradost.cloudstream3.utils.ExtractorLink

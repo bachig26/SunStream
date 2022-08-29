@@ -2,6 +2,7 @@ package com.lagradost.cloudstream3.utils
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.Activity.RESULT_CANCELED
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -20,12 +21,17 @@ import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.text.Spanned
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.annotation.WorkerThread
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import androidx.core.text.toSpanned
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.tvprovider.media.tv.PreviewChannelHelper
@@ -38,13 +44,19 @@ import com.google.android.gms.cast.framework.CastState
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.wrappers.Wrappers
-import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.SearchResponse
-import com.lagradost.cloudstream3.isMovieType
-import com.lagradost.cloudstream3.mapper
+import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.CommonActivity.showToast
+import com.lagradost.cloudstream3.MainActivity.Companion.afterRepositoryLoadedEvent
 import com.lagradost.cloudstream3.mvvm.logError
+import com.lagradost.cloudstream3.mvvm.normalSafeApiCall
+import com.lagradost.cloudstream3.plugins.RepositoryManager
+import com.lagradost.cloudstream3.ui.WebviewFragment
 import com.lagradost.cloudstream3.ui.result.ResultFragment
+import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTrueTvSettings
+import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel.Companion.downloadAll
+import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
+import com.lagradost.cloudstream3.utils.Coroutines.main
 import com.lagradost.cloudstream3.utils.FillerEpisodeCheck.toClassDir
 import com.lagradost.cloudstream3.utils.JsUnpacker.Companion.load
 import com.lagradost.cloudstream3.utils.UIHelper.navigate
@@ -63,7 +75,7 @@ object AppUtils {
         val layoutManager =
             this.layoutManager as? LinearLayoutManager?
         val adapter = adapter
-        return if (layoutManager == null || adapter == null) false else layoutManager.findLastCompletelyVisibleItemPosition() < adapter.itemCount - 2
+        return if (layoutManager == null || adapter == null) false else layoutManager.findLastCompletelyVisibleItemPosition() < adapter.itemCount - 7 // bit more than 1 to make it more seamless
     }
 
     //fun Context.deleteFavorite(data: SearchResponse) {
@@ -187,21 +199,21 @@ object AppUtils {
     @WorkerThread
     fun Context.addProgramsToContinueWatching(data: List<DataStoreHelper.ResumeWatchingResult>) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-
+        val context = this
         ioSafe {
             data.forEach { episodeInfo ->
                 try {
-                    val (program, id) = getWatchNextProgramByVideoId(episodeInfo.url, this)
-                    val nextProgram = buildWatchNextProgramUri(this, episodeInfo)
+                    val (program, id) = getWatchNextProgramByVideoId(episodeInfo.url, context)
+                    val nextProgram = buildWatchNextProgramUri(context, episodeInfo)
 
                     // If the program is already in the Watch Next row, update it
                     if (program != null && id != null) {
-                        PreviewChannelHelper(this).updateWatchNextProgram(
+                        PreviewChannelHelper(context).updateWatchNextProgram(
                             nextProgram,
                             id,
                         )
                     } else {
-                        PreviewChannelHelper(this)
+                        PreviewChannelHelper(context)
                             .publishWatchNextProgram(nextProgram)
                     }
                 } catch (e: Exception) {
@@ -230,14 +242,96 @@ object AppUtils {
         }
     }
 
-    fun Context.openBrowser(url: String) {
+    fun Activity.loadRepository(url: String) {
+        ioSafe {
+            val repo = RepositoryManager.parseRepository(url) ?: return@ioSafe
+            RepositoryManager.addRepository(
+                RepositoryData(
+                    repo.name,
+                    url
+                )
+            )
+            main {
+                showToast(
+                    this@loadRepository,
+                    getString(R.string.player_loaded_subtitles, repo.name),
+                    Toast.LENGTH_LONG
+                )
+            }
+            afterRepositoryLoadedEvent.invoke(true)
+            downloadAllPluginsDialog(url, repo.name)
+        }
+    }
+
+    fun Activity.downloadAllPluginsDialog(repositoryUrl: String, repositoryName: String) {
+        runOnUiThread {
+            val context = this
+            val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+            builder.setTitle(
+                repositoryName
+            )
+            builder.setMessage(
+                R.string.download_all_plugins_from_repo
+            )
+            builder.apply {
+                setPositiveButton(R.string.download) { _, _ ->
+                    downloadAll(context, repositoryUrl, null)
+                }
+
+                setNegativeButton(R.string.cancel) { _, _ -> }
+            }
+            builder.show()
+        }
+    }
+
+    private fun Context.hasWebView(): Boolean {
+        return this.packageManager.hasSystemFeature("android.software.webview")
+    }
+
+    fun openWebView(fragment: Fragment?, url: String) {
+        if (fragment?.context?.hasWebView() == true)
+            normalSafeApiCall {
+                fragment
+                    .findNavController()
+                    .navigate(R.id.navigation_webview, WebviewFragment.newInstance(url))
+            }
+    }
+
+    /**
+     * If fallbackWebview is true and a fragment is supplied then it will open a webview with the url if the browser fails.
+     * */
+    fun Context.openBrowser(
+        url: String,
+        fallbackWebview: Boolean = false,
+        fragment: Fragment? = null,
+    ) {
         try {
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = Uri.parse(url)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            ContextCompat.startActivity(this, intent, null)
+
+            // activityResultRegistry is used to fall back to webview if a browser is missing
+            // On older versions the startActivity just crashes, but on newer android versions
+            // You need to check the result to make sure it failed
+            val activityResultRegistry = fragment?.activity?.activityResultRegistry
+            if (activityResultRegistry != null) {
+                activityResultRegistry.register(
+                    url,
+                    ActivityResultContracts.StartActivityForResult()
+                ) { result ->
+                    if (result.resultCode == RESULT_CANCELED && fallbackWebview) {
+                        openWebView(fragment, url)
+                    }
+                }.launch(intent)
+            } else {
+                ContextCompat.startActivity(this, intent, null)
+            }
+
         } catch (e: Exception) {
             logError(e)
+            if (fallbackWebview) {
+                openWebView(fragment, url)
+            }
         }
     }
 
@@ -313,6 +407,14 @@ object AppUtils {
 
     //private val viewModel: ResultViewModel by activityViewModels()
 
+    private fun getResultsId(context: Context): Int {
+        return if (context.isTrueTvSettings()) {
+            R.id.global_to_navigation_results_tv
+        } else {
+            R.id.global_to_navigation_results_phone
+        }
+    }
+
     fun AppCompatActivity.loadResult(
         url: String,
         apiName: String,
@@ -322,7 +424,7 @@ object AppUtils {
         this.runOnUiThread {
             // viewModelStore.clear()
             this.navigate(
-                R.id.global_to_navigation_results,
+                getResultsId(this.applicationContext ?: return@runOnUiThread),
                 ResultFragment.newInstance(url, apiName, startAction, startValue)
             )
         }
@@ -336,7 +438,7 @@ object AppUtils {
         this?.runOnUiThread {
             // viewModelStore.clear()
             this.navigate(
-                R.id.global_to_navigation_results,
+                getResultsId(this),
                 ResultFragment.newInstance(card, startAction, startValue)
             )
         }

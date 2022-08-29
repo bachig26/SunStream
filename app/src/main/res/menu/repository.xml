@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/search_button"
+        android:icon="@drawable/search_icon"
+        android:title="@string/title_search"
+        app:actionViewClass="android.widget.SearchView"
+        app:searchHintIcon="@drawable/search_icon"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/lang_filter"
+        android:icon="@drawable/ic_baseline_language_24"
+        android:title="@string/provider_lang_settings"
+        app:showAsAction="collapseActionView|ifRoom" />
+    <item
+        android:id="@+id/download_all"
+        android:icon="@drawable/netflix_download"
+        android:title="@string/batch_download"
+        app:showAsAction="collapseActionView|ifRoom" />
+</menu>

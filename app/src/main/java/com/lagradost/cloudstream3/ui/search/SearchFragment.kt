@@ -21,11 +21,13 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.APIHolder.filterProviderByPreferredMedia
-import com.lagradost.cloudstream3.APIHolder.getApiFromName
+import com.lagradost.cloudstream3.APIHolder.filterSearchResultByFilmQuality
+import com.lagradost.cloudstream3.APIHolder.getApiFromNameNull
 import com.lagradost.cloudstream3.APIHolder.getApiProviderLangSettings
 import com.lagradost.cloudstream3.APIHolder.getApiSettings
 import com.lagradost.cloudstream3.AcraApplication.Companion.removeKey
 import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
+import com.lagradost.cloudstream3.MainActivity.Companion.afterPluginsLoadedEvent
 import com.lagradost.cloudstream3.mvvm.Resource
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.mvvm.observe
@@ -35,6 +37,7 @@ import com.lagradost.cloudstream3.ui.home.HomeFragment.Companion.currentSpan
 import com.lagradost.cloudstream3.ui.home.HomeFragment.Companion.loadHomepageList
 import com.lagradost.cloudstream3.ui.home.ParentItemAdapter
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTrueTvSettings
+import com.lagradost.cloudstream3.utils.Coroutines.main
 import com.lagradost.cloudstream3.utils.DataStore.getKey
 import com.lagradost.cloudstream3.utils.DataStore.setKey
 import com.lagradost.cloudstream3.utils.SubtitleHelper
@@ -97,6 +100,16 @@ class SearchFragment : Fragment() {
         super.onDestroyView()
     }
 
+    override fun onResume() {
+        super.onResume()
+        afterPluginsLoadedEvent += ::reloadRepos
+    }
+
+    override fun onStop() {
+        super.onStop()
+        afterPluginsLoadedEvent -= ::reloadRepos
+    }
+
     var selectedSearchTypes = mutableListOf<TvType>()
     var selectedApis = mutableSetOf<String>()
 
@@ -106,13 +119,74 @@ class SearchFragment : Fragment() {
             searchViewModel.searchAndCancel(
                 query = query,
                 providersActive = selectedApis.filter { name ->
-                    settings.contains(name) && getApiFromName(name).supportedTypes.any {
+                    settings.contains(name) && getApiFromNameNull(name)?.supportedTypes?.any {
                         selectedSearchTypes.contains(
                             it
                         )
-                    }
+                    } == true
                 }.toSet()
             )
+        }
+    }
+
+    // Null if defined as a variable
+    // This needs to be run after view created
+    private fun getPairList(): List<Pair<MaterialButton?, List<TvType>>> {
+        return HomeFragment.getPairList(
+            search_select_anime,
+            search_select_cartoons,
+            search_select_tv_series,
+            search_select_documentaries,
+            search_select_movies,
+            search_select_asian,
+            search_select_livestreams,
+            search_select_nsfw,
+            search_select_others
+        )
+    }
+
+    private fun reloadRepos(success: Boolean = false) = main {
+        val pairList = getPairList()
+
+        searchViewModel.reloadRepos()
+        context?.filterProviderByPreferredMedia()?.let { validAPIs ->
+            for ((button, validTypes) in pairList) {
+                val isValid =
+                    validAPIs.any { api -> validTypes.any { api.supportedTypes.contains(it) } }
+                button?.isVisible = isValid
+                if (isValid) {
+                    fun buttonContains(): Boolean {
+                        return selectedSearchTypes.any { validTypes.contains(it) }
+                    }
+
+                    button?.isSelected = buttonContains()
+                    button?.setOnClickListener {
+                        val last = selectedSearchTypes.toSet()
+                        selectedSearchTypes.clear()
+                        selectedSearchTypes.addAll(validTypes)
+                        for ((otherButton, _) in pairList) {
+                            otherButton?.isSelected = false
+                        }
+                        it?.context?.setKey(SEARCH_PREF_TAGS, selectedSearchTypes)
+                        it?.isSelected = true
+                        if (last != selectedSearchTypes.toSet()) // if you click the same button again the it does nothing
+                            search(main_search?.query?.toString())
+                    }
+
+                    button?.setOnLongClickListener {
+                        if (!buttonContains()) {
+                            it?.isSelected = true
+                            selectedSearchTypes.addAll(validTypes)
+                        } else {
+                            it?.isSelected = false
+                            selectedSearchTypes.removeAll(validTypes)
+                        }
+                        it?.context?.setKey(SEARCH_PREF_TAGS, selectedSearchTypes)
+                        search(main_search?.query?.toString())
+                        return@setOnLongClickListener true
+                    }
+                }
+            }
         }
     }
 
@@ -121,6 +195,7 @@ class SearchFragment : Fragment() {
 
         context?.fixPaddingStatusbar(searchRoot)
         fixGrid()
+        reloadRepos()
 
         val adapter: RecyclerView.Adapter<RecyclerView.ViewHolder>? = activity?.let {
             SearchAdapter(
@@ -158,6 +233,7 @@ class SearchFragment : Fragment() {
                 var currentValidApis = listOf<MainAPI>()
                 val currentSelectedApis = if (selectedApis.isEmpty()) validAPIs.map { it.name }
                     .toMutableSet() else selectedApis
+
                 val builder =
                     BottomSheetDialog(ctx)
 
@@ -174,6 +250,8 @@ class SearchFragment : Fragment() {
                     val asian = dialog.findViewById<MaterialButton>(R.id.home_select_asian)
                     val livestream =
                         dialog.findViewById<MaterialButton>(R.id.home_select_livestreams)
+                    val nsfw = dialog.findViewById<MaterialButton>(R.id.home_select_nsfw)
+                    val other = dialog.findViewById<MaterialButton>(R.id.home_select_others)
                     val cancelBtt = dialog.findViewById<MaterialButton>(R.id.cancel_btt)
                     val applyBtt = dialog.findViewById<MaterialButton>(R.id.apply_btt)
 
@@ -185,7 +263,9 @@ class SearchFragment : Fragment() {
                             docs,
                             movies,
                             asian,
-                            livestream
+                            livestream,
+                            nsfw,
+                            other
                         )
 
                     cancelBtt?.setOnClickListener {
@@ -221,7 +301,7 @@ class SearchFragment : Fragment() {
                     listView?.choiceMode = AbsListView.CHOICE_MODE_MULTIPLE
 
                     listView?.setOnItemClickListener { _, _, i, _ ->
-                        if (!currentValidApis.isNullOrEmpty()) {
+                        if (currentValidApis.isNotEmpty()) {
                             val api = currentValidApis[i].name
                             if (currentSelectedApis.contains(api)) {
                                 listView.setItemChecked(i, false)
@@ -295,16 +375,6 @@ class SearchFragment : Fragment() {
             }
         }
 
-        val pairList = HomeFragment.getPairList(
-            search_select_anime,
-            search_select_cartoons,
-            search_select_tv_series,
-            search_select_documentaries,
-            search_select_movies,
-            search_select_asian,
-            search_select_livestreams
-        )
-
         val settingsManager = context?.let { PreferenceManager.getDefaultSharedPreferences(it) }
         val isAdvancedSearch = settingsManager?.getBoolean("advanced_search", true) ?: true
 
@@ -313,50 +383,11 @@ class SearchFragment : Fragment() {
             ?.toMutableList()
             ?: mutableListOf(TvType.Movie, TvType.TvSeries)
 
+        val pairList = getPairList()
         fun updateSelectedList(list: MutableList<TvType>) {
             selectedSearchTypes = list
             for ((button, validTypes) in pairList) {
                 button?.isSelected = selectedSearchTypes.any { validTypes.contains(it) }
-            }
-        }
-
-        context?.filterProviderByPreferredMedia()?.let { validAPIs ->
-            for ((button, validTypes) in pairList) {
-                val isValid =
-                    validAPIs.any { api -> validTypes.any { api.supportedTypes.contains(it) } }
-                button?.isVisible = isValid
-                if (isValid) {
-                    fun buttonContains(): Boolean {
-                        return selectedSearchTypes.any { validTypes.contains(it) }
-                    }
-
-                    button?.isSelected = buttonContains()
-                    button?.setOnClickListener {
-                        val last = selectedSearchTypes.toSet()
-                        selectedSearchTypes.clear()
-                        selectedSearchTypes.addAll(validTypes)
-                        for ((otherButton, _) in pairList) {
-                            otherButton?.isSelected = false
-                        }
-                        it?.context?.setKey(SEARCH_PREF_TAGS, selectedSearchTypes)
-                        it?.isSelected = true
-                        if (last != selectedSearchTypes.toSet()) // if you click the same button again the it does nothing
-                            search(main_search?.query?.toString())
-                    }
-
-                    button?.setOnLongClickListener {
-                        if (!buttonContains()) {
-                            it?.isSelected = true
-                            selectedSearchTypes.addAll(validTypes)
-                        } else {
-                            it?.isSelected = false
-                            selectedSearchTypes.removeAll(validTypes)
-                        }
-                        it?.context?.setKey(SEARCH_PREF_TAGS, selectedSearchTypes)
-                        search(main_search?.query?.toString())
-                        return@setOnLongClickListener true
-                    }
-                }
             }
         }
 
@@ -429,9 +460,13 @@ class SearchFragment : Fragment() {
                 listLock.lock()
                 (search_master_recycler?.adapter as ParentItemAdapter?)?.apply {
                     val newItems = list.map { ongoing ->
+                        val dataList =
+                            if (ongoing.data is Resource.Success) ongoing.data.value else ArrayList()
+                        val dataListFiltered =
+                            context?.filterSearchResultByFilmQuality(dataList) ?: dataList
                         val ongoingList = HomePageList(
                             ongoing.apiName,
-                            if (ongoing.data is Resource.Success) ongoing.data.value else ArrayList()
+                            dataListFiltered
                         )
                         ongoingList
                     }

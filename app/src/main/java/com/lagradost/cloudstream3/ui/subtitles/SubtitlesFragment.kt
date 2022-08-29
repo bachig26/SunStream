@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.annotation.FontRes
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
+import androidx.preference.PreferenceManager
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.android.exoplayer2.text.Cue
 import com.google.android.exoplayer2.ui.CaptionStyleCompat
@@ -37,6 +38,7 @@ import com.lagradost.cloudstream3.utils.UIHelper.hideSystemUI
 import com.lagradost.cloudstream3.utils.UIHelper.navigate
 import com.lagradost.cloudstream3.utils.UIHelper.popCurrentPage
 import kotlinx.android.synthetic.main.subtitle_settings.*
+import kotlinx.android.synthetic.main.toast.view.*
 import java.io.File
 
 const val SUBTITLE_KEY = "subtitle_settings"
@@ -59,6 +61,8 @@ data class SaveCaptionStyle(
     @JsonProperty("fixedTextSize") var fixedTextSize: Float?,
     @JsonProperty("removeCaptions") var removeCaptions: Boolean = false,
     @JsonProperty("removeBloat") var removeBloat: Boolean = true,
+    /** Apply caps lock to the text **/
+    @JsonProperty("upperCase") var upperCase: Boolean = false,
 )
 
 const val DEF_SUBS_ELEVATION = 20
@@ -181,6 +185,19 @@ class SubtitlesFragment : Fragment() {
 
     private fun Context.updateState() {
         subtitle_text?.setStyle(fromSaveToStyle(state))
+        val text = subtitle_text.context.getString(R.string.subtitles_example_text)
+        val fixedText = if (state.upperCase) text.uppercase() else text
+        subtitle_text?.setCues(
+            listOf(
+                Cue.Builder()
+                    .setTextSize(
+                        getPixels(TypedValue.COMPLEX_UNIT_SP, 25.0f).toFloat(),
+                        Cue.TEXT_SIZE_TYPE_ABSOLUTE
+                    )
+                    .setText(fixedText)
+                    .build()
+            )
+        )
     }
 
     private fun getColor(id: Int): Int {
@@ -220,7 +237,6 @@ class SubtitlesFragment : Fragment() {
         subs_import_text?.text = getString(R.string.subs_import_text).format(
             context?.getExternalFilesDir(null)?.absolutePath.toString() + "/Fonts"
         )
-
 
         context?.fixPaddingStatusbar(subs_root)
 
@@ -403,6 +419,12 @@ class SubtitlesFragment : Fragment() {
         subtitles_remove_bloat?.setOnCheckedChangeListener { _, b ->
             state.removeBloat = b
         }
+        subtitles_uppercase?.isChecked = state.upperCase
+        subtitles_uppercase?.setOnCheckedChangeListener { _, b ->
+            state.upperCase = b
+            context?.updateState()
+        }
+
         subtitles_remove_captions?.isChecked = state.removeCaptions
         subtitles_remove_captions?.setOnCheckedChangeListener { _, b ->
             state.removeCaptions = b
@@ -413,6 +435,22 @@ class SubtitlesFragment : Fragment() {
             //textView.context.updateState() // font size not changed
             showToast(activity, R.string.subs_default_reset_toast, Toast.LENGTH_SHORT)
             return@setOnLongClickListener true
+        }
+
+        //Fetch current value from preference
+        context?.let { ctx ->
+            subtitles_filter_sub_lang?.isChecked =
+                PreferenceManager.getDefaultSharedPreferences(ctx)
+                    .getBoolean(getString(R.string.filter_sub_lang_key), false)
+        }
+
+        subtitles_filter_sub_lang?.setOnCheckedChangeListener { _, b ->
+            context?.let { ctx ->
+                PreferenceManager.getDefaultSharedPreferences(ctx)
+                    .edit()
+                    .putBoolean(getString(R.string.filter_sub_lang_key), b)
+                    .apply()
+            }
         }
 
         subs_font.setFocusableInTv()
@@ -538,17 +576,5 @@ class SubtitlesFragment : Fragment() {
             it.context.fromSaveToStyle(state)
             activity?.popCurrentPage()
         }
-
-        subtitle_text.setCues(
-            listOf(
-                Cue.Builder()
-                    .setTextSize(
-                        getPixels(TypedValue.COMPLEX_UNIT_SP, 25.0f).toFloat(),
-                        Cue.TEXT_SIZE_TYPE_ABSOLUTE
-                    )
-                    .setText(subtitle_text.context.getString(R.string.subtitles_example_text))
-                    .build()
-            )
-        )
     }
 }

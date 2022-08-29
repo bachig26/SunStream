@@ -39,13 +39,16 @@ import com.lagradost.cloudstream3.CommonActivity.onUserLeaveHint
 import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.CommonActivity.updateLocale
 import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
+import com.lagradost.cloudstream3.metaproviders.TmdbProvider
 import com.lagradost.cloudstream3.mvvm.logError
-import com.lagradost.cloudstream3.mvvm.normalSafeApiCall
 import com.lagradost.cloudstream3.network.initClient
+import com.lagradost.cloudstream3.plugins.PluginManager
+import com.lagradost.cloudstream3.plugins.PluginManager.loadSinglePlugin
 import com.lagradost.cloudstream3.receivers.VideoDownloadRestartReceiver
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.OAuth2Apis
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.accountManagers
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.appString
+import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.appStringRepo
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.inAppAuths
 import com.lagradost.cloudstream3.ui.APIRepository
 import com.lagradost.cloudstream3.ui.download.DOWNLOAD_NAVIGATE_TO
@@ -55,19 +58,19 @@ import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isEmula
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTvSettings
 import com.lagradost.cloudstream3.ui.settings.SettingsGeneral
 import com.lagradost.cloudstream3.ui.setup.HAS_DONE_SETUP_KEY
+import com.lagradost.cloudstream3.ui.setup.SetupFragmentExtensions
 import com.lagradost.cloudstream3.utils.AppUtils.isCastApiAvailable
 import com.lagradost.cloudstream3.utils.AppUtils.loadCache
+import com.lagradost.cloudstream3.utils.AppUtils.loadRepository
 import com.lagradost.cloudstream3.utils.AppUtils.loadResult
-import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.BackupUtils.setUpBackup
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
-import com.lagradost.cloudstream3.utils.Coroutines.main
-import com.lagradost.cloudstream3.utils.DataStore
 import com.lagradost.cloudstream3.utils.DataStore.getKey
 import com.lagradost.cloudstream3.utils.DataStore.removeKey
 import com.lagradost.cloudstream3.utils.DataStore.setKey
 import com.lagradost.cloudstream3.utils.DataStoreHelper.migrateResumeWatching
 import com.lagradost.cloudstream3.utils.DataStoreHelper.setViewPos
+import com.lagradost.cloudstream3.utils.Event
 import com.lagradost.cloudstream3.utils.IOnBackPressed
 import com.lagradost.cloudstream3.utils.InAppUpdater.Companion.runAutoUpdate
 import com.lagradost.cloudstream3.utils.LazyRemoteServer
@@ -79,6 +82,7 @@ import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
 import com.lagradost.cloudstream3.utils.UIHelper.navigate
 import com.lagradost.cloudstream3.utils.UIHelper.requestRW
 import com.lagradost.cloudstream3.utils.USER_PROVIDER_API
+import com.lagradost.cloudstream3.utils.USER_SELECTED_HOMEPAGE_API
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.ResponseParser
 import kotlinx.android.synthetic.main.activity_main.*
@@ -88,6 +92,9 @@ import org.schabi.newpipe.extractor.NewPipe
 import java.io.File
 import java.net.InetSocketAddress
 import kotlin.concurrent.thread
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.net.URI
 import kotlin.reflect.KClass
 
 
@@ -133,6 +140,14 @@ var app = Requests(responseParser = object : ResponseParser {
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     companion object {
         const val TAG = "MAINACT"
+
+        /**
+         * Fires every time a new batch of plugins have been loaded, no guarantee about how often this is run and on which thread
+         * */
+        val afterPluginsLoadedEvent = Event<Boolean>()
+        val mainPluginsLoadedEvent =
+            Event<Boolean>() // homepage api, used to speed up time to load for homepage
+        val afterRepositoryLoadedEvent = Event<Boolean>()
     }
 
     override fun onColorSelected(dialogId: Int, color: Int) {
@@ -157,7 +172,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
         // Fucks up anime info layout since that has its own layout
         cast_mini_controller_holder?.isVisible =
-            !listOf(R.id.navigation_results, R.id.navigation_player).contains(destination.id)
+            !listOf(
+                R.id.navigation_results_phone,
+                R.id.navigation_results_tv,
+                R.id.navigation_player
+            ).contains(destination.id)
 
         val isNavVisible = listOf(
             R.id.navigation_home,
@@ -173,7 +192,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             R.id.navigation_settings_account,
             R.id.navigation_settings_lang,
             R.id.navigation_settings_general,
-            R.id.navigation_settings_providers,
+            R.id.navigation_settings_extensions,
+            R.id.navigation_settings_plugins,
         ).contains(destination.id)
 
         val landscape = when (resources.configuration.orientation) {
@@ -229,6 +249,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
     override fun onResume() {
         super.onResume()
+        afterPluginsLoadedEvent += ::onAllPluginsLoaded
         try {
             if (isCastApiAvailable()) {
                 //mCastSession = mSessionManager.currentCastSession
@@ -289,7 +310,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (VLC_REQUEST_CODE == requestCode) {
+        if (requestCode == VLC_REQUEST_CODE) {
             if (resultCode == RESULT_OK && data != null) {
                 val pos: Long =
                     data.getLongExtra(
@@ -318,6 +339,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         broadcastIntent.action = "restart_service"
         broadcastIntent.setClass(this, VideoDownloadRestartReceiver::class.java)
         this.sendBroadcast(broadcastIntent)
+        afterPluginsLoadedEvent -= ::onAllPluginsLoaded
         super.onDestroy()
     }
 
@@ -331,9 +353,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         val str = intent.dataString
         loadCache()
         if (str != null) {
-            if (str.contains(appString)) {
+            if (str.startsWith("https://cs.repo")) {
+                val realUrl = "https://" + str.substringAfter("?")
+                println("Repository url: $realUrl")
+                loadRepository(realUrl)
+            } else if (str.contains(appString)) {
                 for (api in OAuth2Apis) {
                     if (str.contains("/${api.redirectUrl}")) {
+                        val activity = this
                         ioSafe {
                             Log.i(TAG, "handleAppIntent $str")
                             val isSuccessful = api.handleRedirect(str)
@@ -344,10 +371,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
                                 Log.i(TAG, "failed to authenticate ${api.name}")
                             }
 
-                            this.runOnUiThread {
+                            activity.runOnUiThread {
                                 try {
                                     showToast(
-                                        this,
+                                        activity,
                                         getString(if (isSuccessful) R.string.authenticated_user else R.string.authenticated_user_fail).format(
                                             api.name
                                         )
@@ -359,6 +386,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
                         }
                     }
                 }
+            } else if (URI(str).scheme == appStringRepo) {
+                val url = str.replaceFirst(appStringRepo, "https")
+                loadRepository(url)
             } else {
                 if (str.startsWith(DOWNLOAD_NAVIGATE_TO)) {
                     this.navigate(R.id.navigation_downloads)
@@ -399,129 +429,42 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         }
     }
 
-    fun test() {
-        /*thread {
-            val youtubeLink = "https://www.youtube.com/watch?v=Zxem9rqJ5S0"
-
-            val url = YoutubeStreamLinkHandlerFactory.getInstance().fromUrl(youtubeLink)
-            println("ID:::: ${url.id}")
-            NewPipe.init(DownloaderTestImpl.getInstance())
-            val service = ServiceList.YouTube
-            val s = object : YoutubeStreamExtractor(
-                service,
-                url
-            ) {
-
-            }
-            s.fetchPage()
-            val streams = s.videoStreams
-            println("STREAMS: ${streams.map { "url = "+ it.url + " extra= " + it.height + "|" + it.isVideoOnly + "\n" }}")
-        }*/
-        /*
-        runBlocking {
-
-            val query = """
-            query {
-                searchShows(search: "spider", limit: 10) {
-                    id
-                    name
-                    originalName
-                }
-            }
-            """
-            val data =
-                mapOf(
-                    "query" to query,
-                    //"variables" to
-                    //        mapOf(
-                    //            "name" to name,
-                     //       ).toJson()
-                )
-            val txt = app.post(
-                "http://api.anime-skip.com/graphql",
-                headers = mapOf(
-                    "X-Client-ID" to "",
-                    "Content-Type" to "application/json",
-                    "Accept" to "application/json",
-                ),
-                json = data
-            )
-            println("TEXT: $txt")
-        }*/
-        /*runBlocking {
-            //https://test.api.anime-skip.com/graphiql
-            val txt = app.get(
-                "https://api.anime-skip.com/status",
-                headers = mapOf("X-Client-ID" to "")
-            )
-            println("TEXT: $txt")
-        }*/
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        // init accounts
-        for (api in accountManagers) {
-            api.init()
-        }
-
+    private val pluginsLock = Mutex()
+    private fun onAllPluginsLoaded(success: Boolean = false) {
         ioSafe {
-            inAppAuths.apmap { api ->
+            pluginsLock.withLock {
+                // Load cloned sites after plugins have been loaded since clones depend on plugins.
                 try {
-                    api.initialize()
+                    getKey<Array<SettingsGeneral.CustomSite>>(USER_PROVIDER_API)?.let { list ->
+                        list.forEach { custom ->
+                            allProviders.firstOrNull { it.javaClass.simpleName == custom.parentJavaClass }
+                                ?.let {
+                                    allProviders.add(it.javaClass.newInstance().apply {
+                                        name = custom.name
+                                        lang = custom.lang
+                                        mainUrl = custom.url.trimEnd('/')
+                                        canBeOverridden = false
+                                    })
+                                }
+                        }
+                    }
+
+                    // it.hashCode() is not enough to make sure they are distinct
+                    apis = allProviders.distinctBy { it.lang + it.name + it.mainUrl + it.javaClass.name }
+                    APIHolder.apiMap = null
                 } catch (e: Exception) {
                     logError(e)
                 }
             }
         }
+    }
 
-        SearchResultBuilder.updateCache(this)
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        app.initClient(this)
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
-        val enabledMetaProvidersName = try {
-            settingsManager.getStringSet(getString(R.string.enabled_meta_providers_key), null)?.toList()
-                ?: allProviders.filter{ it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java }.map { it.name }
-        } catch (e: Exception) {
-            logError(e)
-            allProviders.filter{ it.providerType == ProviderType.MetaProvider && it::class.java != CrossTmdbProvider::class.java }.map { it.name }
-        }
-
-
-        // Gets the enabled providers in the settings and apply it
-        APIHolder.allEnabledMetaProviders = if(enabledMetaProvidersName.isNotEmpty()) {
-            ArrayList(enabledMetaProvidersName.map { APIHolder.getProviderFromName(it) }) // find from settigs
-        } else {
-            arrayListOf<MainAPI>()
-        }
-
-
-
-        val enabledDirectProvidersName = try {
-            settingsManager.getStringSet(getString(R.string.enabled_direct_providers_key), null)?.toList()
-                ?: allProviders.filter{ it.providerType == ProviderType.DirectProvider && it::class.java != CrossTmdbProvider::class.java && it.hasSearchFilter}.map { it.name }
-        } catch (e: Exception) {
-            logError(e)
-            allProviders.filter {it.providerType == ProviderType.DirectProvider && it::class.java != CrossTmdbProvider::class.java && it.hasSearchFilter}.map { it.name }
-        }
-
-
-        // Gets the enabled providers in the settings and apply it
-        APIHolder.allEnabledDirectProviders = if(enabledDirectProvidersName.isNotEmpty()) {
-            ArrayList(enabledDirectProvidersName.map { APIHolder.getProviderFromName(it) })
-        } else {
-            arrayListOf<MainAPI>()
-        }
-
-
-
-        val downloadFromGithub = try {
-            settingsManager.getBoolean(getString(R.string.killswitch_key), true)
-        } catch (e: Exception) {
-            logError(e)
-            false
-        }
-
-        val enableLocalServer = try {
+        val enableLocalServer = try { // TODO server as an extension
             settingsManager.getBoolean(getString(R.string.enable_local_server_key), false)
         } catch (e: Exception) {
             logError(e)
@@ -530,16 +473,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
 
         // must give benenes to get beta providers
-        val hasBenene = try {
-            val count = settingsManager.getInt(getString(R.string.benene_count), 0)
-            count > 30
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
 
         // START SERVER
-        // TODO add try catch + strings in settings
         if (enableLocalServer) {
             try {
                 ioSafe { LazyRemoteServer.server() }
@@ -549,102 +484,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
         }
 
-        try {
-            getKey<Array<SettingsGeneral.CustomSite>>(USER_PROVIDER_API)?.let { list ->
-                list.forEach { custom ->
-                    allProviders.firstOrNull { it.javaClass.simpleName == custom.parentJavaClass }
-                        ?.let {
-                            allProviders.add(it.javaClass.newInstance().apply {
-                                name = custom.name
-                                lang = custom.lang
-                                mainUrl = custom.url.trimEnd('/')
-                                canBeOverridden = false
-                            })
-                        }
-                }
-            }
-            apis = allProviders
-            APIHolder.apiMap = null
-        } catch (e: Exception) {
-            logError(e)
-        }
-
         // this pulls the latest data so ppl don't have to update to simply change provider url
-        if (downloadFromGithub) {
-            try {
-                runBlocking {
-                    withContext(Dispatchers.IO) {
-                        try {
-                            val cacheStr: String? = getKey(PROVIDER_STATUS_KEY)
-                            val cache: HashMap<String, ProvidersInfoJson>? =
-                                cacheStr?.let { tryParseJson(cacheStr) }
-                            if (cache != null) {
-                                // if cache is found then spin up a new request, but dont wait
-                                main {
-                                    try {
-                                        val txt = app.get(PROVIDER_STATUS_URL).text
-                                        val newCache =
-                                            tryParseJson<HashMap<String, ProvidersInfoJson>>(txt)
-                                        setKey(PROVIDER_STATUS_KEY, txt)
-                                        MainAPI.overrideData = newCache // update all new providers
-
-                                        initAll()
-                                        for (api in apis) { // update current providers
-                                            newCache?.get(api.javaClass.simpleName)
-                                                ?.let { data ->
-                                                    api.overrideWithNewData(data)
-                                                }
-                                        }
-                                    } catch (e: Exception) {
-                                        logError(e)
-                                    }
-                                }
-                                cache
-                            } else {
-                                // if it is the first time the user has used the app then wait for a request to update all providers
-                                val txt = app.get(PROVIDER_STATUS_URL).text
-                                setKey(PROVIDER_STATUS_KEY, txt)
-                                val newCache = tryParseJson<HashMap<String, ProvidersInfoJson>>(txt)
-                                newCache
-                            }?.let { providersJsonMap ->
-                                MainAPI.overrideData = providersJsonMap
-                                initAll()
-                                val acceptableProviders =
-                                    providersJsonMap.filter { it.value.status == PROVIDER_STATUS_OK || it.value.status == PROVIDER_STATUS_SLOW }
-                                        .map { it.key }.toSet()
-
-                                val restrictedApis =
-                                    if (hasBenene) providersJsonMap.filter { it.value.status == PROVIDER_STATUS_BETA_ONLY }
-                                        .map { it.key }.toSet() else emptySet()
-
-                                apis = allProviders.filter { api ->
-                                    val name = api.javaClass.simpleName
-                                    // if the provider does not exist in the json file, then it is shown by default
-                                    !providersJsonMap.containsKey(name) || acceptableProviders.contains(
-                                        name
-                                    ) || restrictedApis.contains(name)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            logError(e)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                initAll()
-                apis = allProviders
-                e.printStackTrace()
-                logError(e)
-            }
-        } else {
-            initAll()
-            apis = allProviders
-        }
-
 
         loadThemes(this)
         updateLocale()
-        app.initClient(this)
         super.onCreate(savedInstanceState)
         try {
             if (isCastApiAvailable()) {
@@ -663,6 +506,63 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         }
 
         changeStatusBarState(isEmulatorSettings())
+
+
+
+        ioSafe {
+            getKey<String>(USER_SELECTED_HOMEPAGE_API)?.let { homeApi ->
+                mainPluginsLoadedEvent.invoke(loadSinglePlugin(this@MainActivity, homeApi))
+            } ?: run {
+                mainPluginsLoadedEvent.invoke(false)
+            }
+
+            ioSafe {
+                if (settingsManager.getBoolean(getString(R.string.auto_update_plugins_key), true)) {
+                    PluginManager.updateAllOnlinePluginsAndLoadThem(this@MainActivity)
+                } else {
+                    PluginManager.loadAllOnlinePlugins(this@MainActivity)
+                }
+            }
+
+            ioSafe {
+                PluginManager.loadAllLocalPlugins(this@MainActivity)
+            }
+        }
+
+//        ioSafe {
+//            val plugins =
+//                RepositoryParser.getRepoPlugins("https://raw.githubusercontent.com/recloudstream/TestPlugin/master/repo.json")
+//                    ?: emptyList()
+//            plugins.map {
+//                println("Load plugin: ${it.name} ${it.url}")
+//                RepositoryParser.loadSiteTemp(applicationContext, it.url, it.name)
+//            }
+//        }
+
+        // init accounts
+        ioSafe {
+            for (api in accountManagers) {
+                api.init()
+            }
+        }
+
+        ioSafe {
+            inAppAuths.apmap { api ->
+                try {
+                    api.initialize()
+                } catch (e: Exception) {
+                    logError(e)
+                }
+            }
+        }
+
+        SearchResultBuilder.updateCache(this)
+
+        ioSafe {
+            initAll()
+            // No duplicates (which can happen by registerMainAPI)
+            apis = allProviders.distinctBy { it }
+        }
 
         //  val navView: BottomNavigationView = findViewById(R.id.nav_view)
         setUpBackup()
@@ -702,7 +602,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         }
 
         loadCache()
-        test()
         updateHasTrailers()
         /*nav_view.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
@@ -812,7 +711,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
         handleAppIntent(intent)
 
-        thread {
+        ioSafe {
             runAutoUpdate()
         }
 
@@ -835,23 +734,29 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         try {
             if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
                 navController.navigate(R.id.navigation_setup_language)
+                // If no plugins bring up extensions screen
+            } else if (PluginManager.getPluginsOnline().isEmpty()
+                && PluginManager.getPluginsLocal().isEmpty()
+//                && PREBUILT_REPOSITORIES.isNotEmpty()
+            ) {
+                navController.navigate(
+                    R.id.navigation_setup_extensions,
+                    SetupFragmentExtensions.newInstance(false)
+                )
             }
         } catch (e: Exception) {
             logError(e)
         } finally {
             setKey(HAS_DONE_SETUP_KEY, true)
         }
-/*
 
-        val relativePath = (Environment.DIRECTORY_DOWNLOADS) + File.separatorChar
-        val displayName = "output.dex" //""output.dex"
-        val file =  getExternalFilesDir(null)?.absolutePath + File.separatorChar + displayName//"${Environment.getExternalStorageDirectory()}${File.separatorChar}$relativePath$displayName"
-        println(file)
+//        Used to check current focus for TV
+//        main {
+//            while (true) {
+//                delay(1000)
+//                println("Current focus: $currentFocus")
+//            }
+//        }
 
-        val realFile = File(file)
-        println("REAALFILE: ${realFile.exists()} at ${realFile.length()}"  )
-        val src = ExtensionManager.getSourceFromDex(this, "com.example.testdex2.TestClassToDex", File(file))
-        val output = src?.doMath()
-        println("MASTER OUTPUT = $output")*/
     }
 }

@@ -4,10 +4,35 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
     app:startDestination="@+id/navigation_home">
-
     <action
-        android:id="@+id/global_to_navigation_results"
-        app:destination="@id/navigation_results"
+        android:id="@+id/global_to_navigation_results_tv"
+        app:destination="@id/navigation_results_tv"
+        app:enterAnim="@anim/enter_anim"
+        app:exitAnim="@anim/exit_anim"
+        app:popEnterAnim="@anim/enter_anim"
+        app:popExitAnim="@anim/exit_anim">
+        <argument
+            android:name="url"
+            app:argType="string" />
+        <argument
+            android:name="apiName"
+            app:argType="string" />
+        <argument
+            android:name="startAction"
+            android:defaultValue="0"
+            app:argType="integer" />
+        <argument
+            android:name="startValue"
+            android:defaultValue="0"
+            app:argType="integer" />
+        <argument
+            android:name="restart"
+            android:defaultValue="false"
+            app:argType="boolean" />
+    </action>
+    <action
+        android:id="@+id/global_to_navigation_results_phone"
+        app:destination="@id/navigation_results_phone"
         app:enterAnim="@anim/enter_anim"
         app:exitAnim="@anim/exit_anim"
         app:popEnterAnim="@anim/enter_anim"
@@ -129,6 +154,57 @@
         app:popExitAnim="@anim/exit_anim" />
 
     <fragment
+        android:id="@+id/navigation_settings_extensions"
+        android:name="com.lagradost.cloudstream3.ui.settings.extensions.ExtensionsFragment"
+        android:label="@string/title_settings"
+        app:enterAnim="@anim/enter_anim"
+        app:exitAnim="@anim/exit_anim"
+        app:popEnterAnim="@anim/enter_anim"
+        app:popExitAnim="@anim/exit_anim"
+        tools:layout="@layout/fragment_extensions">
+        <action
+            android:id="@+id/navigation_settings_extensions_to_navigation_settings_plugins"
+            app:destination="@id/navigation_settings_plugins"
+            app:enterAnim="@anim/enter_anim"
+            app:exitAnim="@anim/exit_anim"
+            app:popEnterAnim="@anim/enter_anim"
+            app:popExitAnim="@anim/exit_anim">
+            <argument
+                android:name="name"
+                android:defaultValue="@null"
+                app:argType="string" />
+            <argument
+                android:name="url"
+                android:defaultValue="@null"
+                app:argType="string" />
+            <argument
+                android:name="isLocal"
+                android:defaultValue="false"
+                app:argType="boolean" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_settings_plugins"
+        android:name="com.lagradost.cloudstream3.ui.settings.extensions.PluginsFragment"
+        android:label="@string/title_settings"
+        app:enterAnim="@anim/enter_anim"
+        app:exitAnim="@anim/exit_anim"
+        app:popEnterAnim="@anim/enter_anim"
+        app:popExitAnim="@anim/exit_anim"
+        tools:layout="@layout/fragment_plugins" />
+
+    <fragment
+        android:id="@+id/navigation_webview"
+        android:name="com.lagradost.cloudstream3.ui.WebviewFragment"
+        android:label="@string/title_settings"
+        app:enterAnim="@anim/enter_anim"
+        app:exitAnim="@anim/exit_anim"
+        app:popEnterAnim="@anim/enter_anim"
+        app:popExitAnim="@anim/exit_anim"
+        tools:layout="@layout/fragment_webview" />
+
+    <fragment
         android:id="@+id/navigation_settings_lang"
         android:name="com.lagradost.cloudstream3.ui.settings.SettingsLang"
         android:label="@string/title_settings"
@@ -150,15 +226,6 @@
         android:id="@+id/navigation_settings_account"
         android:name="com.lagradost.cloudstream3.ui.settings.SettingsAccount"
         android:label="@string/title_settings"
-        app:enterAnim="@anim/enter_anim"
-        app:exitAnim="@anim/exit_anim"
-        app:popEnterAnim="@anim/enter_anim"
-        app:popExitAnim="@anim/exit_anim" />
-
-    <fragment
-        android:id="@+id/navigation_settings_providers"
-        android:name="com.lagradost.cloudstream3.ui.settings.SettingsProviders"
-        android:label="@string/title_providers"
         app:enterAnim="@anim/enter_anim"
         app:exitAnim="@anim/exit_anim"
         app:popEnterAnim="@anim/enter_anim"
@@ -200,13 +267,6 @@
         app:popExitAnim="@anim/exit_anim"
         tools:layout="@layout/fragment_home">
         <action
-            android:id="@+id/action_navigation_home_to_navigation_results"
-            app:destination="@id/navigation_results"
-            app:enterAnim="@anim/enter_anim"
-            app:exitAnim="@anim/exit_anim"
-            app:popEnterAnim="@anim/enter_anim"
-            app:popExitAnim="@anim/exit_anim" />
-        <action
             android:id="@+id/action_navigation_home_to_navigation_quick_search"
             app:destination="@id/navigation_quick_search"
             app:enterAnim="@anim/enter_anim"
@@ -223,15 +283,7 @@
         app:exitAnim="@anim/exit_anim"
         app:popEnterAnim="@anim/enter_anim"
         app:popExitAnim="@anim/exit_anim"
-        tools:layout="@layout/fragment_search">
-        <action
-            android:id="@+id/action_navigation_search_to_navigation_results"
-            app:destination="@id/navigation_results"
-            app:enterAnim="@anim/enter_anim"
-            app:exitAnim="@anim/exit_anim"
-            app:popEnterAnim="@anim/enter_anim"
-            app:popExitAnim="@anim/exit_anim" />
-    </fragment>
+        tools:layout="@layout/fragment_search" />
 
     <fragment
         android:id="@+id/navigation_downloads"
@@ -257,13 +309,6 @@
                 android:name="folder"
                 app:argType="string" />
         </action>
-        <action
-            android:id="@+id/action_navigation_downloads_to_navigation_results"
-            app:destination="@id/navigation_results"
-            app:enterAnim="@anim/enter_anim"
-            app:exitAnim="@anim/exit_anim"
-            app:popEnterAnim="@anim/enter_anim"
-            app:popExitAnim="@anim/exit_anim" />
         <action
             android:id="@+id/action_navigation_downloads_to_navigation_player"
             app:destination="@id/navigation_player"
@@ -325,8 +370,8 @@
             app:popEnterAnim="@anim/enter_anim"
             app:popExitAnim="@anim/exit_anim" />
         <action
-            android:id="@+id/action_navigation_settings_to_navigation_settings_providers"
-            app:destination="@id/navigation_settings_providers"
+            android:id="@+id/action_navigation_settings_to_navigation_settings_extensions"
+            app:destination="@id/navigation_settings_extensions"
             app:enterAnim="@anim/enter_anim"
             app:exitAnim="@anim/exit_anim"
             app:popEnterAnim="@anim/enter_anim"
@@ -392,6 +437,56 @@
     </fragment>
 
     <fragment
+        android:id="@+id/navigation_results_phone"
+        android:name="com.lagradost.cloudstream3.ui.result.ResultFragmentPhone"
+        android:layout_height="match_parent"
+        app:enterAnim="@anim/enter_anim"
+        app:exitAnim="@anim/exit_anim"
+        app:popEnterAnim="@anim/enter_anim"
+        app:popExitAnim="@anim/exit_anim"
+        tools:layout="@layout/fragment_result_swipe">
+        <action
+            android:id="@+id/action_navigation_results_phone_to_navigation_quick_search"
+            app:destination="@id/navigation_quick_search"
+            app:enterAnim="@anim/enter_anim"
+            app:exitAnim="@anim/exit_anim"
+            app:popEnterAnim="@anim/enter_anim"
+            app:popExitAnim="@anim/exit_anim" />
+        <action
+            android:id="@+id/action_navigation_results_phone_to_navigation_player"
+            app:destination="@id/navigation_player"
+            app:enterAnim="@anim/enter_anim"
+            app:exitAnim="@anim/exit_anim"
+            app:popEnterAnim="@anim/enter_anim"
+            app:popExitAnim="@anim/exit_anim" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_results_tv"
+        android:name="com.lagradost.cloudstream3.ui.result.ResultFragmentTv"
+        android:layout_height="match_parent"
+        app:enterAnim="@anim/enter_anim"
+        app:exitAnim="@anim/exit_anim"
+        app:popEnterAnim="@anim/enter_anim"
+        app:popExitAnim="@anim/exit_anim"
+        tools:layout="@layout/fragment_result_swipe">
+        <action
+            android:id="@+id/action_navigation_results_tv_to_navigation_quick_search"
+            app:destination="@id/navigation_quick_search"
+            app:enterAnim="@anim/enter_anim"
+            app:exitAnim="@anim/exit_anim"
+            app:popEnterAnim="@anim/enter_anim"
+            app:popExitAnim="@anim/exit_anim" />
+        <action
+            android:id="@+id/action_navigation_results_tv_to_navigation_player"
+            app:destination="@id/navigation_player"
+            app:enterAnim="@anim/enter_anim"
+            app:exitAnim="@anim/exit_anim"
+            app:popEnterAnim="@anim/enter_anim"
+            app:popExitAnim="@anim/exit_anim" />
+    </fragment>
+
+    <!--<fragment
         android:id="@+id/navigation_results"
         android:name="com.lagradost.cloudstream3.ui.result.ResultFragment"
         android:layout_height="match_parent"
@@ -414,7 +509,7 @@
             app:exitAnim="@anim/exit_anim"
             app:popEnterAnim="@anim/enter_anim"
             app:popExitAnim="@anim/exit_anim" />
-    </fragment>
+    </fragment>-->
 
     <fragment
         android:id="@+id/navigation_player"
@@ -444,6 +539,38 @@
             app:popEnterAnim="@anim/enter_anim"
             app:popExitAnim="@anim/exit_anim" />
     </fragment>
+
+    <action
+        android:id="@+id/action_navigation_global_to_navigation_setup_extensions"
+        app:destination="@id/navigation_setup_extensions"
+        app:enterAnim="@anim/enter_anim"
+        app:exitAnim="@anim/exit_anim"
+        app:popEnterAnim="@anim/enter_anim"
+        app:popExitAnim="@anim/exit_anim">
+        <argument
+            android:name="isSetup"
+            android:defaultValue="false"
+            app:argType="boolean" />
+    </action>
+
+    <fragment
+        android:id="@+id/navigation_setup_extensions"
+        android:name="com.lagradost.cloudstream3.ui.setup.SetupFragmentExtensions"
+        android:layout_height="match_parent"
+        app:enterAnim="@anim/enter_anim"
+        app:exitAnim="@anim/exit_anim"
+        app:popEnterAnim="@anim/enter_anim"
+        app:popExitAnim="@anim/exit_anim"
+        tools:layout="@layout/fragment_setup_extensions">
+        <action
+            android:id="@+id/action_navigation_setup_extensions_to_navigation_setup_provider_languages"
+            app:destination="@id/navigation_setup_provider_languages"
+            app:enterAnim="@anim/enter_anim"
+            app:exitAnim="@anim/exit_anim"
+            app:popEnterAnim="@anim/enter_anim"
+            app:popExitAnim="@anim/exit_anim" />
+    </fragment>
+
     <fragment
         android:id="@+id/navigation_setup_provider_languages"
         android:name="com.lagradost.cloudstream3.ui.setup.SetupFragmentProviderLanguage"

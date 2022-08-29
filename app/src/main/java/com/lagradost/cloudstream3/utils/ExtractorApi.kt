@@ -7,10 +7,11 @@ import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.TvType
 import com.lagradost.cloudstream3.USER_AGENT
 import com.lagradost.cloudstream3.app
-import com.lagradost.cloudstream3.extractors.*
 import com.lagradost.cloudstream3.mvvm.logError
+import com.lagradost.cloudstream3.extractors.*
 import kotlinx.coroutines.delay
 import org.jsoup.Jsoup
+import kotlin.collections.MutableList
 
 /**
  * For use in the ConcatenatingMediaSource.
@@ -191,7 +192,7 @@ suspend fun loadExtractor(
     return false
 }
 
-val extractorApis: Array<ExtractorApi> = arrayOf(
+val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     //AllProvider(),
     WcoStream(),
     Vidstreamz(),
@@ -235,7 +236,10 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     // Streamhub(), cause Streamhub2() works
     Streamhub2(),
     Ssbstream(),
+    Sbthe(),
 
+    Fastream(),
+    
     FEmbed(),
     FeHD(),
     Fplayer(),
@@ -311,13 +315,17 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Linkbox(),
     Acefile(),
     SpeedoStream(),
+    Zorofile(),
 
     YoutubeExtractor(),
     YoutubeShortLinkExtractor(),
+    YoutubeMobileExtractor(),
+    YoutubeNoCookieExtractor(),
     Streamlare(),
     VidSrcExtractor(),
     VidSrcExtractor2(),
 )
+
 
 fun getExtractorApiFromName(name: String): ExtractorApi {
     for (api in extractorApis) {
@@ -374,6 +382,9 @@ abstract class ExtractorApi {
     abstract val name: String
     abstract val mainUrl: String
     abstract val requiresReferer: Boolean
+
+    /** Determines which plugin a given extractor is from */
+    var sourcePlugin: String? = null
 
     //suspend fun getSafeUrl(url: String, referer: String? = null): List<ExtractorLink>? {
     //    return suspendSafeApiCall { getUrl(url, referer) }

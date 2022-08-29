@@ -6,10 +6,12 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.Build
+import android.os.Looper
 import android.util.Log
 import android.view.*
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.MainThread
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -17,15 +19,18 @@ import androidx.preference.PreferenceManager
 import com.google.android.gms.cast.framework.CastSession
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.ui.player.PlayerEventType
+import com.lagradost.cloudstream3.ui.result.UiText
 import com.lagradost.cloudstream3.utils.Event
 import com.lagradost.cloudstream3.utils.UIHelper
 import com.lagradost.cloudstream3.utils.UIHelper.hasPIPPermission
 import com.lagradost.cloudstream3.utils.UIHelper.shouldShowPIPMode
 import com.lagradost.cloudstream3.utils.UIHelper.toPx
+import kotlinx.coroutines.currentCoroutineContext
 import org.schabi.newpipe.extractor.NewPipe
 import java.util.*
 
 object CommonActivity {
+    @MainThread
     fun Activity?.getCastSession(): CastSession? {
         return (this as MainActivity?)?.mSessionManager?.currentCastSession
     }
@@ -42,6 +47,13 @@ object CommonActivity {
 
 
     var currentToast: Toast? = null
+
+    fun showToast(act: Activity?, text: UiText, duration: Int) {
+        if (act == null) return
+        text.asStringNull(act)?.let {
+            showToast(act, it, duration)
+        }
+    }
 
     fun showToast(act: Activity?, @StringRes message: Int, duration: Int) {
         if (act == null) return
@@ -261,10 +273,10 @@ object CommonActivity {
             KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD, KeyEvent.KEYCODE_MEDIA_REWIND -> {
                 PlayerEventType.SeekBack
             }
-            KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_BUTTON_R1 -> {
+            KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_N -> {
                 PlayerEventType.NextEpisode
             }
-            KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_BUTTON_L1 -> {
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_B -> {
                 PlayerEventType.PrevEpisode
             }
             KeyEvent.KEYCODE_MEDIA_PAUSE -> {
@@ -294,6 +306,9 @@ object CommonActivity {
             }
             KeyEvent.KEYCODE_R, KeyEvent.KEYCODE_NUMPAD_0 -> {
                 PlayerEventType.Resize
+            }
+            KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_NUMPAD_4 -> {
+                PlayerEventType.SkipOp
             }
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_P, KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_NUMPAD_ENTER, KeyEvent.KEYCODE_ENTER -> { // space is not captured due to navigation
                 PlayerEventType.PlayPauseToggle

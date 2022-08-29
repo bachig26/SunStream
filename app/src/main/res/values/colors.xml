@@ -32,6 +32,8 @@
     <color name="typeColorBg">?attr/colorPrimaryDark</color>
     <color name="ratingColorBg">#B89B00</color>
 
+    <color name="adultColor">#FF6F63</color> <!-- same as sub color -->
+
     <color name="video_ripple">#80FFFFFF</color>
     <color name="video_button_ripple">#32FFFFFF</color>
 

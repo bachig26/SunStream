@@ -24,7 +24,7 @@
     <string name="result_share">Teilen</string>
     <string name="result_open_in_browser">Im Browser öffnen</string>
     <string name="skip_loading">Buffern überspringen</string>
-    <string name="loading_chromecast">Lädt…</string>
+    <string name="loading">Lädt…</string>
     <string name="type_watching">Am schauen</string>
     <string name="type_on_hold">Pausiert</string>
     <string name="type_completed">Abgeschlossen</string>
@@ -87,7 +87,7 @@
     <string name="vpn_might_be_needed">Damit dieser Anbieter korrekt funktioniert, ist möglicherweise eine VPN erforderlich</string>
     <string name="vpn_torrent">Dies ist ein Torrent Anbieter, eine VPN wird empfohlen</string>
     <string name="torrent_plot">Beschreibung</string>
-    <string name="normal_no_plot">Keine Parzelle gefunden</string>
+    <string name="normal_no_plot">Keine Beschreibung gefunden</string>
     <string name="torrent_no_plot">Keine Beschreibung gefunden</string>
     <string name="picture_in_picture">Bild-in-Bild-Modus</string>
     <string name="picture_in_picture_des">Setzt die Wiedergabe in einem Miniplayer über anderen Anwendungen fort</string>
@@ -107,8 +107,6 @@
     <string name="use_system_brightness_settings">Systemhelligkeit benutzen</string>
     <string name="use_system_brightness_settings_des">Benutze Systemhelligkeit im Player anstatt von einem Dunklem Overlay</string>
     <string name="restore_settings">Daten aus der Sicherung wiederherstellen</string>
-    <string name="killswitch_settings">Aktuelle Metadaten von Github herunterladen</string>
-    <string name="killswitch_settings_des">Für Zugang zu allen Anbietern (auch zu defekten), deaktiviere diese Einstellung</string>
     <string name="backup_settings">Daten sichern</string>
     <string name="restore_success">Sicherungsdatei geladen</string>
     <string name="restore_failed_format" formatted="true">Wiederherstellung der Daten aus der Datei %s fehlgeschlagen</string>

@@ -4,12 +4,14 @@ import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.LayoutRes
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.widget.ContentLoadingProgressBar
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.lagradost.cloudstream3.R
@@ -56,11 +58,11 @@ const val ACTION_DOWNLOAD_EPISODE_SUBTITLE_MIRROR = 14
 data class EpisodeClickEvent(val action: Int, val data: ResultEpisode)
 
 class EpisodeAdapter(
-    var cardList: List<ResultEpisode>,
     private val hasDownloadSupport: Boolean,
     private val clickCallback: (EpisodeClickEvent) -> Unit,
     private val downloadClickCallback: (DownloadClickEvent) -> Unit,
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    private var cardList: MutableList<ResultEpisode> = mutableListOf()
 
     private val mBoundViewHolders: HashSet<DownloadButtonViewHolder> = HashSet()
     private fun getAllBoundViewHolders(): Set<DownloadButtonViewHolder?>? {
@@ -74,6 +76,12 @@ class EpisodeAdapter(
     }
 
     override fun onViewDetachedFromWindow(holder: RecyclerView.ViewHolder) {
+        if (holder.itemView.hasFocus()) {
+            holder.itemView.clearFocus()
+        }
+        //(holder.itemView as? FrameLayout?)?.descendantFocusability =
+        //    ViewGroup.FOCUS_BLOCK_DESCENDANTS
+
         if (holder is DownloadButtonViewHolder) {
             holder.downloadButton.dispose()
         }
@@ -83,23 +91,36 @@ class EpisodeAdapter(
         if (holder is DownloadButtonViewHolder) {
             holder.downloadButton.dispose()
             mBoundViewHolders.remove(holder)
+            //(holder.itemView as? FrameLayout?)?.descendantFocusability =
+            //    ViewGroup.FOCUS_BLOCK_DESCENDANTS
         }
     }
 
     override fun onViewAttachedToWindow(holder: RecyclerView.ViewHolder) {
         if (holder is DownloadButtonViewHolder) {
+            //println("onViewAttachedToWindow = ${holder.absoluteAdapterPosition}")
+            //holder.itemView.post {
+            //    if (holder.itemView.isAttachedToWindow)
+            //        (holder.itemView as? FrameLayout?)?.descendantFocusability =
+            //            ViewGroup.FOCUS_AFTER_DESCENDANTS
+            //}
+
             holder.reattachDownloadButton()
         }
     }
 
-    @LayoutRes
-    private var layout: Int = 0
-    fun updateLayout() {
-        // layout =
-        //     if (cardList.filter { it.poster != null }.size >= cardList.size / 2f) // If over half has posters then use the large layout
-        //          R.layout.result_episode_large
-        //      else R.layout.result_episode
+    fun updateList(newList: List<ResultEpisode>) {
+        val diffResult = DiffUtil.calculateDiff(
+            ResultDiffCallback(this.cardList, newList)
+        )
+
+        cardList.clear()
+        cardList.addAll(newList)
+
+        diffResult.dispatchUpdatesTo(this)
     }
+
+    var layout = R.layout.result_episode_both
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         /*val layout = if (cardList.filter { it.poster != null }.size >= cardList.size / 2)
@@ -108,7 +129,7 @@ class EpisodeAdapter(
 
         return EpisodeCardViewHolder(
             LayoutInflater.from(parent.context)
-                .inflate(R.layout.result_episode_both, parent, false),
+                .inflate(layout, parent, false),
             hasDownloadSupport,
             clickCallback,
             downloadClickCallback
@@ -137,7 +158,6 @@ class EpisodeAdapter(
     ) : RecyclerView.ViewHolder(itemView), DownloadButtonViewHolder {
         override var downloadButton = EasyDownloadButton()
 
-
         var episodeDownloadBar: ContentLoadingProgressBar? = null
         var episodeDownloadImage: ImageView? = null
         var localCard: ResultEpisode? = null
@@ -145,6 +165,8 @@ class EpisodeAdapter(
         @SuppressLint("SetTextI18n")
         fun bind(card: ResultEpisode) {
             localCard = card
+
+            val isTrueTv = itemView.context?.isTrueTvSettings() == true
 
             val (parentView, otherView) = if (card.poster == null) {
                 itemView.episode_holder to itemView.episode_holder_large
@@ -196,26 +218,28 @@ class EpisodeAdapter(
                 }
             }
 
-            episodePoster?.setOnClickListener {
+            if (!isTrueTv) {
+                episodePoster?.setOnClickListener {
+                    clickCallback.invoke(EpisodeClickEvent(ACTION_CLICK_DEFAULT, card))
+                }
+
+                episodePoster?.setOnLongClickListener {
+                    clickCallback.invoke(EpisodeClickEvent(ACTION_SHOW_TOAST, card))
+                    return@setOnLongClickListener true
+                }
+            }
+
+            itemView.setOnClickListener {
                 clickCallback.invoke(EpisodeClickEvent(ACTION_CLICK_DEFAULT, card))
             }
 
-            episodePoster?.setOnLongClickListener {
-                clickCallback.invoke(EpisodeClickEvent(ACTION_SHOW_TOAST, card))
-                return@setOnLongClickListener true
+            if (isTrueTv) {
+                itemView.isFocusable = true
+                itemView.isFocusableInTouchMode = true
+                //itemView.touchscreenBlocksFocus = false
             }
 
-            parentView.setOnClickListener {
-                clickCallback.invoke(EpisodeClickEvent(ACTION_CLICK_DEFAULT, card))
-            }
-
-            if (parentView.context.isTrueTvSettings()) {
-                parentView.isFocusable = true
-                parentView.isFocusableInTouchMode = true
-                parentView.touchscreenBlocksFocus = false
-            }
-
-            parentView.setOnLongClickListener {
+            itemView.setOnLongClickListener {
                 clickCallback.invoke(EpisodeClickEvent(ACTION_SHOW_OPTIONS, card))
 
                 return@setOnLongClickListener true
@@ -230,6 +254,9 @@ class EpisodeAdapter(
             downloadButton.dispose()
             val card = localCard
             if (hasDownloadSupport && card != null) {
+                if (episodeDownloadBar == null ||
+                    episodeDownloadImage == null
+                ) return
                 val downloadInfo = VideoDownloadManager.getDownloadFileInfoAndUpdateSettings(
                     itemView.context,
                     card.id
@@ -262,4 +289,20 @@ class EpisodeAdapter(
             }
         }
     }
+}
+
+class ResultDiffCallback(
+    private val oldList: List<ResultEpisode>,
+    private val newList: List<ResultEpisode>
+) :
+    DiffUtil.Callback() {
+    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int) =
+        oldList[oldItemPosition].id == newList[newItemPosition].id
+
+    override fun getOldListSize() = oldList.size
+
+    override fun getNewListSize() = newList.size
+
+    override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int) =
+        oldList[oldItemPosition] == newList[newItemPosition]
 }

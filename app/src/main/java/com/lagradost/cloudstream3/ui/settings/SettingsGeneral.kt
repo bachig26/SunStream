@@ -21,7 +21,9 @@ import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.mvvm.normalSafeApiCall
 import com.lagradost.cloudstream3.network.initClient
+import com.lagradost.cloudstream3.ui.EasterEggMonke
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
+import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setPaddingBottom
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Coroutines.main
@@ -43,6 +45,7 @@ class SettingsGeneral : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpToolbar(R.string.category_general)
+        setPaddingBottom()
     }
 
     data class CustomSite(
@@ -252,30 +255,66 @@ class SettingsGeneral : PreferenceFragmentCompat() {
         }
 
 
+        try {
+            SettingsFragment.beneneCount =
+                settingsManager.getInt(getString(R.string.benene_count), 0)
+            getPref(R.string.benene_count)?.let { pref ->
+                pref.summary =
+                    if (SettingsFragment.beneneCount <= 0) getString(R.string.benene_count_text_none) else getString(
+                        R.string.benene_count_text
+                    ).format(
+                        SettingsFragment.beneneCount
+                    )
+
+                pref.setOnPreferenceClickListener {
+                    try {
+                        SettingsFragment.beneneCount++
+                        if (SettingsFragment.beneneCount%20 == 0) {
+                            val intent = Intent(context, EasterEggMonke::class.java)
+                            startActivity(intent)
+                        }
+                        settingsManager.edit().putInt(
+                            getString(R.string.benene_count),
+                            SettingsFragment.beneneCount
+                        )
+                            .apply()
+                        it.summary =
+                            getString(R.string.benene_count_text).format(SettingsFragment.beneneCount)
+                    } catch (e: Exception) {
+                        logError(e)
+                    }
+
+                    return@setOnPreferenceClickListener true
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         getPref(R.string.show_local_ip_key)?.setOnPreferenceClickListener {
             val builder: AlertDialog.Builder =
                 AlertDialog.Builder(it.context, R.style.AlertDialogCustom)
             builder.setTitle(R.string.local_ip_pref)
             getLocalIpAddress(builder)
-
-            return@setOnPreferenceClickListener true
         }
+
     }
 
 
-    private fun getLocalIpAddress(builder: AlertDialog.Builder) {
+    private fun getLocalIpAddress(builder: AlertDialog.Builder): Boolean {
         ioSafe {
             try {
-                val s1 = Socket("192.168.1.1", 80) // will fail if router is not here exactly
-                val address = s1.getLocalAddress().getHostAddress()
+                val s1 = Socket("192.168.1.1", 80) // try to ping router, will fail if router is not here exactly
+                val address = s1.localAddress.hostAddress
                 s1.close()
                 showMessageWithIp(builder, address)
             } catch (e: Exception) {
                 val s2 = Socket("google.com", 80) // not private
-                showMessageWithIp(builder, s2.getLocalAddress().getHostAddress())
+                showMessageWithIp(builder, s2.localAddress.hostAddress)
                 s2.close()
             }
         }
+        return true
     }
 
 

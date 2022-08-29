@@ -12,9 +12,7 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
         val aniListApi = AniListApi(0)
         val openSubtitlesApi = OpenSubtitlesApi(0)
         val indexSubtitlesApi = IndexSubtitleApi()
-        val nginxApi = NginxApi(0)
         val radarrApi = RadarrApi(0)
-        val sonarrApi = SonarrApi(0)
         val remoteApi = RemoteApi(0)
 
         // used to login via app intent
@@ -26,7 +24,7 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
         // this needs init with context and can be accessed in settings
         val accountManagers
             get() = listOf(
-                malApi, aniListApi, openSubtitlesApi, nginxApi, radarrApi, sonarrApi, remoteApi
+                malApi, aniListApi, openSubtitlesApi, radarrApi, remoteApi
             )
 
         // used for active syncing
@@ -36,15 +34,16 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
             )
 
         val inAppAuths
-            get() = listOf(openSubtitlesApi, nginxApi, sonarrApi, radarrApi, remoteApi)
+            get() = listOf(openSubtitlesApi, radarrApi, remoteApi)
 
         val subtitleProviders
             get() = listOf(
                 openSubtitlesApi,
-                indexSubtitlesApi
+//                indexSubtitlesApi // they got anti scraping measures in place :(
             )
 
-        const val appString = "cloudstreamapp"
+        const val appString = "sunstreamapp"
+        const val appStringRepo = "sunstreamrepo"
 
         val unixTime: Long
             get() = System.currentTimeMillis() / 1000L

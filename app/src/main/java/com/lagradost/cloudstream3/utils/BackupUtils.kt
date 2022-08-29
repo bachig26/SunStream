@@ -13,7 +13,23 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.mvvm.logError
+import com.lagradost.cloudstream3.plugins.PLUGINS_KEY
+import com.lagradost.cloudstream3.plugins.PLUGINS_KEY_LOCAL
+import com.lagradost.cloudstream3.syncproviders.providers.AniListApi.Companion.ANILIST_CACHED_LIST
+import com.lagradost.cloudstream3.syncproviders.providers.AniListApi.Companion.ANILIST_SHOULD_UPDATE_LIST
+import com.lagradost.cloudstream3.syncproviders.providers.AniListApi.Companion.ANILIST_TOKEN_KEY
+import com.lagradost.cloudstream3.syncproviders.providers.AniListApi.Companion.ANILIST_UNIXTIME_KEY
+import com.lagradost.cloudstream3.syncproviders.providers.AniListApi.Companion.ANILIST_USER_KEY
+import com.lagradost.cloudstream3.syncproviders.providers.MALApi.Companion.MAL_CACHED_LIST
+import com.lagradost.cloudstream3.syncproviders.providers.MALApi.Companion.MAL_REFRESH_TOKEN_KEY
+import com.lagradost.cloudstream3.syncproviders.providers.MALApi.Companion.MAL_SHOULD_UPDATE_LIST
+import com.lagradost.cloudstream3.syncproviders.providers.MALApi.Companion.MAL_TOKEN_KEY
+import com.lagradost.cloudstream3.syncproviders.providers.MALApi.Companion.MAL_UNIXTIME_KEY
+import com.lagradost.cloudstream3.syncproviders.providers.MALApi.Companion.MAL_USER_KEY
+import com.lagradost.cloudstream3.syncproviders.providers.OpenSubtitlesApi
+import com.lagradost.cloudstream3.syncproviders.providers.OpenSubtitlesApi.Companion.OPEN_SUBTITLES_USER_KEY
 import com.lagradost.cloudstream3.utils.DataStore.getDefaultSharedPrefs
 import com.lagradost.cloudstream3.utils.DataStore.getSharedPrefs
 import com.lagradost.cloudstream3.utils.DataStore.mapper
@@ -29,6 +45,37 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 object BackupUtils {
+
+    /**
+     * No sensitive or breaking data in the backup
+     * */
+    private val nonTransferableKeys = listOf(
+        // When sharing backup we do not want to transfer what is essentially the password
+        ANILIST_TOKEN_KEY,
+        ANILIST_CACHED_LIST,
+        ANILIST_SHOULD_UPDATE_LIST,
+        ANILIST_UNIXTIME_KEY,
+        ANILIST_USER_KEY,
+        MAL_TOKEN_KEY,
+        MAL_REFRESH_TOKEN_KEY,
+        MAL_SHOULD_UPDATE_LIST,
+        MAL_CACHED_LIST,
+        MAL_UNIXTIME_KEY,
+        MAL_USER_KEY,
+
+        // The plugins themselves are not backed up
+        PLUGINS_KEY,
+        PLUGINS_KEY_LOCAL,
+
+        OPEN_SUBTITLES_USER_KEY,
+        "nginx_user", // Nginx user key
+    )
+
+    /** false if blacklisted key */
+    private fun String.isTransferable(): Boolean {
+        return !nonTransferableKeys.contains(this)
+    }
+
     var restoreFileSelector: ActivityResultLauncher<Array<String>>? = null
 
     // Kinda hack, but I couldn't think of a better way
@@ -46,6 +93,58 @@ object BackupUtils {
         @JsonProperty("settings") val settings: BackupVars
     )
 
+    fun Context.getBackup(): BackupFile {
+        val allData = getSharedPrefs().all.filter { it.key.isTransferable() }
+        val allSettings = getDefaultSharedPrefs().all.filter { it.key.isTransferable() }
+
+        val allDataSorted = BackupVars(
+            allData.filter { it.value is Boolean } as? Map<String, Boolean>,
+            allData.filter { it.value is Int } as? Map<String, Int>,
+            allData.filter { it.value is String } as? Map<String, String>,
+            allData.filter { it.value is Float } as? Map<String, Float>,
+            allData.filter { it.value is Long } as? Map<String, Long>,
+            allData.filter { it.value as? Set<String> != null } as? Map<String, Set<String>>
+        )
+
+        val allSettingsSorted = BackupVars(
+            allSettings.filter { it.value is Boolean } as? Map<String, Boolean>,
+            allSettings.filter { it.value is Int } as? Map<String, Int>,
+            allSettings.filter { it.value is String } as? Map<String, String>,
+            allSettings.filter { it.value is Float } as? Map<String, Float>,
+            allSettings.filter { it.value is Long } as? Map<String, Long>,
+            allSettings.filter { it.value as? Set<String> != null } as? Map<String, Set<String>>
+        )
+
+        return BackupFile(
+            allDataSorted,
+            allSettingsSorted
+        )
+    }
+
+    fun Context.restore(
+        backupFile: BackupFile,
+        restoreSettings: Boolean,
+        restoreDataStore: Boolean
+    ) {
+        if (restoreSettings) {
+            restoreMap(backupFile.settings._Bool, true)
+            restoreMap(backupFile.settings._Int, true)
+            restoreMap(backupFile.settings._String, true)
+            restoreMap(backupFile.settings._Float, true)
+            restoreMap(backupFile.settings._Long, true)
+            restoreMap(backupFile.settings._StringSet, true)
+        }
+
+        if (restoreDataStore) {
+            restoreMap(backupFile.datastore._Bool)
+            restoreMap(backupFile.datastore._Int)
+            restoreMap(backupFile.datastore._String)
+            restoreMap(backupFile.datastore._Float)
+            restoreMap(backupFile.datastore._Long)
+            restoreMap(backupFile.datastore._StringSet)
+        }
+    }
+
     fun FragmentActivity.backup() {
         try {
             if (checkWrite()) {
@@ -53,32 +152,8 @@ object BackupUtils {
                 val date = SimpleDateFormat("yyyy_MM_dd_HH_mm").format(Date(currentTimeMillis()))
                 val ext = "json"
                 val displayName = "CS3_Backup_${date}"
+                val backupFile = getBackup()
 
-                val allData = getSharedPrefs().all
-                val allSettings = getDefaultSharedPrefs().all
-
-                val allDataSorted = BackupVars(
-                    allData.filter { it.value is Boolean } as? Map<String, Boolean>,
-                    allData.filter { it.value is Int } as? Map<String, Int>,
-                    allData.filter { it.value is String } as? Map<String, String>,
-                    allData.filter { it.value is Float } as? Map<String, Float>,
-                    allData.filter { it.value is Long } as? Map<String, Long>,
-                    allData.filter { it.value as? Set<String> != null } as? Map<String, Set<String>>
-                )
-
-                val allSettingsSorted = BackupVars(
-                    allSettings.filter { it.value is Boolean } as? Map<String, Boolean>,
-                    allSettings.filter { it.value is Int } as? Map<String, Int>,
-                    allSettings.filter { it.value is String } as? Map<String, String>,
-                    allSettings.filter { it.value is Float } as? Map<String, Float>,
-                    allSettings.filter { it.value is Long } as? Map<String, Long>,
-                    allSettings.filter { it.value as? Set<String> != null } as? Map<String, Set<String>>
-                )
-
-                val backupFile = BackupFile(
-                    allDataSorted,
-                    allSettingsSorted
-                )
                 val steam =
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && subDir?.isDownloadDir() == true) {
                         val cr = this.contentResolver
@@ -89,7 +164,9 @@ object BackupUtils {
                         val newFile = ContentValues().apply {
                             put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
                             put(MediaStore.MediaColumns.TITLE, displayName)
-                            put(MediaStore.MediaColumns.MIME_TYPE, "application/json")
+                            // While it a json file we store as txt because not
+                            // all file managers support mimetype json
+                            put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
                             //put(MediaStore.MediaColumns.RELATIVE_PATH, folder)
                         }
 
@@ -202,32 +279,8 @@ object BackupUtils {
         map: Map<String, T>?,
         isEditingAppSettings: Boolean = false
     ) {
-        map?.forEach {
+        map?.filter { it.key.isTransferable() }?.forEach {
             setKeyRaw(it.key, it.value, isEditingAppSettings)
-        }
-    }
-
-    fun Context.restore(
-        backupFile: BackupFile,
-        restoreSettings: Boolean,
-        restoreDataStore: Boolean
-    ) {
-        if (restoreSettings) {
-            restoreMap(backupFile.settings._Bool, true)
-            restoreMap(backupFile.settings._Int, true)
-            restoreMap(backupFile.settings._String, true)
-            restoreMap(backupFile.settings._Float, true)
-            restoreMap(backupFile.settings._Long, true)
-            restoreMap(backupFile.settings._StringSet, true)
-        }
-
-        if (restoreDataStore) {
-            restoreMap(backupFile.datastore._Bool)
-            restoreMap(backupFile.datastore._Int)
-            restoreMap(backupFile.datastore._String)
-            restoreMap(backupFile.datastore._Float)
-            restoreMap(backupFile.datastore._Long)
-            restoreMap(backupFile.datastore._StringSet)
         }
     }
 }

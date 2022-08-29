@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"> <!-- app:layout_constraintBottom_toBottomOf="parent" -->
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -96,6 +96,7 @@
                 android:id="@+id/settings_credits"
                 style="@style/SettingsItem"
 
+
                 android:nextFocusUp="@id/settings_updates"
                 android:nextFocusDown="@id/settings_providers"
                 android:text="@string/category_account" />
@@ -116,13 +117,10 @@
                 android:text="@string/category_about" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:padding="10dp"
-                android:text="@string/app_version"
-                android:textColor="?attr/textColor" />
+                android:id="@+id/settings_extensions"
+                style="@style/SettingsItem"
+                android:nextFocusUp="@id/settings_updates"
+                android:text="@string/extensions" />
 
             <LinearLayout
                 android:id="@+id/remote_container"
@@ -191,6 +189,40 @@
                 android:textColor="?attr/textColor"
                 android:id="@+id/remote_device_name"
                 android:visibility="gone"/>
+                android:nextFocusUp="@id/settings_updates"
+                android:text="@string/category_account" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="10dp"
+                    android:text="@string/app_version"
+                    android:textColor="?attr/textColor" />
+
+                <TextView
+                    android:id="@+id/textView3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="10dp"
+                    android:text="•"
+                    android:textColor="?attr/textColor" />
+                <TextView
+                    android:id="@+id/commit_hash"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="10dp"
+                    android:text="@string/commit_hash"
+                    android:textColor="?attr/textColor" />
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

@@ -125,10 +125,11 @@ class GeneratorPlayer : FullScreenPlayer() {
 
     private fun loadExtractorJob(extractorLink: ExtractorLink?) {
         currentVerifyLink?.cancel()
-        extractorLink?.let {
+
+        extractorLink?.let { link ->
             currentVerifyLink = ioSafe {
-                if (it.extractorData != null) {
-                    getApiFromNameNull(it.source)?.extractorVerifierJob(it.extractorData)
+                if (link.extractorData != null) {
+                    getApiFromNameNull(link.source)?.extractorVerifierJob(link.extractorData)
                 }
             }
         }
@@ -488,7 +489,9 @@ class GeneratorPlayer : FullScreenPlayer() {
                     .setView(R.layout.player_select_source_and_subs)
 
                 val sourceDialog = sourceBuilder.create()
+
                 selectSourceDialog = sourceDialog
+
                 sourceDialog.show()
                 val providerList = sourceDialog.sort_providers
                 val subtitleList = sourceDialog.sort_subtitles
@@ -730,7 +733,12 @@ class GeneratorPlayer : FullScreenPlayer() {
         // Don't save livestream data
         if ((currentMeta as? ResultEpisode)?.tvType?.isLiveStream() == true) return
 
+        // Don't save NSFW data
+        if ((currentMeta as? ResultEpisode)?.tvType == TvType.NSFW) return
+
         val (position, duration) = posDur
+        if (duration == 0L) return // idk how you achieved this, but div by zero crash
+
         viewModel.getId()?.let {
             DataStoreHelper.setViewPos(it, position, duration)
         }
@@ -1001,12 +1009,26 @@ class GeneratorPlayer : FullScreenPlayer() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        var langFilterList = listOf<String>()
+        var filterSubByLang = false
 
         context?.let { ctx ->
             val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
             titleRez = settingsManager.getInt(ctx.getString(R.string.prefer_limit_title_rez_key), 3)
             limitTitle = settingsManager.getInt(ctx.getString(R.string.prefer_limit_title_key), 0)
             updateForcedEncoding(ctx)
+
+            filterSubByLang =
+                settingsManager.getBoolean(getString(R.string.filter_sub_lang_key), false)
+            if (filterSubByLang) {
+                val langFromPrefMedia = settingsManager.getStringSet(
+                    this.getString(R.string.provider_lang_key),
+                    mutableSetOf("en")
+                )
+                langFilterList = langFromPrefMedia?.mapNotNull {
+                    fromTwoLettersToLanguage(it)?.lowercase() ?: return@mapNotNull null
+                } ?: listOf()
+            }
         }
 
         unwrapBundle(savedInstanceState)
@@ -1059,7 +1081,18 @@ class GeneratorPlayer : FullScreenPlayer() {
         }
 
         observe(viewModel.currentSubs) { set ->
-            currentSubs = set
+            val setOfSub = mutableSetOf<SubtitleData>()
+            if (langFilterList.isNotEmpty() && filterSubByLang) {
+                Log.i("subfilter", "Filtering subtitle")
+                langFilterList.forEach { lang ->
+                    Log.i("subfilter", "Lang: $lang")
+                    setOfSub += set.filter { it.name.contains(lang, ignoreCase = true) }
+                        .toMutableSet()
+                }
+                currentSubs = setOfSub
+            } else {
+                currentSubs = set
+            }
             player.setActiveSubtitles(set)
 
             autoSelectSubtitles()

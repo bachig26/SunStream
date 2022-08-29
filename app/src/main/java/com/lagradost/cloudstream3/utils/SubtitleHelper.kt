@@ -71,7 +71,8 @@ object SubtitleHelper {
 
     /** ISO_639_1 -> lang*/
     fun fromTwoLettersToLanguage(input: String): String? {
-        if (input.length != 2) return null
+        // pr-BR
+        if (input.substringBefore("-").length != 2) return null
         if (ISO_639_1Map.isEmpty()) {
             initISO6391Map()
         }
@@ -138,14 +139,14 @@ object SubtitleHelper {
 
     private fun getFlagFromIsoShort(flagAscii: String?): String? {
         if (flagAscii.isNullOrBlank() || flagAscii.length < 2) return null
-        try {
+        return try {
             val firstChar: Int = Character.codePointAt(flagAscii, 0) + offset
             val secondChar: Int = Character.codePointAt(flagAscii, 1) + offset
 
-            return (String(Character.toChars(firstChar)) + String(Character.toChars(secondChar)))
+            (String(Character.toChars(firstChar)) + String(Character.toChars(secondChar)))
         } catch (e: Exception) {
             logError(e)
-            return null
+            null
         }
     }
 
@@ -269,6 +270,8 @@ object SubtitleHelper {
         "pl" to "PL",
         "ps" to "AF",
         "pt" to "PT",
+        "pt-pt" to "PT",
+        "pt-br" to "BR",
         "rm" to "CH",
         "rn" to "BI",
         "ro" to "RO",
@@ -452,7 +455,9 @@ object SubtitleHelper {
         Language639("Persian", "فارسی", "fa", "fas", "", "fas", ""),
         Language639("Polish", "język polski, polszczyzna", "pl", "pol", "pol", "pol", "pols"),
         Language639("Pashto", "پښتو", "ps", "pus", "pus", "pus", ""),
-        Language639("Portuguese", "português", "pt", "por", "por", "por", ""),
+        Language639("Portuguese", "português", "pt-pt", "por", "por", "por", ""),
+        // Addition to support Brazilian Portuguese properly, might break other things
+        Language639("Portuguese (Brazilian)", "português", "pt-br", "por", "por", "por", ""),
         Language639("Quechua", "Runa Simi, Kichwa", "qu", "que", "que", "que", ""),
         Language639("Romansh", "rumantsch grischun", "rm", "roh", "roh", "roh", ""),
         Language639("Kirundi", "Ikirundi", "rn", "run", "run", "run", ""),

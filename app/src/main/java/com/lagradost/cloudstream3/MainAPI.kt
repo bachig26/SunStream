@@ -10,10 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.lagradost.cloudstream3.animeproviders.*
-import com.lagradost.cloudstream3.liveproviders.EjaTv
 import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
-import com.lagradost.cloudstream3.movieproviders.*
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.aniListApi
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.malApi
@@ -21,11 +18,13 @@ import com.lagradost.cloudstream3.ui.player.SubtitleData
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTvSettings
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.loadExtractor
 import okhttp3.Interceptor
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.absoluteValue
+import kotlin.collections.MutableList
 
 const val USER_AGENT =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -42,146 +41,7 @@ object APIHolder {
 
     private const val defProvider = 0
 
-    val allProviders =
-        arrayListOf(
-            /*
-            // Movie providers
-            ElifilmsProvider(),
-            EstrenosDoramasProvider(),
-            PelisplusProvider(),
-            PelisplusHDProvider(),
-            PeliSmartProvider(),
-            MeloMovieProvider(), // Captcha for links
-            DoramasYTProvider(),
-            CinecalidadProvider(),
-            CuevanaProvider(),
-            EntrepeliculasyseriesProvider(),
-            PelisflixProvider(),
-            SeriesflixProvider(),
-            IHaveNoTvProvider(), // Documentaries provider
-            VMoveeProvider(),
-            AllMoviesForYouProvider(),
-            VidEmbedProvider(),
-            VfFilmProvider(),
-            VfSerieProvider(),
-            FrenchStreamProvider(),
-            AsianLoadProvider(),
-            AsiaFlixProvider(), // This should be removed in favor of asianembed.io, same source
-            EjaTv(),
-            BflixProvider(),
-            FmoviesToProvider(),
-            SflixProProvider(),
-            FilmanProvider(),
-            SflixProvider(),
-            DopeboxProvider(),
-            SolarmovieProvider(),
-            PinoyMoviePediaProvider(),
-            PinoyHDXyzProvider(),
-            PinoyMoviesEsProvider(),
-
-            DramaSeeProvider(),
-            WatchAsianProvider(),
-            DramaidProvider(),
-            KdramaHoodProvider(),
-            AkwamProvider(),
-            MyCimaProvider(),
-            CimaNowProvider(),
-            EgyBestProvider(),
-            FaselHDProvider(),
-            SoaptwoDayProvider(),
-            HDMProvider(),// disabled due to cloudflare
-            TheFlixToProvider(),
-            StreamingcommunityProvider(),
-            TantifilmProvider(),
-            CineblogProvider(),
-            IlGenioDelloStreamingProvider(),
-            AltadefinizioneProvider(),
-            FilmpertuttiProvider(),
-            HDMovie5(),
-            RebahinProvider(),
-            LayarKacaProvider(),
-            HDTodayProvider(),
-            OpenVidsProvider(),
-            IdlixProvider(),
-            MultiplexProvider(),
-            UakinoProvider(),
-            PhimmoichillProvider(),
-            HDrezkaProvider(),
-            YomoviesProvider(),
-            DubokuProvider(),
-            KisskhProvider(),
-
-             */
-
-
-            // Metadata providers
-            //TmdbProvider(),
-            OlgplyProvider(),
-            CrossTmdbProvider(),
-            // ApiMDBProvider(), // removed idk why
-            OpenVidsProvider(),
-            TrailersTwoProvider(),
-            TwoEmbedProvider(),
-            VidSrcProvider(),
-
-            /*
-            // Anime providers
-            WatchCartoonOnlineProvider(),
-            GogoanimeProvider(),
-            AllAnimeProvider(),
-            AnimekisaProvider(),
-            //ShiroProvider(), // v2 fucked me
-            AnimeFlickProvider(),
-            AnimeflvnetProvider(),
-            AnimefenixProvider(),
-            AnimeflvIOProvider(),
-            JKAnimeProvider(),
-            TenshiProvider(),
-            WcoProvider(),
-            AnimePaheProvider(),
-            NineAnimeProvider(),
-            AnimeWorldProvider(),
-            AnimeSaturnProvider(),
-            AniPlayProvider(),
-            ZoroProvider(),
-            DubbedAnimeProvider(),
-            MonoschinosProvider(),
-            MundoDonghuaProvider(),
-            KawaiifuProvider(), // disabled due to cloudflare
-            NeonimeProvider(),
-            KuramanimeProvider(),
-            OploverzProvider(),
-            GomunimeProvider(),
-            NontonAnimeIDProvider(),
-            KuronimeProvider(),
-            OtakudesuProvider(),
-            AnimeIndoProvider(),
-            AnimeSailProvider(),
-            TocanimeProvider(),
-            WcofunProvider(),
-            //MultiAnimeProvider(),
-            AniflixProvider(),
-
-            KimCartoonProvider(),
-            XcineProvider()
-
-
-
-            // SELF HOSTED providers
-
-
-            //SonarrProvider(),
-                         */
-            NginxProvider(),
-            RadarrProvider(),
-
-            // XcineProvider(),
-            SuperStream(),
-        )
-
-
-    var allEnabledDirectProviders: List<MainAPI> = arrayListOf()
-    var allEnabledMetaProviders: List<MainAPI> = arrayListOf()
+    val allProviders: MutableList<MainAPI> = arrayListOf(CrossTmdbProvider())
 
     fun initAll() {
         for (api in allProviders) {
@@ -197,20 +57,28 @@ object APIHolder {
     var apis: List<MainAPI> = arrayListOf()
     var apiMap: Map<String, Int>? = null
 
-    private fun initMap() {
-        if (apiMap == null)
-            apiMap = apis.mapIndexed { index, api -> api.name to index }.toMap()
+    fun addPluginMapping(plugin: MainAPI) {
+        apis = apis + plugin
+        initMap(true)
     }
 
 
-    fun getApiFromName(apiName: String?): MainAPI {
-        return getApiFromNameNull(apiName) ?: apis[defProvider] // TODO FIX BHECAUSE OF NGINX
+    fun removePluginMapping(plugin: MainAPI) {
+        apis = apis.filter { it != plugin }
+        initMap(true)
+    }
+
+    private fun initMap(forcedUpdate: Boolean = false) {
+        if (apiMap == null || forcedUpdate)
+            apiMap = apis.mapIndexed { index, api -> api.name to index }.toMap()
+
     }
 
     fun getApiFromNameNull(apiName: String?): MainAPI? {
         if (apiName == null) return null
         initMap()
         return apiMap?.get(apiName)?.let { apis.getOrNull(it) }
+            ?: allProviders.firstOrNull { it.name == apiName }
     }
 
 
@@ -228,8 +96,9 @@ object APIHolder {
         return null
     }
 
-    fun getLoadResponseIdFromUrl(url: String, apiName: String): Int {
-        return url.replace(getApiFromName(apiName).mainUrl, "").replace("/", "").hashCode()
+    private fun getLoadResponseIdFromUrl(url: String, apiName: String): Int {
+        return url.replace(getApiFromNameNull(apiName)?.mainUrl ?: "", "").replace("/", "")
+            .hashCode()
     }
 
     fun LoadResponse.getId(): Int {
@@ -250,39 +119,43 @@ object APIHolder {
     // Try document.select("script[src*=https://www.google.com/recaptcha/api.js?render=]").attr("src").substringAfter("render=")
     // To get the key
     suspend fun getCaptchaToken(url: String, key: String, referer: String? = null): String? {
-        val uri = Uri.parse(url)
-        val domain = encodeToString(
-            (uri.scheme + "://" + uri.host + ":443").encodeToByteArray(),
-            0
-        ).replace("\n", "").replace("=", ".")
+        try {
+            val uri = Uri.parse(url)
+            val domain = encodeToString(
+                (uri.scheme + "://" + uri.host + ":443").encodeToByteArray(),
+                0
+            ).replace("\n", "").replace("=", ".")
 
-        val vToken =
-            app.get(
-                "https://www.google.com/recaptcha/api.js?render=$key",
-                referer = referer,
-                cacheTime = 0
-            )
-                .text
-                .substringAfter("releases/")
-                .substringBefore("/")
-        val recapToken =
-            app.get("https://www.google.com/recaptcha/api2/anchor?ar=1&hl=en&size=invisible&cb=cs3&k=$key&co=$domain&v=$vToken")
-                .document
-                .selectFirst("#recaptcha-token")?.attr("value")
-        if (recapToken != null) {
-            return app.post(
-                "https://www.google.com/recaptcha/api2/reload?k=$key",
-                data = mapOf(
-                    "v" to vToken,
-                    "k" to key,
-                    "c" to recapToken,
-                    "co" to domain,
-                    "sa" to "",
-                    "reason" to "q"
-                ), cacheTime = 0
-            ).text
-                .substringAfter("rresp\",\"")
-                .substringBefore("\"")
+            val vToken =
+                app.get(
+                    "https://www.google.com/recaptcha/api.js?render=$key",
+                    referer = referer,
+                    cacheTime = 0
+                )
+                    .text
+                    .substringAfter("releases/")
+                    .substringBefore("/")
+            val recapToken =
+                app.get("https://www.google.com/recaptcha/api2/anchor?ar=1&hl=en&size=invisible&cb=cs3&k=$key&co=$domain&v=$vToken")
+                    .document
+                    .selectFirst("#recaptcha-token")?.attr("value")
+            if (recapToken != null) {
+                return app.post(
+                    "https://www.google.com/recaptcha/api2/reload?k=$key",
+                    data = mapOf(
+                        "v" to vToken,
+                        "k" to key,
+                        "c" to recapToken,
+                        "co" to domain,
+                        "sa" to "",
+                        "reason" to "q"
+                    ), cacheTime = 0
+                ).text
+                    .substringAfter("rresp\",\"")
+                    .substringBefore("\"")
+            }
+        } catch (e: Exception) {
+            logError(e)
         }
         return null
     }
@@ -368,27 +241,66 @@ object APIHolder {
     }
 
     fun Context.filterProviderByPreferredMedia(hasHomePageIsRequired: Boolean = true): List<MainAPI> {
-        val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
-        val currentPrefMedia =
-            settingsManager.getInt(this.getString(R.string.prefer_media_type_key), 0)
+        val default = enumValues<TvType>().sorted().filter { it != TvType.NSFW }.map { it.ordinal }
+        val defaultSet = default.map { it.toString() }.toSet()
+        val currentPrefMedia = try {
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .getStringSet(this.getString(R.string.prefer_media_type_key), defaultSet)
+                ?.mapNotNull { it.toIntOrNull() ?: return@mapNotNull null }
+        } catch (e: Throwable) {
+            null
+        } ?: default
         val langs = this.getApiProviderLangSettings()
         val allApis = apis.filter { langs.contains(it.lang) }
             .filter { api -> api.hasMainPage || !hasHomePageIsRequired }
-        return if (currentPrefMedia < 1) {
+        return if (currentPrefMedia.isEmpty()) {
             allApis
         } else {
             // Filter API depending on preferred media type
-            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA)
-            val listEnumMovieTv =
-                listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon, TvType.AsianDrama)
-            val listEnumDoc = listOf(TvType.Documentary)
-            val mediaTypeList = when (currentPrefMedia) {
-                2 -> listEnumAnime
-                3 -> listEnumDoc
-                else -> listEnumMovieTv
-            }
-            allApis.filter { api -> api.supportedTypes.any { it in mediaTypeList } }
+            allApis.filter { api -> api.supportedTypes.any { currentPrefMedia.contains(it.ordinal) } }
         }
+    }
+
+    fun Context.filterSearchResultByFilmQuality(data: List<SearchResponse>): List<SearchResponse> {
+        // Filter results omitting entries with certain quality
+        if (data.isNotEmpty()) {
+            val filteredSearchQuality = PreferenceManager.getDefaultSharedPreferences(this)
+                ?.getStringSet(getString(R.string.pref_filter_search_quality_key), setOf())
+                ?.mapNotNull { entry ->
+                    entry.toIntOrNull() ?: return@mapNotNull null
+                } ?: listOf()
+            if (filteredSearchQuality.isNotEmpty()) {
+                return data.filter { item ->
+                    val searchQualVal = item.quality?.ordinal ?: -1
+                    //Log.i("filterSearch", "QuickSearch item => ${item.toJson()}")
+                    !filteredSearchQuality.contains(searchQualVal)
+                }
+            }
+        }
+        return data
+    }
+
+    fun Context.filterHomePageListByFilmQuality(data: HomePageList): HomePageList {
+        // Filter results omitting entries with certain quality
+        if (data.list.isNotEmpty()) {
+            val filteredSearchQuality = PreferenceManager.getDefaultSharedPreferences(this)
+                ?.getStringSet(getString(R.string.pref_filter_search_quality_key), setOf())
+                ?.mapNotNull { entry ->
+                    entry.toIntOrNull() ?: return@mapNotNull null
+                } ?: listOf()
+            if (filteredSearchQuality.isNotEmpty()) {
+                return HomePageList(
+                    name = data.name,
+                    isHorizontalImages = data.isHorizontalImages,
+                    list = data.list.filter { item ->
+                        val searchQualVal = item.quality?.ordinal ?: -1
+                        //Log.i("filterSearch", "QuickSearch item => ${item.toJson()}")
+                        !filteredSearchQuality.contains(searchQualVal)
+                    }
+                )
+            }
+        }
+        return data
     }
 }
 
@@ -400,8 +312,6 @@ object APIHolder {
 3 = restricted, must donate 30 benenes to use
  */
 const val PROVIDER_STATUS_KEY = "PROVIDER_STATUS_KEY"
-const val PROVIDER_STATUS_URL =
-    "https://raw.githubusercontent.com/reduplicated/Cloudstream/master/docs/providers.json"
 const val PROVIDER_STATUS_BETA_ONLY = 3
 const val PROVIDER_STATUS_SLOW = 2
 const val PROVIDER_STATUS_OK = 1
@@ -444,6 +354,10 @@ fun newHomePageResponse(list: HomePageList, hasNext: Boolean? = null): HomePageR
     return HomePageResponse(listOf(list), hasNext = hasNext ?: list.list.isNotEmpty())
 }
 
+fun newHomePageResponse(list: List<HomePageList>, hasNext: Boolean? = null): HomePageResponse {
+    return HomePageResponse(list, hasNext = hasNext ?: list.any { it.list.isNotEmpty() })
+}
+
 /**Every provider will **not** have try catch built in, so handle exceptions when calling these functions*/
 abstract class MainAPI {
     companion object {
@@ -482,6 +396,9 @@ abstract class MainAPI {
 
     /**Used for testing and can be used to disable the providers if WebView is not available*/
     open val usesWebView = false
+
+    /** Determines which plugin a given provider is from */
+    var sourcePlugin: String? = null
 
     open val hasMainPage = false
     open val hasQuickSearch = false
@@ -675,21 +592,24 @@ enum class ShowStatus {
 }
 
 enum class DubStatus(val id: Int) {
+    None(-1),
     Dubbed(1),
     Subbed(0),
 }
 
-enum class TvType {
-    Movie,
-    AnimeMovie,
-    TvSeries,
-    Cartoon,
-    Anime,
-    OVA,
-    Torrent,
-    Documentary,
-    AsianDrama,
-    Live,
+enum class TvType(value: Int?) {
+    Movie(1),
+    AnimeMovie(2),
+    TvSeries(3),
+    Cartoon(4),
+    Anime(5),
+    OVA(6),
+    Torrent(7),
+    Documentary(8),
+    AsianDrama(9),
+    Live(10),
+    NSFW(11),
+    Others(12)
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
@@ -713,30 +633,38 @@ data class HomePageResponse(
     val hasNext: Boolean = false
 )
 
+data class TmdbProviderSearchFilter(
+    val title: String,
+    val tmdbYear: Int?,
+    val tmdbPlot: String?,
+    val duration: Int?,
+    val type: TvType?,
+)
+
 data class HomePageList(
     val name: String,
     var list: List<SearchResponse>,
     val isHorizontalImages: Boolean = false
 )
 
-enum class SearchQuality {
+enum class SearchQuality(value: Int?) {
     //https://en.wikipedia.org/wiki/Pirated_movie_release_types
-    Cam,
-    CamRip,
-    HdCam,
-    Telesync, // TS
-    WorkPrint,
-    Telecine, // TC
-    HQ,
-    HD,
-    HDR, // high dynamic range
-    BlueRay,
-    DVD,
-    SD,
-    FourK,
-    UHD,
-    SDR, // standard dynamic range
-    WebRip
+    Cam(1),
+    CamRip(2),
+    HdCam(3),
+    Telesync(4), // TS
+    WorkPrint(5),
+    Telecine(6), // TC
+    HQ(7),
+    HD(8),
+    HDR(9), // high dynamic range
+    BlueRay(10),
+    DVD(11),
+    SD(12),
+    FourK(13),
+    UHD(14),
+    SDR(15), // standard dynamic range
+    WebRip(16)
 }
 
 /**Add anything to here if you find a site that uses some specific naming convention*/
@@ -1006,8 +934,11 @@ data class TvSeriesSearchResponse(
 ) : SearchResponse
 
 data class TrailerData(
-    var mirros: List<ExtractorLink>,
-    var subtitles: List<SubtitleFile> = emptyList(),
+    val extractorUrl: String,
+    val referer: String?,
+    val raw: Boolean,
+    //var mirros: List<ExtractorLink>,
+    //var subtitles: List<SubtitleFile> = emptyList(),
 )
 
 interface LoadResponse {
@@ -1034,6 +965,10 @@ interface LoadResponse {
         private val malIdPrefix = malApi.idPrefix
         private val aniListIdPrefix = aniListApi.idPrefix
         var isTrailersEnabled = true
+
+        fun LoadResponse.isMovie(): Boolean {
+            return this.type.isMovieType()
+        }
 
         @JvmName("addActorNames")
         fun LoadResponse.addActors(actors: List<String>?) {
@@ -1076,27 +1011,76 @@ interface LoadResponse {
         }
 
         /**better to call addTrailer with mutible trailers directly instead of calling this multiple times*/
-        suspend fun LoadResponse.addTrailer(trailerUrl: String?, referer: String? = null) {
-            if (!isTrailersEnabled || trailerUrl == null) return
-            val links = arrayListOf<ExtractorLink>()
+        suspend fun LoadResponse.addTrailer(
+            trailerUrl: String?,
+            referer: String? = null,
+            addRaw: Boolean = false
+        ) {
+            if (!isTrailersEnabled || trailerUrl.isNullOrBlank()) return
+            this.trailers.add(TrailerData(trailerUrl, referer, addRaw))
+            /*val links = arrayListOf<ExtractorLink>()
             val subs = arrayListOf<SubtitleFile>()
-            loadExtractor(trailerUrl, referer, { subs.add(it) }, { links.add(it) })
-            this.trailers.add(TrailerData(links, subs))
+            if (!loadExtractor(
+                    trailerUrl,
+                    referer,
+                    { subs.add(it) },
+                    { links.add(it) }) && addRaw
+            ) {
+                this.trailers.add(
+                    TrailerData(
+                        listOf(
+                            ExtractorLink(
+                                "",
+                                "Trailer",
+                                trailerUrl,
+                                referer ?: "",
+                                Qualities.Unknown.value,
+                                trailerUrl.contains(".m3u8")
+                            )
+                        ), listOf()
+                    )
+                )
+            } else {
+                this.trailers.add(TrailerData(links, subs))
+            }*/
         }
 
+        /*
         fun LoadResponse.addTrailer(newTrailers: List<ExtractorLink>) {
             trailers.addAll(newTrailers.map { TrailerData(listOf(it)) })
-        }
+        }*/
 
-        suspend fun LoadResponse.addTrailer(trailerUrls: List<String>?, referer: String? = null) {
+        suspend fun LoadResponse.addTrailer(
+            trailerUrls: List<String>?,
+            referer: String? = null,
+            addRaw: Boolean = false
+        ) {
             if (!isTrailersEnabled || trailerUrls == null) return
-            val trailers = trailerUrls.apmap { trailerUrl ->
+            trailers.addAll(trailerUrls.map { TrailerData(it, referer, addRaw) })
+            /*val trailers = trailerUrls.filter { it.isNotBlank() }.apmap { trailerUrl ->
                 val links = arrayListOf<ExtractorLink>()
                 val subs = arrayListOf<SubtitleFile>()
-                loadExtractor(trailerUrl, referer, { subs.add(it) }, { links.add(it) })
-                links to subs
+                if (!loadExtractor(
+                        trailerUrl,
+                        referer,
+                        { subs.add(it) },
+                        { links.add(it) }) && addRaw
+                ) {
+                    arrayListOf(
+                        ExtractorLink(
+                            "",
+                            "Trailer",
+                            trailerUrl,
+                            referer ?: "",
+                            Qualities.Unknown.value,
+                            trailerUrl.contains(".m3u8")
+                        )
+                    ) to arrayListOf()
+                } else {
+                    links to subs
+                }
             }.map { (links, subs) -> TrailerData(links, subs) }
-            this.trailers.addAll(trailers)
+            this.trailers.addAll(trailers)*/
         }
 
         fun LoadResponse.addImdbId(id: String?) {
@@ -1175,6 +1159,7 @@ data class NextAiring(
 data class SeasonData(
     val season: Int,
     val name: String? = null,
+    val displaySeason: Int? = null, // will use season if null
 )
 
 interface EpisodeResponse {

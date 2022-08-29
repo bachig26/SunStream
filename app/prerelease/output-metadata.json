@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.sarlays.sunstream.prerelease",
+  "variantName": "prerelease",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 49,
+      "versionName": "3.0.1-PRE",
+      "outputFile": "app-prerelease.apk"
+    }
+  ],
+  "elementType": "File"
+}

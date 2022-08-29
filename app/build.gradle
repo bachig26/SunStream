@@ -3,15 +3,15 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'kotlin-android-extensions'
+    id 'org.jetbrains.dokka'
 }
 
 def tmpFilePath = System.getProperty("user.home") + "/work/_temp/keystore/"
 def allFilesFromDir = new File(tmpFilePath).listFiles()
-def prerelaseStoreFile = null
+def prereleaseStoreFile = null
 if (allFilesFromDir != null) {
-    prerelaseStoreFile = allFilesFromDir.first()
+    prereleaseStoreFile = allFilesFromDir.first()
 }
-
 
 android {
     testOptions {
@@ -19,8 +19,8 @@ android {
     }
     signingConfigs {
         prerelease {
-            if (prerelaseStoreFile != null) {
-                storeFile = file(prerelaseStoreFile)
+            if (prereleaseStoreFile != null) {
+                storeFile = file(prereleaseStoreFile)
                 storePassword System.getenv("SIGNING_STORE_PASSWORD")
                 keyAlias System.getenv("SIGNING_KEY_ALIAS")
                 keyPassword System.getenv("SIGNING_KEY_PASSWORD")
@@ -36,10 +36,15 @@ android {
         targetSdkVersion 30
 
         versionCode 50
-        versionName "3.0.2"
+        versionName "3.1.3"
 
         resValue "string", "app_version",
                 "${defaultConfig.versionName}${versionNameSuffix ?: ""}"
+
+        resValue "string", "commit_hash",
+                ("git rev-parse --short HEAD".execute().text.trim() ?: "")
+        
+        resValue "bool", "is_prerelease", "false"
 
         buildConfigField("String", "BUILDDATE", "new java.text.SimpleDateFormat(\"yyyy-MM-dd HH:mm\").format(new java.util.Date(" + System.currentTimeMillis() + "L));")
 
@@ -51,12 +56,13 @@ android {
     }
 
     buildTypes {
-        release {
-            debuggable false
-            minifyEnabled false
-            shrinkResources false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
+        // release {
+        //     debuggable false
+        //     minifyEnabled false
+        //     shrinkResources false
+        //     proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        //     resValue "bool", "is_prerelease", "false"
+        // }
         prerelease {
             applicationIdSuffix ".prerelease"
             buildConfigField("boolean", "BETA", "true")
@@ -66,11 +72,13 @@ android {
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            resValue "bool", "is_prerelease", "true"
         }
         debug {
             debuggable true
             applicationIdSuffix ".debug"
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            resValue "bool", "is_prerelease", "true"
         }
     }
     compileOptions {
@@ -83,9 +91,15 @@ android {
         jvmTarget = '1.8'
         freeCompilerArgs = ['-Xjvm-default=compatibility']
     }
+
     packagingOptions {
-        exclude 'META-INF/INDEX.LIST' // TODO IDK WHAT THAT IS ??
-        exclude 'META-INF/io.netty.versions.properties' // TODO IDK WHAT THAT IS ??
+        exclude 'META-INF/INDEX.LIST' // IDK WHAT IS THAT but it works
+        exclude 'META-INF/io.netty.versions.properties' // IDK WHAT IS THAT but it works
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
     }
 
 }
@@ -100,8 +114,10 @@ dependencies {
     testImplementation 'org.json:json:20180813'
 
     implementation 'androidx.core:core-ktx:1.8.0'
-    implementation 'androidx.appcompat:appcompat:1.4.2'
-    implementation 'com.google.android.material:material:1.5.0' // dont change this to 1.6.0 it looks ugly af
+    implementation 'androidx.appcompat:appcompat:1.4.2' // need target 32 for 1.5.0
+
+    // dont change this to 1.6.0 it looks ugly af
+    implementation 'com.google.android.material:material:1.5.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.5.1'
     implementation 'androidx.navigation:navigation-ui-ktx:2.5.1'
@@ -183,10 +199,27 @@ dependencies {
     //implementation 'com.github.HaarigerHarald:android-youtubeExtractor:master-SNAPSHOT'
 
     // newpipe yt
-    implementation 'com.github.TeamNewPipe:NewPipeExtractor:master-SNAPSHOT'
+    implementation 'com.github.recloudstream:NewPipeExtractor:0.22.1'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+
 
     // ktor for local network socket
     implementation("io.ktor:ktor-server-netty:2.0.3")
     implementation("io.ktor:ktor-network:2.0.3")
+
+    // Library/extensions searching with Levenshtein distance
+    implementation 'me.xdrop:fuzzywuzzy:1.4.0'
+}
+
+task androidSourcesJar(type: Jar) {
+    getArchiveClassifier().set('sources')
+    from android.sourceSets.main.java.srcDirs//full sources
+}
+
+task makeJar(type: Copy) {
+    // after modifying here, you can export. Jar
+    from('build/intermediates/compile_app_classes_jar/debug')
+    into('build') // output location
+    include('classes.jar') // the classes file of the imported rack package
+    dependsOn build
 }

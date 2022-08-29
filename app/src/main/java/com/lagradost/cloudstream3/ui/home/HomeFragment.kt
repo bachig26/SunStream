@@ -31,7 +31,8 @@ import com.lagradost.cloudstream3.APIHolder.filterProviderByPreferredMedia
 import com.lagradost.cloudstream3.APIHolder.getApiFromNameNull
 import com.lagradost.cloudstream3.APIHolder.getApiProviderLangSettings
 import com.lagradost.cloudstream3.AcraApplication.Companion.getKey
-import com.lagradost.cloudstream3.AcraApplication.Companion.setKey
+import com.lagradost.cloudstream3.MainActivity.Companion.afterPluginsLoadedEvent
+import com.lagradost.cloudstream3.MainActivity.Companion.mainPluginsLoadedEvent
 import com.lagradost.cloudstream3.mvvm.Resource
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.mvvm.observe
@@ -42,6 +43,7 @@ import com.lagradost.cloudstream3.ui.AutofitRecyclerView
 import com.lagradost.cloudstream3.ui.WatchType
 import com.lagradost.cloudstream3.ui.quicksearch.QuickSearchFragment
 import com.lagradost.cloudstream3.ui.result.START_ACTION_RESUME_LATEST
+import com.lagradost.cloudstream3.ui.result.setLinearListLayout
 import com.lagradost.cloudstream3.ui.search.*
 import com.lagradost.cloudstream3.ui.search.SearchHelper.handleSearchClickCallback
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTrueTvSettings
@@ -58,7 +60,6 @@ import com.lagradost.cloudstream3.utils.DataStoreHelper.deleteAllResumeStateIds
 import com.lagradost.cloudstream3.utils.DataStoreHelper.removeLastWatched
 import com.lagradost.cloudstream3.utils.DataStoreHelper.setResultWatchState
 import com.lagradost.cloudstream3.utils.Event
-import com.lagradost.cloudstream3.utils.HOMEPAGE_API
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showOptionSelectStringRes
 import com.lagradost.cloudstream3.utils.SubtitleHelper.getFlagFromIso
 import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
@@ -68,6 +69,7 @@ import com.lagradost.cloudstream3.utils.UIHelper.getSpanCount
 import com.lagradost.cloudstream3.utils.UIHelper.popupMenuNoIconsAndNoStringRes
 import com.lagradost.cloudstream3.utils.UIHelper.setImage
 import com.lagradost.cloudstream3.utils.UIHelper.setImageBlur
+import com.lagradost.cloudstream3.utils.USER_SELECTED_HOMEPAGE_API
 import com.lagradost.cloudstream3.widget.CenterZoomLayoutManager
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.home_api_fab
@@ -251,6 +253,8 @@ class HomeFragment : Fragment() {
             movies: MaterialButton?,
             asian: MaterialButton?,
             livestream: MaterialButton?,
+            nsfw: MaterialButton?,
+            others: MaterialButton?,
         ): List<Pair<MaterialButton?, List<TvType>>> {
             return listOf(
                 Pair(anime, listOf(TvType.Anime, TvType.OVA, TvType.AnimeMovie)),
@@ -260,6 +264,8 @@ class HomeFragment : Fragment() {
                 Pair(movies, listOf(TvType.Movie, TvType.Torrent)),
                 Pair(asian, listOf(TvType.AsianDrama)),
                 Pair(livestream, listOf(TvType.Live)),
+                Pair(nsfw, listOf(TvType.NSFW)),
+                Pair(others, listOf(TvType.Others)),
             )
         }
 
@@ -294,10 +300,13 @@ class HomeFragment : Fragment() {
                 val movies = dialog.findViewById<MaterialButton>(R.id.home_select_movies)
                 val asian = dialog.findViewById<MaterialButton>(R.id.home_select_asian)
                 val livestream = dialog.findViewById<MaterialButton>(R.id.home_select_livestreams)
+                val nsfw = dialog.findViewById<MaterialButton>(R.id.home_select_nsfw)
+                val others = dialog.findViewById<MaterialButton>(R.id.home_select_others)
                 val cancelBtt = dialog.findViewById<MaterialButton>(R.id.cancel_btt)
                 val applyBtt = dialog.findViewById<MaterialButton>(R.id.apply_btt)
 
-                val pairList = getPairList(anime, cartoons, tvs, docs, movies, asian, livestream)
+                val pairList =
+                    getPairList(anime, cartoons, tvs, docs, movies, asian, livestream, nsfw, others)
 
                 cancelBtt?.setOnClickListener {
                     dialog.dismissSafe()
@@ -428,12 +437,15 @@ class HomeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         reloadStored()
+        afterPluginsLoadedEvent += ::firstLoadHomePage
+        mainPluginsLoadedEvent += ::firstLoadHomePage
     }
-/*
+
     override fun onStop() {
-        backEvent -= ::handleBack
+        afterPluginsLoadedEvent -= ::firstLoadHomePage
+        mainPluginsLoadedEvent -= ::firstLoadHomePage
         super.onStop()
-    }*/
+    }
 
     private fun reloadStored() {
         homeViewModel.loadResumeWatching()
@@ -442,6 +454,20 @@ class HomeFragment : Fragment() {
             list.addAll(it)
         }
         homeViewModel.loadStoredData(list)
+    }
+
+    private fun firstLoadHomePage(successful: Boolean = false) {
+        // dirty hack to make it only load once
+        loadHomePage(false)
+    }
+
+    private fun loadHomePage(forceReload: Boolean = true) {
+        val apiName = context?.getKey<String>(USER_SELECTED_HOMEPAGE_API)
+
+        if (homeViewModel.apiName.value != apiName || apiName == null) {
+            //println("Caught home: " + homeViewModel.apiName.value + " at " + apiName)
+            homeViewModel.loadAndCancel(apiName, forceReload)
+        }
     }
 
     /*private fun handleBack(poppedFragment: Boolean) {
@@ -493,7 +519,7 @@ class HomeFragment : Fragment() {
 
         observe(homeViewModel.apiName) { apiName ->
             currentApiName = apiName
-            setKey(HOMEPAGE_API, apiName)
+            // setKey(USER_SELECTED_HOMEPAGE_API, apiName)
             home_api_fab?.text = apiName
             home_provider_name?.text = apiName
             try {
@@ -519,6 +545,16 @@ class HomeFragment : Fragment() {
             }
         }
 
+        home_main_poster_recyclerview?.adapter =
+            HomeChildItemAdapter(
+                mutableListOf(),
+                R.layout.home_result_big_grid,
+                nextFocusUp = home_main_poster_recyclerview.nextFocusUpId,
+                nextFocusDown = home_main_poster_recyclerview.nextFocusDownId
+            ) { callback ->
+                homeHandleSearch(callback)
+            }
+        home_main_poster_recyclerview.setLinearListLayout()
         observe(homeViewModel.randomItems) { items ->
             if (items.isNullOrEmpty()) {
                 toggleMainVisibility(false)
@@ -531,15 +567,7 @@ class HomeFragment : Fragment() {
                 }
 
                 val randomSize = items.size
-                home_main_poster_recyclerview?.adapter =
-                    HomeChildItemAdapter(
-                        items.toMutableList(),
-                        R.layout.home_result_big_grid,
-                        nextFocusUp = home_main_poster_recyclerview.nextFocusUpId,
-                        nextFocusDown = home_main_poster_recyclerview.nextFocusDownId
-                    ) { callback ->
-                        homeHandleSearch(callback)
-                    }
+                tempAdapter?.updateList(items)
                 if (context?.isTvSettings() == false) {
                     home_main_poster_recyclerview?.post {
                         (home_main_poster_recyclerview?.layoutManager as CenterZoomLayoutManager?)?.let { manager ->
@@ -600,7 +628,8 @@ class HomeFragment : Fragment() {
                         home_random?.isGone = true
                     }
                 }
-                is Resource.Failure -> {
+                 is Resource.Failure -> {
+
                     home_loading_shimmer?.stopShimmer()
 
                     result_error_text.text = data.errorString
@@ -630,6 +659,8 @@ class HomeFragment : Fragment() {
                     home_loading_error?.isVisible = true
                     home_loaded?.isVisible = false
                 }
+
+
                 is Resource.Loading -> {
                     (home_master_recycler?.adapter as? ParentItemAdapter?)?.updateList(listOf())
                     home_loading_shimmer?.startShimmer()
@@ -813,6 +844,8 @@ class HomeFragment : Fragment() {
                 homeHandleSearch(callback)
             }
         }
+        home_watch_child_recyclerview.setLinearListLayout()
+        home_bookmarked_child_recyclerview.setLinearListLayout()
 
         home_watch_child_recyclerview?.adapter = HomeChildItemAdapter(
             ArrayList(),
@@ -901,6 +934,7 @@ class HomeFragment : Fragment() {
             }, { name ->
                 homeViewModel.expand(name)
             })
+        home_master_recycler.setLinearListLayout()
         home_master_recycler?.setMaxViewPoolSize(0, Int.MAX_VALUE)
         home_master_recycler.layoutManager = object : LinearLayoutManager(context) {
             override fun supportsPredictiveItemAnimations(): Boolean {
@@ -936,19 +970,15 @@ class HomeFragment : Fragment() {
         }
 
         reloadStored()
-        val apiName = context?.getKey<String>(HOMEPAGE_API)
-        if (homeViewModel.apiName.value != apiName || apiName == null) {
-            //println("Caught home: " + homeViewModel.apiName.value + " at " + apiName)
-            homeViewModel.loadAndCancel(apiName)
-        }
+        loadHomePage()
 
-        home_loaded.setOnScrollChangeListener(NestedScrollView.OnScrollChangeListener { view, _, scrollY, _, oldScrollY ->
+        home_loaded.setOnScrollChangeListener(NestedScrollView.OnScrollChangeListener { v, _, scrollY, _, oldScrollY ->
             val dy = scrollY - oldScrollY
             if (dy > 0) { //check for scroll down
                 home_api_fab?.shrink() // hide
                 home_random?.shrink()
             } else if (dy < -5) {
-                if (view?.context?.isTvSettings() == false) {
+                if (v.context?.isTvSettings() == false) {
                     home_api_fab?.extend() // show
                     home_random?.extend()
                 }

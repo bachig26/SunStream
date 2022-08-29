@@ -5,9 +5,11 @@ import android.view.View
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream3.SearchQuality
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.ui.search.SearchResultBuilder
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
+import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setPaddingBottom
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showDialog
@@ -18,6 +20,7 @@ class SettingsUI : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpToolbar(R.string.category_ui)
+        setPaddingBottom()
     }
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         hideKeyboard()
@@ -122,6 +125,26 @@ class SettingsUI : PreferenceFragmentCompat() {
                     logError(e)
                 }
             }
+            return@setOnPreferenceClickListener true
+        }
+
+        getPref(R.string.pref_filter_search_quality_key)?.setOnPreferenceClickListener {
+            val names = enumValues<SearchQuality>().sorted().map { it.name }
+            val currentList = settingsManager.getStringSet(getString(R.string.pref_filter_search_quality_key), setOf())?.map {
+                it.toInt()
+            } ?: listOf()
+
+            activity?.showMultiDialog(
+                names,
+                currentList,
+                getString(R.string.pref_filter_search_quality),
+                {}) { selectedList ->
+                settingsManager.edit().putStringSet(
+                    this.getString(R.string.pref_filter_search_quality_key),
+                    selectedList.map { it.toString() }.toMutableSet()
+                ).apply()
+            }
+
             return@setOnPreferenceClickListener true
         }
 

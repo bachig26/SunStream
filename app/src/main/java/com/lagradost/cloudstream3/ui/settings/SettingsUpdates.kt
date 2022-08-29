@@ -13,9 +13,11 @@ import com.lagradost.cloudstream3.CommonActivity
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
+import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setPaddingBottom
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
 import com.lagradost.cloudstream3.utils.BackupUtils.backup
 import com.lagradost.cloudstream3.utils.BackupUtils.restorePrompt
+import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.InAppUpdater.Companion.runAutoUpdate
 import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
@@ -25,12 +27,12 @@ import okhttp3.internal.closeQuietly
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStream
-import kotlin.concurrent.thread
 
 class SettingsUpdates : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpToolbar(R.string.category_updates)
+        setPaddingBottom()
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -69,7 +71,7 @@ class SettingsUpdates : PreferenceFragmentCompat() {
 
                 var line: String?
                 while (bufferedReader.readLine().also { line = it } != null) {
-                    log.append(line)
+                    log.append("${line}\n")
                 }
             } catch (e: Exception) {
                 logError(e) // kinda ironic
@@ -116,8 +118,8 @@ class SettingsUpdates : PreferenceFragmentCompat() {
         }
 
         getPref(R.string.manual_check_update_key)?.setOnPreferenceClickListener {
-            thread {
-                if (!requireActivity().runAutoUpdate(false)) {
+            ioSafe {
+                if (activity?.runAutoUpdate(false) == false) {
                     activity?.runOnUiThread {
                         CommonActivity.showToast(
                             activity,
