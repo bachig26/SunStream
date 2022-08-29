@@ -50,6 +50,9 @@ class SettingsFragment : Fragment() {
     companion object {
         var beneneCount = 0
 
+        private var isTv : Boolean = false
+        private var isTrueTv : Boolean = false
+
         fun PreferenceFragmentCompat?.getPref(id: Int): Preference? {
             if (this == null) return null
 
@@ -65,7 +68,7 @@ class SettingsFragment : Fragment() {
          * On TV you cannot properly scroll to the bottom of settings, this fixes that.
          * */
         fun PreferenceFragmentCompat.setPaddingBottom() {
-            if (this.context?.isTvSettings() == true) {
+            if (isTvSettings()) {
                 listView?.setPadding(0, 0, 0, 100.toPx)
             }
         }
@@ -113,7 +116,7 @@ class SettingsFragment : Fragment() {
             return settingsManager.getInt(this.getString(R.string.app_layout_key), -1)
         }
 
-        fun Context.isTvSettings(): Boolean {
+        private fun Context.isTvSettings(): Boolean {
             var value = getLayoutInt()
             if (value == -1) {
                 value = if (isAutoTv()) 1 else 0
@@ -121,12 +124,25 @@ class SettingsFragment : Fragment() {
             return value == 1 || value == 2
         }
 
-        fun Context.isTrueTvSettings(): Boolean {
+        private fun Context.isTrueTvSettings(): Boolean {
             var value = getLayoutInt()
             if (value == -1) {
                 value = if (isAutoTv()) 1 else 0
             }
             return value == 1
+        }
+
+        fun Context.updateTv() {
+            isTrueTv = isTrueTvSettings()
+            isTv = isTvSettings()
+        }
+
+        fun isTrueTvSettings(): Boolean {
+            return isTrueTv
+        }
+
+        fun isTvSettings(): Boolean {
+            return isTv
         }
 
         fun Context.isEmulatorSettings(): Boolean {
@@ -158,7 +174,7 @@ class SettingsFragment : Fragment() {
             activity?.navigate(id, Bundle())
         }
 
-        val isTrueTv = context?.isTrueTvSettings() == true
+        val isTrueTv = isTrueTvSettings()
 
         for (syncApi in accountManagers) {
             val login = syncApi.loginInfo()

@@ -400,7 +400,7 @@ class HomeFragment : Fragment() {
         //homeViewModel =
         //     ViewModelProvider(this).get(HomeViewModel::class.java)
         val layout =
-            if (context?.isTvSettings() == true) R.layout.fragment_home_tv else R.layout.fragment_home
+            if (isTvSettings()) R.layout.fragment_home_tv else R.layout.fragment_home
         return inflater.inflate(layout, container, false)
     }
 
@@ -568,7 +568,7 @@ class HomeFragment : Fragment() {
 
                 val randomSize = items.size
                 tempAdapter?.updateList(items)
-                if (context?.isTvSettings() == false) {
+                if (!isTvSettings()) {
                     home_main_poster_recyclerview?.post {
                         (home_main_poster_recyclerview?.layoutManager as CenterZoomLayoutManager?)?.let { manager ->
                             manager.updateSize(forceUpdate = true)
@@ -942,7 +942,7 @@ class HomeFragment : Fragment() {
             }
         } // GridLayoutManager(context, 1).also { it.supportsPredictiveItemAnimations() }
 
-        if (context?.isTvSettings() == false) {
+        if (!isTvSettings()) {
             LinearSnapHelper().attachToRecyclerView(home_main_poster_recyclerview) // snap
             val centerLayoutManager =
                 CenterZoomLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
@@ -978,7 +978,7 @@ class HomeFragment : Fragment() {
                 home_api_fab?.shrink() // hide
                 home_random?.shrink()
             } else if (dy < -5) {
-                if (v.context?.isTvSettings() == false) {
+                if (!isTvSettings()) {
                     home_api_fab?.extend() // show
                     home_random?.extend()
                 }
@@ -987,37 +987,35 @@ class HomeFragment : Fragment() {
 
         // nice profile pic on homepage
         home_profile_picture_holder?.isVisible = false
-        context?.let { ctx ->
-            // just in case
-            if (ctx.isTvSettings()) {
-                home_api_fab?.isVisible = false
-                home_change_api?.isVisible = true
-                if (ctx.isTrueTvSettings()) {
-                    home_change_api_loading?.isVisible = true
-                    home_change_api_loading?.isFocusable = true
-                    home_change_api_loading?.isFocusableInTouchMode = true
-                    home_change_api?.isFocusable = true
-                    home_change_api?.isFocusableInTouchMode = true
-                }
-                // home_bookmark_select?.isFocusable = true
-                // home_bookmark_select?.isFocusableInTouchMode = true
-            } else {
-                home_api_fab?.isVisible = true
-                home_change_api?.isVisible = false
-                home_change_api_loading?.isVisible = false
+        // just in case
+        if (isTvSettings()) {
+            home_api_fab?.isVisible = false
+            home_change_api?.isVisible = true
+            if (isTrueTvSettings()) {
+                home_change_api_loading?.isVisible = true
+                home_change_api_loading?.isFocusable = true
+                home_change_api_loading?.isFocusableInTouchMode = true
+                home_change_api?.isFocusable = true
+                home_change_api?.isFocusableInTouchMode = true
             }
+            // home_bookmark_select?.isFocusable = true
+            // home_bookmark_select?.isFocusableInTouchMode = true
+        } else {
+            home_api_fab?.isVisible = true
+            home_change_api?.isVisible = false
+            home_change_api_loading?.isVisible = false
+        }
 
-            for (syncApi in OAuth2Apis) {
-                val login = syncApi.loginInfo()
-                val pic = login?.profilePicture
-                if (home_profile_picture?.setImage(
-                        pic,
-                        errorImageDrawable = errorProfilePic
-                    ) == true
-                ) {
-                    home_profile_picture_holder?.isVisible = true
-                    break
-                }
+        for (syncApi in OAuth2Apis) {
+            val login = syncApi.loginInfo()
+            val pic = login?.profilePicture
+            if (home_profile_picture?.setImage(
+                    pic,
+                    errorImageDrawable = errorProfilePic
+                ) == true
+            ) {
+                home_profile_picture_holder?.isVisible = true
+                break
             }
         }
     }

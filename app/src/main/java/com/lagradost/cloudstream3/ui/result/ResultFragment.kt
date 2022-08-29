@@ -292,7 +292,7 @@ open class ResultFragment : ResultTrailerPlayer() {
                 result_reload_connection_open_in_browser?.isVisible = true
             }
             2 -> {
-                result_bookmark_fab?.isGone = result_bookmark_fab?.context?.isTvSettings() == true
+                result_bookmark_fab?.isGone = isTvSettings()
                 result_bookmark_fab?.extend()
                 //if (result_bookmark_button?.context?.isTrueTvSettings() == true) {
                 //    when {
@@ -550,7 +550,7 @@ open class ResultFragment : ResultTrailerPlayer() {
         }
 
         // This is to band-aid FireTV navigation
-        val isTv = context?.isTvSettings() == true
+        val isTv = isTvSettings()
         result_season_button?.isFocusableInTouchMode = isTv
         result_episode_select?.isFocusableInTouchMode = isTv
         result_dub_select?.isFocusableInTouchMode = isTv
@@ -795,7 +795,7 @@ open class ResultFragment : ResultTrailerPlayer() {
                     result_poster.setImage(d.posterImage)
                     home_blur_poster.setImage(d.backgroundPosterImage)
 
-                    if (d.posterImage != null && context?.isTrueTvSettings() == false)
+                    if (d.posterImage != null && !isTrueTvSettings())
                         result_poster_holder?.setOnClickListener {
                             try {
                                 context?.let { ctx ->
@@ -887,7 +887,7 @@ open class ResultFragment : ResultTrailerPlayer() {
                     result_tag_holder?.isVisible = tags.isNotEmpty()
                     if (tags.isNotEmpty()) {
                         //result_tag_holder?.visibility = VISIBLE
-                        val isOnTv = context?.isTrueTvSettings() == true
+                        val isOnTv = isTrueTvSettings()
                         for ((index, tag) in tags.withIndex()) {
                             val viewBtt = layoutInflater.inflate(R.layout.result_tag, null)
                             val btt = viewBtt.findViewById<MaterialButton>(R.id.result_tag_card)
@@ -1051,7 +1051,7 @@ open class ResultFragment : ResultTrailerPlayer() {
                 }
 
                 // bloats the navigation on tv
-                if (context?.isTrueTvSettings() == false) {
+                if (!isTrueTvSettings()) {
                     result_meta_site?.setOnClickListener {
                         it.context?.openBrowser(storedData.url)
                     }
