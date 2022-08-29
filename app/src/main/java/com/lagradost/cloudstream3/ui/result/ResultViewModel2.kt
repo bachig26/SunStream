@@ -1967,7 +1967,7 @@ class ResultViewModel2 : ViewModel() {
                         )
                     )
 
-                    loadTrailers(data.value)
+                    // loadTrailers(data.value) //TODO FIX TRAILERS
                     postSuccessful(
                         data.value,
                         updateEpisodes = true,
