@@ -2,6 +2,8 @@
 
 [Download pre-release](https://github.com/Sarlay/SunStream/releases)
 
+Based on the amazing [Cloudstream-3](https://github.com/recloudstream/cloudstream/)
+
 **⚠️ Warning: By default this app doesn't provide any video sources, you have to install extensions in order to add functionality to the app.**
 
 ***Features:***
