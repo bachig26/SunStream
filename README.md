@@ -4,10 +4,9 @@
 **⚠️ Warning: By default this app doesn't provide any video sources, you have to install extensions in order to add functionality to the app.**
 
 ***Features:***
-+ All providers show up as one (called MultiMedia) thanks to TMDB
++ All providers show up as only one thanks to [TheMovieDB](https://www.themoviedb.org/)
 
 ***TODO:***
-+ Add filters to add back removed providers
 + self-hosted providers like nginx, radarr and sonarr
 
 ***Screenshots:***
