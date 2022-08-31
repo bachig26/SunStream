@@ -36,7 +36,7 @@ import kotlinx.android.synthetic.main.add_repo_input.*
 import kotlinx.android.synthetic.main.fragment_extensions.*
 import kotlinx.android.synthetic.main.fragment_extensions.list_repositories
 
-const val PUBLIC_REPOSITORIES_LIST = "https://recloudstream.github.io/repos/"
+const val PUBLIC_REPOSITORIES_LIST = "https://sarlay.github.io/sunstream.github.io/repos/"
 
 class ExtensionsFragment : Fragment() {
     override fun onCreateView(
