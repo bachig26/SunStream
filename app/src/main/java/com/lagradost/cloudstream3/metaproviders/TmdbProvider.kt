@@ -87,7 +87,7 @@ open class TmdbProvider : MainAPI() {
             this.title ?: this.original_title,
             getUrl(id, false),
             apiName,
-            TvType.TvSeries,
+            TvType.Movie,
             getImageUrl(this.poster_path),  // POSTER
             this.release_date?.let {
                 Calendar.getInstance().apply {
@@ -405,7 +405,7 @@ open class TmdbProvider : MainAPI() {
 
     override suspend fun search(query: String): List<SearchResponse>? {
         return tmdb.searchService().multi(query, 1, "en-Us", "US", includeAdult).awaitResponse()
-            .body()?.results?.mapNotNull {
+            .body()?.results?.sortedByDescending { it.movie?.popularity ?: it.tvShow?.popularity }?.mapNotNull {
                 it.movie?.toSearchResponse() ?: it.tvShow?.toSearchResponse()
             }
     }

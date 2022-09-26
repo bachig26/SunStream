@@ -237,22 +237,27 @@ val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     Streamhub2(),
     Ssbstream(),
     Sbthe(),
+    Vidgomunime(),
+    Sbflix(),
+    Streamsss(),
 
     Fastream(),
-    
+
     FEmbed(),
     FeHD(),
     Fplayer(),
     DBfilm(),
     Luxubu(),
     LayarKaca(),
+    Rasacintaku(),
+    FEnet(),
     //  WatchSB(), 'cause StreamSB.kt works
     Uqload(),
     Uqload1(),
     Evoload(),
     Evoload1(),
     VoeExtractor(),
-    // UpstreamExtractor(), GenericM3U8.kt works
+    UpstreamExtractor(),
 
     Tomatomatela(),
     Cinestart(),
@@ -268,6 +273,7 @@ val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     DoodWsExtractor(),
     DoodShExtractor(),
     DoodWatchExtractor(),
+    DoodWfExtractor(),
 
     AsianLoad(),
 
@@ -316,6 +322,21 @@ val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     Acefile(),
     SpeedoStream(),
     Zorofile(),
+    Embedgram(),
+    Mvidoo(),
+    Streamplay(),
+
+    Gdriveplayerapi(),
+    Gdriveplayerapp(),
+    Gdriveplayerfun(),
+    Gdriveplayerio(),
+    Gdriveplayerme(),
+    Gdriveplayerbiz(),
+    Gdriveplayerorg(),
+    Gdriveplayerus(),
+    Gdriveplayerco(),
+    Gdriveplayer(),
+    DatabaseGdrive(),
 
     YoutubeExtractor(),
     YoutubeShortLinkExtractor(),
@@ -324,6 +345,7 @@ val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     Streamlare(),
     VidSrcExtractor(),
     VidSrcExtractor2(),
+    PlayLtXyz(),
 )
 
 

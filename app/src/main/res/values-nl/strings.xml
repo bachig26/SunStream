@@ -20,7 +20,7 @@
 
     <!-- TRANSLATE, BUT DON'T FORGET FORMAT -->
     <string name="player_speed_text_format" formatted="true">Snelheid (%.2fx)</string>
-    <string name="rated_format" formatted="true">Beoordeeld: %.Als</string>
+    <string name="rated_format" formatted="true">Beoordeeld: %.1fAls</string>
     <string name="new_update_format" formatted="true">Nieuwe update gevonden!\n%s -> %s</string>
     <string name="filler" formatted="true">Filler</string>
     <string name="duration_format" formatted="true">%d min</string>
@@ -208,7 +208,6 @@
     <string name="acra_report_toast">Sorry, de applicatie is gecrasht. Er wordt een anoniem bugrapport naar de ontwikkelaars gestuurd </string>
 
     <string name="season">Seizoen</string>
-    <string name="season_format">%s %d</string>
     <string name="no_season">Geen seizoen</string>
     <string name="episode">Aflevering</string>
     <string name="episodes">afleveringen</string>
@@ -337,7 +336,6 @@
     <string name="app_layout">App Layout</string>
     <string name="preferred_media_settings">Preferred media</string>
     <string name="subtitles_encoding">Subtitle encoding</string>
-    <string name="category_preferred_media_and_lang">Language</string>
     <string name="category_ui">Layout</string>
 
     <string name="automatic">Auto</string>
@@ -460,8 +458,6 @@
     <string name="provider_languages_tip">Bekijk video\'s in deze talen</string>
     <string name="previous">Vorige</string>
     <string name="skip_setup">Instelling overslaan</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hallo leeg fragment</string>
     <string name="app_layout_subtext">Pas het uiterlijk van de app aan uw apparaat aan</string>
     <string name="crash_reporting_title">Crashrapportage</string>
     <string name="preferred_media_subtext">Wat wil je zien?</string>

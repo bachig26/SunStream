@@ -313,7 +313,7 @@
     </string>
 
     <string name="season">Season</string>
-    <string name="season_format">%s %d</string>
+    <string name="season_format">%s %d%s</string>
     <string name="no_season">No Season</string>
     <string name="episode">Episode</string>
     <string name="episodes">Episodes</string>
@@ -483,9 +483,8 @@
     <string name="preferred_media_settings">Preferred media</string>
     <string name="enable_nsfw_on_providers">Enable NSFW on supported providers</string>
     <string name="subtitles_encoding">Subtitle encoding</string>
-    <string name="category_preferred_media_and_lang">Language</string>
-    <string name="category_ui">Layout</string>
     <string name="category_providers">Providers</string>
+    <string name="category_ui">Layout</string>
     <string name="category_about">About</string>
 
     <string name="automatic">Auto</string>
@@ -636,8 +635,6 @@
     <string name="provider_languages_tip">Watch videos in these languages</string>
     <string name="previous">Previous</string>
     <string name="skip_setup">Skip setup</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="app_layout_subtext">Change the look of the app to suit your device</string>
     <string name="crash_reporting_title">Crash reporting</string>
     <string name="preferred_media_subtext">What do you want to see</string>
@@ -662,6 +659,7 @@
     <string name="plugins_downloaded" formatted="true">Downloaded: %d</string>
     <string name="plugins_disabled" formatted="true">Disabled: %d</string>
     <string name="plugins_not_downloaded" formatted="true">Not downloaded: %d</string>
+    <string name="plugins_updated" formatted="true">Updated %d plugins</string>
     <string name="blank_repo_message">Add a repository to install site extensions</string>
     <string name="view_public_repositories_button">View community repositories</string>
     <string name="view_public_repositories_button_short">Public list</string>
@@ -669,5 +667,24 @@
 
     <string name="download_all_plugins_from_repo">Download all plugins from this repository?</string>
     <string name="single_plugin_disabled" formatted="true">%s (Disabled)</string>
+    <string name="tracks">Tracks</string>
+    <string name="audio_tracks">Audio tracks</string>
+    <string name="video_tracks">Video tracks</string>
     <string name="apply_on_restart">Apply on Restart</string>
+
+    <string name="safe_mode_title">Safe Mode enabled</string>
+    <string name="safe_mode_description">An unrecoverable crash occurred and we\'ve automatically disabled all extensions, so you can find and remove the extension which is causing trouble.</string>
+    <string name="safe_mode_crash_info">View crash info</string>
+
+    <string name="extension_rating" formatted="true">Rating: %s</string>
+    <string name="extension_description">Description</string>
+    <string name="extension_version">Version</string>
+    <string name="extension_status">Status</string>
+    <string name="extension_size">Size</string>
+    <string name="extension_authors">Authors</string>
+    <string name="extension_types">Supported</string>
+    <string name="extension_language">Language</string>
+    <string name="extension_install_first">Install the extension first</string>
+    
+    <string name="hls_playlist">HLS Playlist</string>
 </resources>

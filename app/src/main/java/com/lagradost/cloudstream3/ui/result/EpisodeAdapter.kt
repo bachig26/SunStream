@@ -4,10 +4,8 @@ import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.LayoutRes
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.widget.ContentLoadingProgressBar
@@ -62,7 +60,7 @@ class EpisodeAdapter(
     private val clickCallback: (EpisodeClickEvent) -> Unit,
     private val downloadClickCallback: (DownloadClickEvent) -> Unit,
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    private var cardList: MutableList<ResultEpisode> = mutableListOf()
+    var cardList: MutableList<ResultEpisode> = mutableListOf()
 
     private val mBoundViewHolders: HashSet<DownloadButtonViewHolder> = HashSet()
     private fun getAllBoundViewHolders(): Set<DownloadButtonViewHolder?>? {
@@ -241,7 +239,6 @@ class EpisodeAdapter(
 
             itemView.setOnLongClickListener {
                 clickCallback.invoke(EpisodeClickEvent(ACTION_SHOW_OPTIONS, card))
-
                 return@setOnLongClickListener true
             }
 

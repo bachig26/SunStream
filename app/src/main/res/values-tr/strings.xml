@@ -350,7 +350,6 @@
     <string name="app_layout">Uygulama düzeni</string>
     <string name="preferred_media_settings">Tercih edilen medya</string>
     <string name="subtitles_encoding">Alt yazı kodlaması</string>
-    <string name="category_preferred_media_and_lang">Dil</string>
     <string name="category_ui">Düzen</string>
 
     <string name="automatic">Otomatik</string>
@@ -473,8 +472,6 @@
     <string name="provider_languages_tip">Videoları bu dillerde izle</string>
     <string name="previous">Geri</string>
     <string name="skip_setup">Kurulumu atla</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Merhaba boş parça</string>
     <string name="app_layout_subtext">Cihazınıza uygun görünümü seçin</string>
     <string name="crash_reporting_title">Çökme raporları</string>
     <string name="preferred_media_subtext">Ne izlemek istiyorsunuz?</string>

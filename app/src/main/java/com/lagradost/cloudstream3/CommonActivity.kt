@@ -166,6 +166,8 @@ object CommonActivity {
                 "Light" -> R.style.LightMode
                 "Amoled" -> R.style.AmoledMode
                 "AmoledLight" -> R.style.AmoledModeLight
+                "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                        R.style.MonetMode else R.style.AppTheme
                 else -> R.style.AppTheme
             }
 
@@ -187,6 +189,10 @@ object CommonActivity {
                 "Banana" -> R.style.OverlayPrimaryColorBanana
                 "Party" -> R.style.OverlayPrimaryColorParty
                 "Pink" -> R.style.OverlayPrimaryColorPink
+                "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                    R.style.OverlayPrimaryColorMonet else R.style.OverlayPrimaryColorNormal
+                "Monet2" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                    R.style.OverlayPrimaryColorMonetTwo else R.style.OverlayPrimaryColorNormal
                 else -> R.style.OverlayPrimaryColorNormal
             }
         act.theme.applyStyle(currentTheme, true)
@@ -284,7 +290,7 @@ object CommonActivity {
             KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_BUTTON_START -> {
                 PlayerEventType.Play
             }
-            KeyEvent.KEYCODE_L, KeyEvent.KEYCODE_NUMPAD_7 -> {
+            KeyEvent.KEYCODE_L, KeyEvent.KEYCODE_NUMPAD_7, KeyEvent.KEYCODE_7 -> {
                 PlayerEventType.Lock
             }
             KeyEvent.KEYCODE_H, KeyEvent.KEYCODE_MENU -> {
@@ -293,20 +299,20 @@ object CommonActivity {
             KeyEvent.KEYCODE_M, KeyEvent.KEYCODE_VOLUME_MUTE -> {
                 PlayerEventType.ToggleMute
             }
-            KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_NUMPAD_9 -> {
+            KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_NUMPAD_9, KeyEvent.KEYCODE_9 -> {
                 PlayerEventType.ShowMirrors
             }
             // OpenSubtitles shortcut
-            KeyEvent.KEYCODE_O, KeyEvent.KEYCODE_NUMPAD_8 -> {
+            KeyEvent.KEYCODE_O, KeyEvent.KEYCODE_NUMPAD_8, KeyEvent.KEYCODE_8 -> {
                 PlayerEventType.SearchSubtitlesOnline
             }
-            KeyEvent.KEYCODE_E, KeyEvent.KEYCODE_NUMPAD_3 -> {
+            KeyEvent.KEYCODE_E, KeyEvent.KEYCODE_NUMPAD_3, KeyEvent.KEYCODE_3 -> {
                 PlayerEventType.ShowSpeed
             }
-            KeyEvent.KEYCODE_R, KeyEvent.KEYCODE_NUMPAD_0 -> {
+            KeyEvent.KEYCODE_R, KeyEvent.KEYCODE_NUMPAD_0, KeyEvent.KEYCODE_0 -> {
                 PlayerEventType.Resize
             }
-            KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_NUMPAD_4 -> {
+            KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_NUMPAD_4, KeyEvent.KEYCODE_4 -> {
                 PlayerEventType.SkipOp
             }
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_P, KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_NUMPAD_ENTER, KeyEvent.KEYCODE_ENTER -> { // space is not captured due to navigation

@@ -311,7 +311,6 @@
     <string name="preferred_media_settings">Preferowane media</string>
 
     <string name="subtitles_encoding">Kodowanie napisów</string>
-    <string name="category_preferred_media_and_lang">Język</string>
     <string name="category_ui">Układ interfejsu</string>
     <string name="automatic">Automatyczny</string>
     <string name="tv_layout">Układ dla telewizorów</string>
@@ -409,23 +408,23 @@
     <string name="repository_url_hint">Adres url repozytorium</string>
     <string name="plugin_loaded">Rozszerzenie załadowane</string>
     <string name="plugin_deleted">Rozszerzenie usunięte</string>
-    <string name="plugin_load_fail">Błąd ładowania %s</string>
+    <string name="plugin_load_fail" formatted="true">Błąd ładowania %s</string>
     <string name="is_adult">+18</string>
-    <string name="batch_download_start_format">Zaczęto pobieranie %d %s</string>
-    <string name="batch_download_finish_format">Pobrano %d %s</string>
-    <string name="batch_download_nothing_to_download_format">Wszystkie %s już pobrane</string>
+    <string name="batch_download_start_format" formatted="true">Zaczęto pobieranie %d %s</string>
+    <string name="batch_download_finish_format" formatted="true">Pobrano %d %s</string>
+    <string name="batch_download_nothing_to_download_format" formatted="true">Wszystkie %s już pobrane</string>
     <string name="batch_download">Pobierz wszystko</string>
     <string name="plugin_singular">rozszerzenie</string>
     <string name="plugin">rozszerzenia</string>
     <string name="delete_repository_plugins">Ta akcja usunie także wszystkie rozszerzenia z repozytorium</string>
     <string name="delete_repository">Usuń repozytorium</string>
     <string name="setup_extensions_subtext">Pobierz strony które Cię interesują</string>
-    <string name="plugins_downloaded">Pobrano: %d</string>
-    <string name="plugins_disabled">Wyłączono: %d</string>
-    <string name="plugins_not_downloaded">Nie pobrano: %d</string>
+    <string name="plugins_downloaded" formatted="true">Pobrano: %d</string>
+    <string name="plugins_disabled" formatted="true">Wyłączono: %d</string>
+    <string name="plugins_not_downloaded" formatted="true">Nie pobrano: %d</string>
     <string name="blank_repo_message">Dodaj repozytorium aby zainstalować rozszerzenia</string>
     <string name="sync_score">Ocenione</string>
-    <string name="sync_score_format">%d na 10</string>
+    <string name="sync_score_format" formatted="true">%d na 10</string>
     <string name="others">Inne</string>
     <string name="other_singular">Wideo</string>
     <string name="view_public_repositories_button">Zobacz repozytoria społeczności</string>
@@ -434,6 +433,27 @@
     <string name="subtitles_filter_lang">Filtrowanie wg preferowanego języka mediów</string>
     <string name="uppercase_all_subtitles">Wszystkie napisy wielką literą</string>
     <string name="download_all_plugins_from_repo">Pobrać wszystkie rozszerzenia z tego repozytorium?</string>
-    <string name="single_plugin_disabled">%s (Wyłączone)</string>
+    <string name="single_plugin_disabled" formatted="true">%s (Wyłączone)</string>
     <string name="pref_filter_search_quality">Ukryj wybraną jakość wideo w wynikach wyszukiwania</string>
+    <string name="enable_nsfw_on_providers">Włącz NSFW u obsługiwanych dostawców</string>
+    <string name="category_providers">Dostawcy</string>
+    <string name="safe_mode_title">Tryb bezpieczny włączony</string>
+    <string name="safe_mode_description">Wystąpiła nieoczekiwana awaria i automatycznie wyłączyliśmy wszystkie rozszerzenia, abyś mógł znaleźć i usunąć rozszerzenie, które powoduje problemy.</string>
+    <string name="safe_mode_crash_info">Wyświetl informacje o awarii</string>
+    <string name="audio_tracks">Ścieżki audio</string>
+    <string name="video_tracks">Ścieżki wideo</string>
+    <string name="tracks">Ścieżki</string>
+    <string name="apply_on_restart">Zastosuj po ponownym uruchomieniu</string>
+    <string name="autoplay_next_settings_des">Rozpocznij następny odcinek po zakończeniu bieżącego</string>
+    <string name="autoplay_next_settings">Autoodtwarzanie następnego odcinka</string>
+    <string name="extension_rating" formatted="true">Ocena: %s</string>
+    <string name="extension_description">Opis</string>
+    <string name="extension_version">Versja</string>
+    <string name="extension_status">Status</string>
+    <string name="extension_size">Rozmiar</string>
+    <string name="extension_authors">Autorzy</string>
+    <string name="extension_types">Wspierane</string>
+    <string name="extension_language">Język</string>
+    <string name="extension_install_first">Najpierw zainstaluj rozszerzenie</string>
+    <string name="plugins_updated">Zaaktualizowano %d rozszerzeń</string>
 </resources>

@@ -7,6 +7,7 @@ import com.bumptech.glide.load.HttpException
 import com.lagradost.cloudstream3.BuildConfig
 import com.lagradost.cloudstream3.ErrorLoadingException
 import kotlinx.coroutines.*
+import java.io.InterruptedIOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import javax.net.ssl.SSLHandshakeException
@@ -14,12 +15,19 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 const val DEBUG_EXCEPTION = "THIS IS A DEBUG EXCEPTION!"
+const val DEBUG_PRINT = "DEBUG PRINT"
 
 class DebugException(message: String) : Exception("$DEBUG_EXCEPTION\n$message")
 
 inline fun debugException(message: () -> String) {
     if (BuildConfig.DEBUG) {
         throw DebugException(message.invoke())
+    }
+}
+
+inline fun debugPrint(tag: String = DEBUG_PRINT, message: () -> String) {
+    if (BuildConfig.DEBUG) {
+        Log.d(tag, message.invoke())
     }
 }
 
@@ -157,7 +165,7 @@ suspend fun <T> safeApiCall(
                     }
                     safeFail(throwable)
                 }
-                is SocketTimeoutException -> {
+                is SocketTimeoutException, is InterruptedIOException -> {
                     Resource.Failure(
                         true,
                         null,
@@ -192,7 +200,7 @@ suspend fun <T> safeApiCall(
                         true,
                         null,
                         null,
-                        (throwable.message ?: "SSLHandshakeException") + "\nTry again later."
+                        (throwable.message ?: "SSLHandshakeException") + "\nTry a VPN or DNS."
                     )
                 }
                 else -> safeFail(throwable)

@@ -21,6 +21,8 @@
         <item>Cloudflare</item>
         <!--        <item>OpenDns</item>-->
         <item>AdGuard</item>
+        <item>DNS.WATCH</item>
+        <item>Quad9</item>
     </array>
     <array name="dns_pref_values">
         <item>0</item>
@@ -29,6 +31,8 @@
         <item>2</item>
         <!--        <item>3</item>-->
         <item>4</item>
+        <item>5</item>
+        <item>6</item>
     </array>
 
     <array name="limit_title_rez_pref_names">
@@ -229,6 +233,8 @@
         <item>Banana</item>
         <item>Party</item>
         <item>Pink Pain</item>
+        <item>Material You</item>
+        <item>Material You (Secondary)</item>
     </string-array>
     <string-array name="themes_overlay_names_values">
         <item>SunSet</item>
@@ -248,6 +254,8 @@
         <item>Banana</item>
         <item>Party</item>
         <item>Pink</item>
+        <item>Monet</item>
+        <item>Monet2</item>
     </string-array>
 
     <string-array name="themes_names">
@@ -255,12 +263,22 @@
         <item>Gray</item>
         <item>Amoled</item>
         <item>Flashbang</item>
+        <item>Material You</item>
     </string-array>
     <string-array name="themes_names_values">
         <item>AmoledLight</item>
         <item>Black</item>
         <item>Amoled</item>
         <item>Light</item>
+        <item>Monet</item>
+    </string-array>
+
+    <string-array name="extension_statuses">
+        <item>Down</item>
+        <!-- "Ok" is usually capitalized as "OK". Ok android studio 🤓-->
+        <item>Ok</item>
+        <item>Slow</item>
+        <item>Beta</item>
     </string-array>
 
     <!--https://github.com/videolan/vlc-android/blob/72ccfb93db027b49855760001d1a930fa657c5a8/application/resources/src/main/res/values/arrays.xml#L266-->

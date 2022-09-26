@@ -1,8 +1,5 @@
 package com.lagradost.cloudstream3.ui.settings
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.View.*
@@ -12,8 +9,10 @@ import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceFragmentCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.lagradost.cloudstream3.AcraApplication.Companion.openBrowser
 import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.mvvm.logError
@@ -40,7 +39,11 @@ import kotlinx.android.synthetic.main.add_account_input.*
 class SettingsAccount : PreferenceFragmentCompat() {
     companion object {
         /** Used by nginx plugin too */
-        fun showLoginInfo(activity: Activity?, api: AccountManager, info: AuthAPI.LoginInfo) {
+        fun showLoginInfo(
+            activity: FragmentActivity?,
+            api: AccountManager,
+            info: AuthAPI.LoginInfo
+        ) {
             val builder =
                 AlertDialog.Builder(activity ?: return, R.style.AlertDialogCustom)
                     .setView(R.layout.account_managment)
@@ -63,9 +66,13 @@ class SettingsAccount : PreferenceFragmentCompat() {
                 dialog.dismissSafe(activity)
                 showAccountSwitch(activity, api)
             }
+
+            if (isTvSettings()) {
+                dialog.account_switch_account?.requestFocus()
+            }
         }
 
-        fun showAccountSwitch(activity: Activity, api: AccountManager) {
+        fun showAccountSwitch(activity: FragmentActivity, api: AccountManager) {
             val accounts = api.getAccounts() ?: return
 
             val builder =
@@ -99,11 +106,11 @@ class SettingsAccount : PreferenceFragmentCompat() {
         }
 
         @UiThread
-        fun addAccount(activity: Activity?, api: AccountManager) {
+        fun addAccount(activity: FragmentActivity?, api: AccountManager) {
             try {
                 when (api) {
                     is OAuth2API -> {
-                        api.authenticate()
+                        api.authenticate(activity)
                     }
                     is InAppAuthAPI -> {
                         val builder =
@@ -115,7 +122,10 @@ class SettingsAccount : PreferenceFragmentCompat() {
                             dialog.login_email_input to api.requiresEmail,
                             dialog.login_password_input to api.requiresPassword,
                             dialog.login_server_input to api.requiresServer,
-                            dialog.login_username_input to api.requiresUsername
+                            dialog.login_username_input to api.requiresUsername,
+                            dialog.login_path_input to api.requiresPath,
+                            dialog.login_apikey_input to api.requiresApiKey,
+                            dialog.login_quality_profile_input to api.requiresQualityProfile,
                         )
 
                         if (isTvSettings()) {
@@ -145,13 +155,11 @@ class SettingsAccount : PreferenceFragmentCompat() {
                         dialog.login_username_input?.isVisible = api.requiresUsername
                         dialog.create_account?.isGone = api.createAccountUrl.isNullOrBlank()
                         dialog.create_account?.setOnClickListener {
-                            val i = Intent(Intent.ACTION_VIEW)
-                            i.data = Uri.parse(api.createAccountUrl)
-                            try {
-                                activity.startActivity(i)
-                            } catch (e: Exception) {
-                                logError(e)
-                            }
+                            openBrowser(
+                                api.createAccountUrl ?: return@setOnClickListener,
+                                activity
+                            )
+                            dialog.dismissSafe()
                         }
                         dialog.text1?.text = api.name
 
@@ -182,9 +190,10 @@ class SettingsAccount : PreferenceFragmentCompat() {
                                     try {
                                         showToast(
                                             activity,
-                                            activity.getString(if (isSuccessful) R.string.authenticated_user else R.string.authenticated_user_fail).format(
-                                                api.name
-                                            )
+                                            activity.getString(if (isSuccessful) R.string.authenticated_user else R.string.authenticated_user_fail)
+                                                .format(
+                                                    api.name
+                                                )
                                         )
                                     } catch (e: Exception) {
                                         logError(e) // format might fail

@@ -10,9 +10,12 @@ import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.annotation.IdRes
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -95,6 +98,7 @@ import kotlin.concurrent.thread
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.net.URI
+import java.nio.charset.Charset
 import kotlin.reflect.KClass
 
 
@@ -148,6 +152,72 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         val mainPluginsLoadedEvent =
             Event<Boolean>() // homepage api, used to speed up time to load for homepage
         val afterRepositoryLoadedEvent = Event<Boolean>()
+
+        /**
+         * @return true if the str has launched an app task (be it successful or not)
+         * @param isWebview does not handle providers and opening download page if true. Can still add repos and login.
+         * */
+        fun handleAppIntentUrl(
+            activity: FragmentActivity?,
+            str: String?,
+            isWebview: Boolean
+        ): Boolean =
+            with(activity) {
+                if (str != null && this != null) {
+                    if (str.startsWith("https://cs.repo")) {
+                        val realUrl = "https://" + str.substringAfter("?")
+                        println("Repository url: $realUrl")
+                        loadRepository(realUrl)
+                        return true
+                    } else if (str.contains(appString)) {
+                        for (api in OAuth2Apis) {
+                            if (str.contains("/${api.redirectUrl}")) {
+                                ioSafe {
+                                    Log.i(TAG, "handleAppIntent $str")
+                                    val isSuccessful = api.handleRedirect(str)
+
+                                    if (isSuccessful) {
+                                        Log.i(TAG, "authenticated ${api.name}")
+                                    } else {
+                                        Log.i(TAG, "failed to authenticate ${api.name}")
+                                    }
+
+                                    this@with.runOnUiThread {
+                                        try {
+                                            showToast(
+                                                this@with,
+                                                getString(if (isSuccessful) R.string.authenticated_user else R.string.authenticated_user_fail).format(
+                                                    api.name
+                                                )
+                                            )
+                                        } catch (e: Exception) {
+                                            logError(e) // format might fail
+                                        }
+                                    }
+                                }
+                                return true
+                            }
+                        }
+                    } else if (URI(str).scheme == appStringRepo) {
+                        val url = str.replaceFirst(appStringRepo, "https")
+                        loadRepository(url)
+                        return true
+                    } else if (!isWebview) {
+                        if (str.startsWith(DOWNLOAD_NAVIGATE_TO)) {
+                            this.navigate(R.id.navigation_downloads)
+                            return true
+                        } else {
+                            for (api in apis) {
+                                if (str.startsWith(api.mainUrl)) {
+                                    loadResult(str, api.name)
+                                    return true
+                                }
+                            }
+                        }
+                    }
+                }
+                return false
+            }
     }
 
     override fun onColorSelected(dialogId: Int, color: Int) {
@@ -190,7 +260,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             R.id.navigation_settings_updates,
             R.id.navigation_settings_ui,
             R.id.navigation_settings_account,
-            R.id.navigation_settings_lang,
+            R.id.navigation_settings_providers,
             R.id.navigation_settings_general,
             R.id.navigation_settings_extensions,
             R.id.navigation_settings_plugins,
@@ -352,56 +422,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         if (intent == null) return
         val str = intent.dataString
         loadCache()
-        if (str != null) {
-            if (str.startsWith("https://cs.repo")) {
-                val realUrl = "https://" + str.substringAfter("?")
-                println("Repository url: $realUrl")
-                loadRepository(realUrl)
-            } else if (str.contains(appString)) {
-                for (api in OAuth2Apis) {
-                    if (str.contains("/${api.redirectUrl}")) {
-                        val activity = this
-                        ioSafe {
-                            Log.i(TAG, "handleAppIntent $str")
-                            val isSuccessful = api.handleRedirect(str)
-
-                            if (isSuccessful) {
-                                Log.i(TAG, "authenticated ${api.name}")
-                            } else {
-                                Log.i(TAG, "failed to authenticate ${api.name}")
-                            }
-
-                            activity.runOnUiThread {
-                                try {
-                                    showToast(
-                                        activity,
-                                        getString(if (isSuccessful) R.string.authenticated_user else R.string.authenticated_user_fail).format(
-                                            api.name
-                                        )
-                                    )
-                                } catch (e: Exception) {
-                                    logError(e) // format might fail
-                                }
-                            }
-                        }
-                    }
-                }
-            } else if (URI(str).scheme == appStringRepo) {
-                val url = str.replaceFirst(appStringRepo, "https")
-                loadRepository(url)
-            } else {
-                if (str.startsWith(DOWNLOAD_NAVIGATE_TO)) {
-                    this.navigate(R.id.navigation_downloads)
-                } else {
-                    for (api in apis) {
-                        if (str.startsWith(api.mainUrl)) {
-                            loadResult(str, api.name)
-                            break
-                        }
-                    }
-                }
-            }
-        }
+        handleAppIntentUrl(this, str, false)
     }
 
     private fun NavDestination.matchDestination(@IdRes destId: Int): Boolean =
@@ -450,7 +471,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
                     }
 
                     // it.hashCode() is not enough to make sure they are distinct
-                    apis = allProviders.distinctBy { it.lang + it.name + it.mainUrl + it.javaClass.name }
+                    apis =
+                        allProviders.distinctBy { it.lang + it.name + it.mainUrl + it.javaClass.name }
                     APIHolder.apiMap = null
                 } catch (e: Exception) {
                     logError(e)
@@ -463,9 +485,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         app.initClient(this)
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
-        
+
+        val errorFile = filesDir.resolve("last_error")
+        var lastError: String? = null
+        if (errorFile.exists() && errorFile.isFile) {
+            lastError = errorFile.readText(Charset.defaultCharset())
+            errorFile.delete()
+        }
+
         val settingsForProvider = SettingsJson()
-        settingsForProvider.enableAdult = settingsManager.getBoolean(getString(R.string.enable_nsfw_on_providers_key), false)
+        settingsForProvider.enableAdult =
+            settingsManager.getBoolean(getString(R.string.enable_nsfw_on_providers_key), false)
 
         MainAPI.settingsForProvider = settingsForProvider
 
@@ -513,26 +543,48 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         changeStatusBarState(isEmulatorSettings())
 
 
-
-        ioSafe {
-            getKey<String>(USER_SELECTED_HOMEPAGE_API)?.let { homeApi ->
-                mainPluginsLoadedEvent.invoke(loadSinglePlugin(this@MainActivity, homeApi))
-            } ?: run {
-                mainPluginsLoadedEvent.invoke(false)
-            }
+        if (lastError == null) {
 
             ioSafe {
-                if (settingsManager.getBoolean(getString(R.string.auto_update_plugins_key), true)) {
-                    PluginManager.updateAllOnlinePluginsAndLoadThem(this@MainActivity)
-                } else {
-                    PluginManager.loadAllOnlinePlugins(this@MainActivity)
+                getKey<String>(USER_SELECTED_HOMEPAGE_API)?.let { homeApi ->
+                    mainPluginsLoadedEvent.invoke(loadSinglePlugin(this@MainActivity, homeApi))
+                } ?: run {
+                    mainPluginsLoadedEvent.invoke(false)
+                }
+
+                ioSafe {
+                    if (settingsManager.getBoolean(
+                            getString(R.string.auto_update_plugins_key),
+                            true
+                        )
+                    ) {
+                        PluginManager.updateAllOnlinePluginsAndLoadThem(this@MainActivity)
+                    } else {
+                        PluginManager.loadAllOnlinePlugins(this@MainActivity)
+                    }
+                }
+
+                ioSafe {
+                    PluginManager.loadAllLocalPlugins(this@MainActivity)
                 }
             }
+        } else {
+            val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+            builder.setTitle(R.string.safe_mode_title)
+            builder.setMessage(R.string.safe_mode_description)
+            builder.apply {
+                setPositiveButton(R.string.safe_mode_crash_info) { _, _ ->
+                    val tbBuilder: AlertDialog.Builder = AlertDialog.Builder(context)
+                    tbBuilder.setTitle(R.string.safe_mode_title)
+                    tbBuilder.setMessage(lastError)
+                    tbBuilder.show()
+                }
 
-            ioSafe {
-                PluginManager.loadAllLocalPlugins(this@MainActivity)
+                setNegativeButton("Ok") { _, _ -> }
             }
+            builder.show()
         }
+
 
 //        ioSafe {
 //            val plugins =
@@ -549,9 +601,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             for (api in accountManagers) {
                 api.init()
             }
-        }
 
-        ioSafe {
             inAppAuths.apmap { api ->
                 try {
                     api.initialize()
