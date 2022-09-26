@@ -5,14 +5,6 @@
 Based on the amazing [Cloudstream-3](https://github.com/recloudstream/cloudstream/)
 
 **⚠️ Warning: By default this app doesn't provide any video sources, you have to install extensions in order to add functionality to the app.**
-<<<<<<< HEAD
-=======
-You can find the list of community-maintained extension repositories [here
-](https://recloudstream.github.io/repos/)
-
-
-[![Discord](https://invidget.switchblade.xyz/5Hus6fM)](https://discord.gg/5Hus6fM)
->>>>>>> refs/remotes/upstream/master
 
 ***Features:***
 + All providers show up as only one thanks to [TheMovieDB](https://www.themoviedb.org/)
