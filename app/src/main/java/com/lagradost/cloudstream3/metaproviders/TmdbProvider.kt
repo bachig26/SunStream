@@ -27,6 +27,7 @@ data class TmdbLink(
     @JsonProperty("episode") val episode: Int?,
     @JsonProperty("season") val season: Int?,
     @JsonProperty("movieName") val movieName: String? = null,
+    @JsonProperty("alternativeTitles") val alternativeTitles: List<AlternativeTitle>? = null,
 )
 
 open class TmdbProvider : MainAPI() {
@@ -118,6 +119,8 @@ open class TmdbProvider : MainAPI() {
                             this.id,
                             episode.episode_number,
                             episode.season_number,
+                            null,
+                            this.alternative_titles?.titles,
                         ).toJson(),
                         episode.name,
                         episode.season_number,
@@ -183,13 +186,15 @@ open class TmdbProvider : MainAPI() {
 
     private suspend fun Movie.toLoadResponse(): MovieLoadResponse {
         return newMovieLoadResponse(
-            this.title ?: this.original_title, getUrl(id, false), TvType.Movie, TmdbLink(
-                this.imdb_id,
-                this.id,
-                null,
-                null,
-                this.title ?: this.original_title,
-            ).toJson()
+            this.title ?: this.original_title, getUrl(id, false), TvType.Movie,
+                TmdbLink(
+                    this.imdb_id,
+                    this.id,
+                    null,
+                    null,
+                    this.title ?: this.original_title,
+                    this.alternative_titles?.titles,
+                ).toJson()
         ) {
             posterUrl = getImageUrl(poster_path)
             year = release_date?.let {
@@ -219,6 +224,13 @@ open class TmdbProvider : MainAPI() {
         Pair("topMovies", "Top Movies"),
         Pair("topSeries", "Top Series"),
         Pair("airingToday", "Series airing today"),
+        Pair("actionmovies", "Action Movies"),
+        Pair("actionseries", "Action & Adventure Series"),
+        Pair("comedymovies", "Comedy Movies"),
+        Pair("comedyseries", "Comedy Series"),
+        Pair("horrormovies", "Horror Movies"),
+        Pair("scifiseries", "Sci-Fi Series"),
+        Pair("documentaryseries", "Documentary Series"),
     )
 
     override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
@@ -255,6 +267,20 @@ open class TmdbProvider : MainAPI() {
         val releasedOnlineFilter = DiscoverFilter(DiscoverFilter.Separator.OR, ReleaseType.PHYSICAL, ReleaseType.DIGITAL) // only show physical release and digital (hide theater cams: those are really annoying)
         val releasedBeforeDate = TmdbDate(LocalDate.now().minusDays(3).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))) // get date of 3 days ago
 
+
+
+        suspend fun discoverMovie(genre: Int, page: Int): List<SearchResponse>{
+            return tmdb.discoverMovie().page(page).with_genres(DiscoverFilter(genre)).build().awaitResponse().body()?.results?.map {// TODO change region
+                it.toSearchResponse()
+            } ?: listOf()
+        }
+
+        suspend fun discoverTv(genre: Int, page: Int): List<SearchResponse>{
+            return tmdb.discoverTv().page(page).with_genres(DiscoverFilter(genre)).build().awaitResponse().body()?.results?.map {// TODO change region
+                it.toSearchResponse()
+            } ?: listOf()
+        }
+
         val responseContent = when (request.data) {
             "discoverMovies" -> tmdb.discoverMovie().page(page).with_release_type(releasedOnlineFilter).release_date_lte(releasedBeforeDate).build().awaitResponse().body()?.results?.map { // show movies released in physical or digital at least three days ago (time to upload rip)
                 it.toSearchResponse()
@@ -278,6 +304,19 @@ open class TmdbProvider : MainAPI() {
                 it.toSearchResponse()
             } ?: listOf()
 
+
+            "actionmovies" -> discoverMovie(28, page)
+            "actionseries" -> discoverTv(10759, page)
+
+            "comedymovies" -> discoverMovie(35, page)
+            "comedyseries" -> discoverTv(35, page)
+
+            "horrormovies" -> discoverMovie(27, page)
+            "documentaryseries" -> discoverTv(99, page)
+
+            "scifimovies" -> discoverMovie(878, page)
+            "scifiseries" -> discoverTv(10765, page)
+
             else -> throw ErrorLoadingException()
         }
 
@@ -286,7 +325,7 @@ open class TmdbProvider : MainAPI() {
                 request.name,
                 responseContent,
             ),
-            true // todo, get remaining pages from remote
+            true
         )
     }
 
@@ -328,6 +367,7 @@ open class TmdbProvider : MainAPI() {
                             AppendToResponseItem.EXTERNAL_IDS,
                             AppendToResponseItem.VIDEOS,
                             AppendToResponseItem.CREDITS,
+                            AppendToResponseItem.ALTERNATIVE_TITLES,
                             // AppendToResponseItem.IMAGES, // display all posters
                         ),
                         // mapOf("include_image_language" to "null"), // display all posters
@@ -359,6 +399,7 @@ open class TmdbProvider : MainAPI() {
                             AppendToResponseItem.EXTERNAL_IDS,
                             AppendToResponseItem.VIDEOS,
                             AppendToResponseItem.CREDITS,
+                            AppendToResponseItem.ALTERNATIVE_TITLES,
                             // AppendToResponseItem.IMAGES, // display all posters
                         ),
                         // mapOf("include_image_language" to "null") //  display all posters

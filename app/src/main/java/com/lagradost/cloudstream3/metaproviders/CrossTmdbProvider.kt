@@ -10,6 +10,7 @@ import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.uwetrottmann.tmdb2.entities.AlternativeTitle
 
 class CrossTmdbProvider : TmdbProvider() {
     override var name = "TheMovieDatabase"
@@ -31,7 +32,7 @@ class CrossTmdbProvider : TmdbProvider() {
         // it.lang == this.lang &&
     }
 
-    private fun getAllEnabledDirectProviders(): List<MainAPI>? {
+    private fun getAllEnabledDirectProviders(): List<MainAPI?> {
         return apis.filter { it::class.java != this::class.java && it.providerType == ProviderType.DirectProvider}
     }
 
@@ -40,6 +41,10 @@ class CrossTmdbProvider : TmdbProvider() {
         @JsonProperty("directApis") val directApis: List<Pair<String?, String?>?>? = null, // list<Pair<apiName, dataUrl>>
         @JsonProperty("metaUrl") val metaUrl: String?,
         @JsonProperty("enabledMetaProviders") val enabledMetaProviderNames: List<String>?,
+    )
+
+    data class TmdbLinkLocal(
+        @JsonProperty("alternativeTitles") val alternativeTitles: List<AlternativeTitle>?, // TODO ADD NULL
     )
 
     override suspend fun loadLinks(
@@ -82,26 +87,29 @@ class CrossTmdbProvider : TmdbProvider() {
 
 
     /**
-     * Will return the media if the name matches
+     * Will return the media if the name matches (main api)
      */
     private suspend fun searchForMediaDirectProvider(api: MainAPI, filter: TmdbProviderSearchFilter): SearchResponse? {
-        val searchResponseOutput = suspendSafeApiCall {
-            api.search(filter.toJson())?.first()
-        }
-        return if (searchResponseOutput?.name?.let {
-                filterName(it).equals(
-                    filterName(filter.title),
-                    ignoreCase = true) } == true
-        ) {
-            searchResponseOutput // found
-        } else {
-            null
+        val title = filter.alternativeTitles?.first{ // idk if its working
+            it.iso_3166_1?.contains(api.lang) == true
+        }?.title ?: filter.title
+        return suspendSafeApiCall {
+            api.search(title)?.first{ element -> // search in any language ?
+                filterName(element.name).equals(
+                    filterName(title), // search the provider language's title
+                    ignoreCase = true,
+                ) || filterName(element.name).equals(
+                    filterName(filter.title), // search in vo (official title in tmdb)
+                    ignoreCase = true,)
+            }
         }
     }
 
     private fun loadMainApiProvidersTvSerie(response: LoadResponse?, filter: TmdbProviderSearchFilter): List<TvSeriesLoadResponse?>? {// TODO merge those two
         val additionalProvider = getAllEnabledDirectProviders()
-        return additionalProvider?.apmap { api ->
+        if (additionalProvider.isEmpty()) return null
+        return additionalProvider.apmap { api ->
+            if (api == null) return@apmap null
             try {
                 if (api.supportedTypes.contains(response?.type)) {
                     val foundTvShow = searchForMediaDirectProvider(api, filter)
@@ -119,12 +127,14 @@ class CrossTmdbProvider : TmdbProvider() {
                 logError(e)
                 null
             }
-        }?.filterNotNull()
+        }.filterNotNull()
     }
 
     private fun loadMainApiProvidersMovie(response: LoadResponse?, filter: TmdbProviderSearchFilter): List<MovieLoadResponse?>? { // TODO merge those two
             val additionalProvider = getAllEnabledDirectProviders()
-            return additionalProvider?.apmap { api ->
+            if (additionalProvider.isEmpty()) return null
+            return additionalProvider.apmap { api ->
+                if (api == null) return@apmap null
                 try {
                     if (api.supportedTypes.contains(response?.type)) {
                         val foundMovie = searchForMediaDirectProvider(api, filter)
@@ -154,7 +164,9 @@ class CrossTmdbProvider : TmdbProvider() {
         val base = super.load(url)?.apply {
             this.recommendations = this.recommendations
             //val matchName = filterName(this.name)
-            val validApisName = getAllEnabledMetaProviders().apmap { it.name }
+            val validApisName = getAllEnabledMetaProviders().map { api ->
+                api.name
+            }
             val filter = TmdbProviderSearchFilter(
                 this.name ?: return null,
                 this.year,
@@ -165,6 +177,7 @@ class CrossTmdbProvider : TmdbProvider() {
             when(this) {
 
                 is MovieLoadResponse -> {
+                    filter.alternativeTitles = tryParseJson<TmdbLinkLocal>(this.dataUrl)?.alternativeTitles
                     val directProvidersContent = loadMainApiProvidersMovie(this, filter)?.apmap {
                         it?.apiName to it?.dataUrl
                     }
@@ -177,26 +190,37 @@ class CrossTmdbProvider : TmdbProvider() {
                     // (old content of data before update): {"isSuccess":true,"movies":[{"first":"VidSrc","second":"{\"imdbID\":\"tt9419884\",\"tmdbID\":453395,\"episode\":null,\"season\":null,\"movieName\":\"Doctor Strange in the Multiverse of Madness\"}"},{"first":"OpenVids","second":"{\"imdbID\":\"tt9419884\",\"tmdbID\":453395,\"episode\":null,\"season\":null,\"movieName\":\"Doctor Strange in the Multiverse of Madness\"}"}]}
                 }
                 is TvSeriesLoadResponse -> {
+                    filter.alternativeTitles = tryParseJson<TmdbLinkLocal>(this.episodes.first().data)?.alternativeTitles // alternative titles of the tv show itself
+                    //TODO FIX NULL
                     val providerLoadResponses = loadMainApiProvidersTvSerie(this, filter)
                     this.episodes.forEachIndexed { Index, Episode ->
-                        val episodeData: List<Pair<String, String>>? = providerLoadResponses?.mapNotNull { providerResponse ->
-                            val apiName = providerResponse?.apiName ?: return@mapNotNull null
-                            Pair(apiName, providerResponse.episodes[Index].data)
+                        val episodeData: List<Pair<String, String?>>? = providerLoadResponses?.mapNotNull { providerResponse ->
+
+                            try {
+                                val apiName = providerResponse?.apiName ?: return@mapNotNull null
+
+                                Pair(
+                                    apiName,
+                                    providerResponse?.episodes?.get(Index)?.data
+                                ) // TODO FIX episode out of range
+                            } catch (exception: IndexOutOfBoundsException) {
+                                null
+                            }
                         }
                         try {
-                            Episode.data = CrossMetaData(
-                                true,
-                                episodeData, // element must have the same number of episodes // TODO FIX
-                                Episode.data,
-                                validApisName
-                            ).toJson() // sent to loadLinks
+                            if (episodeData != null) {
+                                Episode.data = CrossMetaData(
+                                    true,
+                                    episodeData, // element must have the same number of episodes // TODO FIX
+                                    Episode.data,
+                                    validApisName
+                                ).toJson() // sent to loadLinks
+                            }
                         } catch (e: Exception) {
                             logError(e)
                         }
                     }
                 }
-
-
             }
         }
         return base

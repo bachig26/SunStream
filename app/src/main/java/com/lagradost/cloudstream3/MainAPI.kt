@@ -20,6 +20,7 @@ import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.loadExtractor
+import com.uwetrottmann.tmdb2.entities.AlternativeTitle
 import okhttp3.Interceptor
 import java.text.SimpleDateFormat
 import java.util.*
@@ -647,6 +648,7 @@ data class TmdbProviderSearchFilter(
     val tmdbPlot: String?,
     val duration: Int?,
     val type: TvType?,
+    var alternativeTitles: List<AlternativeTitle>? = null,
 )
 
 data class HomePageList(
