@@ -90,11 +90,11 @@ class CrossTmdbProvider : TmdbProvider() {
      * Will return the media if the name matches (main api)
      */
     private suspend fun searchForMediaDirectProvider(api: MainAPI, filter: TmdbProviderSearchFilter): SearchResponse? {
-        val title = filter.alternativeTitles?.first{ // idk if its working
+        val title = filter.alternativeTitles?.firstOrNull{ // idk if its working
             it.iso_3166_1?.contains(api.lang) == true
         }?.title ?: filter.title
         return suspendSafeApiCall {
-            api.search(title)?.first{ element -> // search in any language ?
+            api.search(title)?.firstOrNull{ element -> // search in any language ?
                 filterName(element.name).equals(
                     filterName(title), // search the provider language's title
                     ignoreCase = true,
