@@ -870,6 +870,7 @@ open class ResultFragment : ResultTrailerPlayer() {
 
                     result_cast_items?.isVisible = d.actors != null
                     result_poster_holder?.isVisible = (d.backgroundPosterImage == null) // show poster if no bg
+                    backdrop_trailer_button_container?.isVisible = (d.backgroundPosterImage != null) // show background if available
                     (result_cast_items?.adapter as ActorAdaptor?)?.apply {
                         updateList(d.actors ?: emptyList())
                     }

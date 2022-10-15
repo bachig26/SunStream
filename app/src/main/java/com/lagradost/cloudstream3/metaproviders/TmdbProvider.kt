@@ -6,7 +6,7 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.LoadResponse.Companion.addImdbId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
-    import com.uwetrottmann.tmdb2.Tmdb
+import com.uwetrottmann.tmdb2.Tmdb
 import com.uwetrottmann.tmdb2.entities.*
 import com.uwetrottmann.tmdb2.entities.DiscoverFilter
 import com.uwetrottmann.tmdb2.enumerations.AppendToResponseItem
@@ -111,8 +111,18 @@ open class TmdbProvider : MainAPI() {
 
     private suspend fun TvShow.toLoadResponse(): TvSeriesLoadResponse {
         val episodes = this.seasons?.filter { !disableSeasonZero || (it.season_number ?: 0) != 0 }
-            ?.mapNotNull { season ->
-                season.episodes?.map { episode ->
+            ?.apmapIndexed { seasonIndex, season ->
+                season.episodes?.apmapIndexed { episodeIndex, episode ->
+                    val episodeBody = this@toLoadResponse.id?.let {
+                        tmdb.tvEpisodesService()
+                            .episode(
+                                it,
+                                seasonIndex+1,
+                                episodeIndex+1,
+                                "en-US",
+                            )
+                    }?.awaitResponse()?.body()
+
                     Episode(
                         TmdbLink(
                             episode.external_ids?.imdb_id ?: this.external_ids?.imdb_id,
@@ -125,13 +135,25 @@ open class TmdbProvider : MainAPI() {
                         episode.name,
                         episode.season_number,
                         episode.episode_number,
-                        getImageUrl(episode.still_path),
-                        episode.rating,
+                        getImageUrl(episodeBody?.still_path),
+                        episodeBody?.vote_average?.toInt(), // TODO Not working ??
                         episode.overview,
                         episode.air_date?.time,
                     )
                 } ?: (1..(season.episode_count ?: 1)).map { episodeNum ->
+
+                    val episodeBody = this@toLoadResponse.id?.let {
+                        tmdb.tvEpisodesService()
+                            .episode(
+                                it,
+                                seasonIndex+1, // 0 is special season
+                                episodeNum, //
+                                "en-US",
+                            )
+                    }?.awaitResponse()?.body()
+
                     Episode(
+                        name = episodeBody?.name,
                         episode = episodeNum,
                         data = TmdbLink(
                             this.external_ids?.imdb_id,
@@ -139,10 +161,12 @@ open class TmdbProvider : MainAPI() {
                             episodeNum,
                             season.season_number,
                         ).toJson(),
-                        season = season.season_number
+                        season = season.season_number,
+                        posterUrl = getImageUrl(episodeBody?.still_path),
+                        rating = (episodeBody?.vote_average?.times(10))?.toInt(), // TODO Not working ??
                     )
                 }
-            }?.flatten() ?: listOf()
+            }?.filterNotNull()?.flatten() ?: listOf()
 
         return newTvSeriesLoadResponse(
             this.name ?: this.original_name,
@@ -161,7 +185,7 @@ open class TmdbProvider : MainAPI() {
 
             tags = genres?.mapNotNull { it.name }
             duration = episode_run_time?.average()?.toInt()
-            rating = this@toLoadResponse.rating
+            rating = this@toLoadResponse.vote_average?.toDouble()?.toInt()
             addTrailer(videos.toTrailers())
             recommendations = (this@toLoadResponse.recommendations
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
@@ -206,8 +230,9 @@ open class TmdbProvider : MainAPI() {
             addImdbId(external_ids?.imdb_id)
             tags = genres?.mapNotNull { it.name }
             duration = runtime
-            rating = this@toLoadResponse.rating
-            addTrailer(videos.toTrailers())
+            rating = this@toLoadResponse.vote_average?.toDouble()?.toInt()
+            //rating = this@toLoadResponse.rating
+            // addTrailer(videos.toTrailers()) //TODO ADD BACK
             recommendations = (this@toLoadResponse.recommendations
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
             addActors(credits?.cast?.toList().toActors())
