@@ -140,7 +140,7 @@ open class TmdbProvider : MainAPI() {
                         episode.overview,
                         episode.air_date?.time,
                     )
-                } ?: (1..(season.episode_count ?: 2)).apmap { episodeNum: Int ->
+                } ?: (1..(season.episode_count ?: 2)).toList().apmap { episodeNum: Int ->
 
                     val episodeBody = this@toLoadResponse.id?.let {
                         tmdb.tvEpisodesService()
