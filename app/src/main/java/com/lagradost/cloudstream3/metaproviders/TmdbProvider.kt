@@ -140,7 +140,7 @@ open class TmdbProvider : MainAPI() {
                         episode.overview,
                         episode.air_date?.time,
                     )
-                } ?: (1..(season.episode_count ?: 2)).toList().apmap { episodeNum: Int ->
+                } ?: (1..(season.episode_count ?: 1)).toList().apmap { episodeNum: Int ->
 
                     val episodeBody = this@toLoadResponse.id?.let {
                         tmdb.tvEpisodesService()
@@ -159,14 +159,14 @@ open class TmdbProvider : MainAPI() {
                             this.external_ids?.imdb_id,
                             this.id,
                             episodeNum,
-                            season.season_number,
+                            seasonIndex+1,
                         ).toJson(),
-                        season = season.season_number,
+                        season = seasonIndex+1,
                         posterUrl = getImageUrl(episodeBody?.still_path),
                         rating = (episodeBody?.vote_average?.times(10))?.toInt(), // TODO Not working ??
                     )
                 }
-            }?.filterNotNull()?.flatten() ?: listOf()
+            }?.flatten() ?: listOf()
 
         return newTvSeriesLoadResponse(
             this.name ?: this.original_name,
