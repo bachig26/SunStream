@@ -246,6 +246,7 @@ open class TmdbProvider : MainAPI() {
     override val mainPage = mainPageOf(
         Pair("discoverMovies", "Popular Movies"),
         Pair("discoverSeries", "Popular Series"),
+        Pair("horrormovies", "Horror Movies \uD83C\uDF83"),
         Pair("topMovies", "Top Movies"),
         Pair("topSeries", "Top Series"),
         Pair("airingToday", "Series airing today"),
@@ -253,7 +254,6 @@ open class TmdbProvider : MainAPI() {
         Pair("actionseries", "Action & Adventure Series"),
         Pair("comedymovies", "Comedy Movies"),
         Pair("comedyseries", "Comedy Series"),
-        Pair("horrormovies", "Horror Movies"),
         Pair("scifiseries", "Sci-Fi Series"),
         Pair("documentaryseries", "Documentary Series"),
     )
