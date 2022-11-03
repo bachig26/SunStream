@@ -6,11 +6,13 @@ Based on the amazing [Cloudstream-3](https://github.com/recloudstream/cloudstrea
 
 **⚠️ Warning: By default this app doesn't provide any video sources, you have to install extensions in order to add functionality to the app.**
 
+[![Discord](https://invidget.switchblade.xyz/eewncBN4Xh)](https://discord.gg/eewncBN4Xh)
+
 ***Features:***
 + All providers show up as only one thanks to [TheMovieDB](https://www.themoviedb.org/)
 
 ***TODO:***
-+ self-hosted providers like nginx, radarr and sonarr
++ self-hosted providers like jellyfin
 
 ***Screenshots:***
 
@@ -19,6 +21,7 @@ Based on the amazing [Cloudstream-3](https://github.com/recloudstream/cloudstrea
 
 ***The list of supported languages:***
 * 🇱🇧 Arabic
+* 🇧🇬 Bulgarian
 * 🇭🇷 Croatian
 * 🇨🇿 Czech
 * 🇳🇱 Dutch

@@ -81,12 +81,11 @@ data class ResultData(
     val tags: List<String>,
     val actors: List<ActorData>?,
     val actorsText: UiText?,
-
     val comingSoon: Boolean,
     val title: String,
     var syncData: Map<String, String>,
-
     val posterImage: UiImage?,
+    val posterBackgroundImage: UiImage?,
     val plotText: UiText,
     val apiName: UiText,
     val ratingText: UiText?,
@@ -101,7 +100,6 @@ data class ResultData(
     val nextAiringDate: UiText?,
     val nextAiringEpisode: UiText?,
     val plotHeaderText: UiText,
-    val backgroundPosterImage: UiImage?,
 )
 
 fun txt(status: DubStatus?): UiText? {
@@ -170,6 +168,9 @@ fun LoadResponse.toResultData(repo: APIRepository): ResultData {
         posterImage = img(
             posterUrl, posterHeaders
         ) ?: img(R.drawable.default_cover),
+        posterBackgroundImage = img(
+            backgroundPosterUrl ?: posterUrl, posterHeaders
+        ) ?: img(R.drawable.default_cover),
         titleText = txt(name),
         url = url,
         tags = tags ?: emptyList(),
@@ -181,9 +182,6 @@ fun LoadResponse.toResultData(repo: APIRepository): ResultData {
         plotText =
         if (plot.isNullOrBlank()) txt(if (this is TorrentLoadResponse) R.string.torrent_no_plot else R.string.normal_no_plot) else txt(
             plot!!
-        ),
-        backgroundPosterImage = img(
-            backgroundPosterUrl, posterHeaders // TODO FIX HEADERS: use bg poster Headers
         ),
         title = name,
         typeText = txt(
@@ -412,6 +410,29 @@ class ResultViewModel2 : ViewModel() {
         private fun List<SeasonData>?.getSeason(season: Int?): SeasonData? {
             if (season == null) return null
             return this?.firstOrNull { it.season == season }
+        }
+
+        fun updateWatchStatus(currentResponse : LoadResponse, status: WatchType) {
+            val currentId = currentResponse.getId()
+            val resultPage = currentResponse
+
+            DataStoreHelper.setResultWatchState(currentId, status.internalId)
+            val current = DataStoreHelper.getBookmarkedData(currentId)
+            val currentTime = System.currentTimeMillis()
+            DataStoreHelper.setBookmarkedData(
+                currentId,
+                DataStoreHelper.BookmarkedData(
+                    currentId,
+                    current?.bookmarkedTime ?: currentTime,
+                    currentTime,
+                    resultPage.name,
+                    resultPage.url,
+                    resultPage.apiName,
+                    resultPage.type,
+                    resultPage.posterUrl,
+                    resultPage.year
+                )
+            )
         }
 
         private fun filterName(name: String?): String? {
@@ -766,28 +787,10 @@ class ResultViewModel2 : ViewModel() {
     private val _selectPopup: MutableLiveData<Some<SelectPopup>> = MutableLiveData(Some.None)
     val selectPopup: LiveData<Some<SelectPopup>> get() = _selectPopup
 
-    fun updateWatchStatus(status: WatchType) {
-        val currentId = currentId ?: return
-        val resultPage = currentResponse ?: return
-        _watchStatus.postValue(status)
 
-        DataStoreHelper.setResultWatchState(currentId, status.internalId)
-        val current = DataStoreHelper.getBookmarkedData(currentId)
-        val currentTime = System.currentTimeMillis()
-        DataStoreHelper.setBookmarkedData(
-            currentId,
-            DataStoreHelper.BookmarkedData(
-                currentId,
-                current?.bookmarkedTime ?: currentTime,
-                currentTime,
-                resultPage.name,
-                resultPage.url,
-                resultPage.apiName,
-                resultPage.type,
-                resultPage.posterUrl,
-                resultPage.year
-            )
-        )
+    fun updateWatchStatus(status: WatchType) {
+        updateWatchStatus(currentResponse ?: return,status)
+        _watchStatus.postValue(status)
     }
 
     private fun startChromecast(
@@ -1969,7 +1972,7 @@ class ResultViewModel2 : ViewModel() {
     ): List<ExtractedTrailerData> =
         coroutineScope {
             var currentCount = 0
-            return@coroutineScope loadResponse.trailers.apmap { trailerData ->
+            return@coroutineScope loadResponse.trailers.amap { trailerData ->
                 try {
                     val links = arrayListOf<ExtractorLink>()
                     val subs = arrayListOf<SubtitleFile>()

@@ -240,6 +240,7 @@ val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     Vidgomunime(),
     Sbflix(),
     Streamsss(),
+    Sbspeed(),
 
     Fastream(),
 
@@ -251,6 +252,8 @@ val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     LayarKaca(),
     Rasacintaku(),
     FEnet(),
+    Kotakajair(),
+    Cdnplayer(),
     //  WatchSB(), 'cause StreamSB.kt works
     Uqload(),
     Uqload1(),
@@ -288,6 +291,7 @@ val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     Userload(),
     Supervideo(),
     GuardareStream(),
+    CineGrabber(),
 
     // StreamSB.kt works
     //  SBPlay(),
@@ -321,6 +325,7 @@ val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     Linkbox(),
     Acefile(),
     SpeedoStream(),
+    SpeedoStream1(),
     Zorofile(),
     Embedgram(),
     Mvidoo(),
@@ -328,6 +333,9 @@ val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     Vidmoly(),
     Vidmolyme(),
     Voe(),
+    Moviehab(),
+    MoviehabNet(),
+    Jeniusplay(),
 
     Gdriveplayerapi(),
     Gdriveplayerapp(),
@@ -340,6 +348,7 @@ val extractorApis: MutableList<ExtractorApi> = arrayListOf(
     Gdriveplayerco(),
     Gdriveplayer(),
     DatabaseGdrive(),
+    DatabaseGdrive2(),
 
     YoutubeExtractor(),
     YoutubeShortLinkExtractor(),

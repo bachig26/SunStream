@@ -9,15 +9,13 @@ import com.lagradost.cloudstream3.utils.AppUtils
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.uwetrottmann.tmdb2.Tmdb
 import com.uwetrottmann.tmdb2.entities.*
-import com.uwetrottmann.tmdb2.entities.DiscoverFilter
 import com.uwetrottmann.tmdb2.enumerations.AppendToResponseItem
 import com.uwetrottmann.tmdb2.enumerations.ReleaseType
-import com.uwetrottmann.tmdb2.enumerations.SortBy
 import com.uwetrottmann.tmdb2.enumerations.VideoType
 import retrofit2.awaitResponse
-import java.util.*
-import java.time.LocalDate // might be bad idk
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 /**
  * episode and season starting from 1
@@ -255,15 +253,17 @@ open class TmdbProvider : MainAPI() {
     override val mainPage = mainPageOf(
         Pair("discoverMovies", "Popular Movies"),
         Pair("discoverSeries", "Popular Series"),
-        Pair("topMovies", "Top Movies"),
-        Pair("topSeries", "Top Series"),
-        Pair("airingToday", "Series airing today"),
+        Pair("animeseries", "Popular Anime"),
+        // Pair("airingToday", "Series airing today"), // kinda garbage
         Pair("actionmovies", "Action Movies"),
         Pair("actionseries", "Action & Adventure Series"),
+        Pair("animemovies", "Popular Anime Movies"),
         Pair("comedymovies", "Comedy Movies"),
         Pair("comedyseries", "Comedy Series"),
         Pair("horrormovies", "Horror Movies"),
         Pair("scifiseries", "Sci-Fi Series"),
+        Pair("topMovies", "Top Movies"),
+        Pair("topSeries", "Top Series"),
         Pair("documentaryseries", "Documentary Series"),
     )
 
@@ -350,6 +350,13 @@ open class TmdbProvider : MainAPI() {
 
             "scifimovies" -> discoverMovie(878, page)
             "scifiseries" -> discoverTv(10765, page)
+
+            "animemovies" -> tmdb.discoverMovie().page(page).with_keywords(DiscoverFilter(DiscoverFilter.Separator.OR, 210024,222243)).build().awaitResponse().body()?.results?.map { // no need for release type for tv show
+                it.toSearchResponse()
+            } ?: listOf()
+            "animeseries" ->  tmdb.discoverTv().page(page).with_keywords(DiscoverFilter(DiscoverFilter.Separator.OR, 210024,222243)).build().awaitResponse().body()?.results?.map {
+                it.toSearchResponse()
+            } ?: listOf()
 
             else -> throw ErrorLoadingException()
         }
