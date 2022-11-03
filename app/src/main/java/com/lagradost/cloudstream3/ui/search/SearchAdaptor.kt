@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.SearchResponse
+import com.lagradost.cloudstream3.TmdbNetwork
 import com.lagradost.cloudstream3.ui.AutofitRecyclerView
 import com.lagradost.cloudstream3.utils.UIHelper.IsBottomLayout
 import com.lagradost.cloudstream3.utils.UIHelper.toPx
@@ -21,6 +22,7 @@ const val SEARCH_ACTION_PLAY_FILE = 2
 const val SEARCH_ACTION_FOCUSED = 4
 
 class SearchClickCallback(val action: Int, val view: View, val position : Int, val card: SearchResponse)
+class NetworkClickCallback(val view: View, val position : Int, val card: TmdbNetwork)
 
 class SearchAdapter(
     private val cardList: MutableList<SearchResponse>,

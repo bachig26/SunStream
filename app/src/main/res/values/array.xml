@@ -14,7 +14,7 @@
         <item>@id/cast_button_type_forward_30_seconds</item>
     </array>
 
-    <array name="dns_pref">
+    <array name="dns_pref"><!-- TODO FIX DNS MESS -->
         <item>@string/none</item>
         <item>Quad9</item>
         <item>Google</item>
@@ -386,4 +386,60 @@
         <item>VISCII</item>
         <item>Windows-1258</item>
     </string-array>
+
+    <string-array name="tmdb_networks_names">
+        <item>Netflix</item>
+        <item>Disney+</item>
+        <item>Apple TV+</item>
+        <item>Amazon Prime Video</item>
+        <item>adult swim</item>
+        <item>Hulu</item>
+        <item>HBO</item>
+        <item>Paramont+</item>
+        <item>AMC</item>
+    </string-array>
+    <integer-array name="tmdb_networks_values">
+        <item>213</item> <!-- Netflix -->
+        <item>2739</item><!-- Disney + -->
+        <item>2552</item><!-- Apple -->
+        <item>1024</item><!-- Amazon -->
+        <item>80</item><!-- adultswim -->
+        <item>453</item><!-- hulu -->
+        <item>49</item><!-- hbo -->
+        <item>4330</item><!-- Paramont+ -->
+        <item>174</item><!-- AMC -->
+    </integer-array>
+    <integer-array name="just_watch_networks_values"> <!-- https://developers.themoviedb.org/3/watch-providers/get-tv-providers -->
+        <item>8</item> <!-- Netflix -->
+        <item>337</item><!-- Disney + -->
+        <item>350</item><!-- Apple -->
+        <item>9</item><!-- Amazon / maybe 119 ? 2 diff ids-->
+        <item>318</item><!-- adultswim -->
+        <item>15</item><!-- hulu -->
+        <item>118</item><!-- hbo -->
+        <item>531</item><!-- Paramont+ -->
+        <item>528</item><!-- AMC (its amc plus actually ?) -->
+    </integer-array>
+    <string-array name="tmdb_networks_images">
+        <item>/wwemzKWzjKYJFfCeiB57q3r4Bcm.png</item><!-- Netflix -->
+        <item>/PQxvkeK8cTtD7vjataBsNpjbJ5.png</item><!-- Disney + -->
+        <item>/4KAy34EHvRM25Ih8wb82AuGU7zJ.png</item><!-- Apple -->
+        <item>/ifhbNuuVnlwYy5oXA5VIb2YR8AZ.png</item><!-- Amazon -->
+        <item>/tHZPHOLc6iF27G34cAZGPsMtMSy.png</item><!-- adultswim -->
+        <item>/pqUTCleNUiTLAVlelGxUgWn1ELh.png</item><!-- hulu -->
+        <item>/tuomPhY2UtuPTqqFnKMVHvSb724.png</item><!-- hbo -->
+        <item>/fi83B1oztoS47xxcemFdPMhIzK.png</item><!-- Paramont+ -->
+        <item>/pmvRmATOCaDykE6JrVoeYxlFHw3.png</item><!-- AMC -->
+    </string-array>
+    <integer-array name="tmdb_networks_color_tint"><!-- 1 to enable white filter / 0 to keep logo color  -->
+        <item>0</item><!-- Netflix -->
+        <item>0</item><!-- Disney + -->
+        <item>1</item><!-- Apple -->
+        <item>1</item><!-- Amazon -->
+        <item>1</item><!-- adultswim -->
+        <item>0</item><!-- hulu -->
+        <item>1</item><!-- hbo -->
+        <item>0</item><!-- Paramont+ -->
+        <item>1</item><!-- AMC -->
+    </integer-array>
 </resources>

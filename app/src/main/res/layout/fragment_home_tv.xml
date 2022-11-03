@@ -419,6 +419,29 @@
                         tools:listitem="@layout/home_result_grid" />
             </LinearLayout>
 
+            <FrameLayout
+                android:foreground="?android:attr/selectableItemBackgroundBorderless"
+                android:padding="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_gravity="center_vertical"
+                    android:id="@+id/home_parent_network_item_title"
+                    style="@style/WatchHeaderText"
+                    android:text="@string/network_filter_title" />
+            </FrameLayout>
+            <androidx.recyclerview.widget.RecyclerView
+                android:paddingHorizontal="5dp"
+                android:clipToPadding="false"
+                android:descendantFocusability="afterDescendants"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                android:id="@+id/home_network_child_recyclerview"
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                tools:listitem="@layout/home_network_grid" />
+
             <androidx.recyclerview.widget.RecyclerView
                     android:nextFocusLeft="@id/nav_rail_view"
                     android:descendantFocusability="afterDescendants"

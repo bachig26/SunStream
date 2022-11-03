@@ -84,7 +84,7 @@ class SearchViewModel : ViewModel() {
                 return@launchSafe
             }
 
-            if (!isQuickSearch) {
+            if (!isQuickSearch && (!query.startsWith("{") && !query.endsWith("}"))) { // if is not quick search and not network json search
                 val key = query.hashCode().toString()
                 setKey(
                     SEARCH_HISTORY_KEY,

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--  android:layout_width="114dp"
+        android:layout_height="180dp"-->
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:foreground="@drawable/outline_drawable"
+    android:layout_margin="5dp"
+    android:layout_width="180dp"
+    android:layout_height="114dp"
+    android:layout_marginBottom="5dp"
+    android:elevation="10dp"
+    app:cardCornerRadius="@dimen/rounded_image_radius"
+    android:id="@+id/network_filter_background_card"
+    app:cardBackgroundColor="@color/boxItemBackground">
+
+    <ImageView
+        android:id="@+id/networkImageView"
+        tools:src="@drawable/example_poster"
+        android:scaleType="centerInside"
+        android:layout_width="180dp"
+        android:layout_height="114dp"
+        android:padding="15dp"
+        app:tintMode="src_atop"
+        android:foreground="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/search_poster_img_des" />
+
+    <TextView
+        tools:text="The Perfect Run"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_gravity="bottom"
+        android:paddingBottom="5dp"
+        android:paddingTop="5dp"
+        android:textColor="@color/textColor"
+        android:id="@+id/networkImageText"
+        android:textStyle="bold"
+        android:maxLines="2"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:ellipsize="end" />
+
+</androidx.cardview.widget.CardView>

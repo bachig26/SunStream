@@ -42,16 +42,24 @@ class QuickSearchFragment : Fragment() {
     companion object {
         const val AUTOSEARCH_KEY = "autosearch"
         const val PROVIDER_KEY = "providers"
+        const val NETWORKFILTERNAME = "networkfiltername"
 
         fun pushSearch(
             activity: Activity?,
             autoSearch: String? = null,
-            providers: Array<String>? = null
+            providers: Array<String>? = null,
+            networkNameFilter: String? = null,
         ) {
             activity.navigate(R.id.global_to_navigation_quick_search, Bundle().apply {
                 providers?.let {
                     putStringArray(PROVIDER_KEY, it)
                 }
+
+                putString(
+                    NETWORKFILTERNAME, // null if no specifc network
+                    networkNameFilter,
+                )
+
                 autoSearch?.let {
                     putString(
                         AUTOSEARCH_KEY,
@@ -213,6 +221,14 @@ class QuickSearchFragment : Fragment() {
         observe(searchViewModel.searchResponse) {
             when (it) {
                 is Resource.Success -> {
+                    arguments?.getString(NETWORKFILTERNAME)?.let { networkFilterName -> // if filter by network is enabled:
+                        search_bar?.visibility = View.GONE
+                        network_result_container?.visibility = View.VISIBLE
+                        network_search_result_title?.text = networkFilterName
+                    } ?: run { // else normal search
+                        search_bar?.visibility = View.VISIBLE
+                        network_result_container?.visibility = View.GONE
+                    }
                     it.value.let { data ->
                         (quick_search_autofit_results?.adapter as? SearchAdapter?)?.updateList(
                             context?.filterSearchResultByFilmQuality(data) ?: data

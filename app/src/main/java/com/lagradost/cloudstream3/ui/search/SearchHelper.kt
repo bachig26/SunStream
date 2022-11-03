@@ -2,13 +2,19 @@ package com.lagradost.cloudstream3.ui.search
 
 import android.app.Activity
 import android.widget.Toast
+import androidx.appcompat.widget.SearchView
+import com.lagradost.cloudstream3.APIHolder.apis
 import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
+import com.lagradost.cloudstream3.metaproviders.TmdbProvider
 import com.lagradost.cloudstream3.ui.download.DOWNLOAD_ACTION_PLAY_FILE
 import com.lagradost.cloudstream3.ui.download.DownloadButtonSetup.handleDownloadClick
 import com.lagradost.cloudstream3.ui.download.DownloadClickEvent
+import com.lagradost.cloudstream3.ui.quicksearch.QuickSearchFragment
 import com.lagradost.cloudstream3.ui.result.START_ACTION_LOAD_EP
 import com.lagradost.cloudstream3.utils.AppUtils.loadSearchResult
+import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.DataStoreHelper
 import com.lagradost.cloudstream3.utils.VideoDownloadHelper
 
@@ -57,5 +63,15 @@ object SearchHelper {
                 showToast(activity, callback.card.name, Toast.LENGTH_SHORT)
             }
         }
+    }
+    fun handleNetworkSearchClickCallback(activity: Activity?, callback: NetworkClickCallback) {
+
+        val card = callback.card
+        val queryFilter = TmdbProvider.CrossSearch(
+            null, // no specific media is searched
+            card.id,  // filter network name
+            card.watchProviderId,  // filter network name
+        ).toJson()
+        QuickSearchFragment.pushSearch(activity, queryFilter, arrayOf(CrossTmdbProvider().name), card.name)
     }
 }

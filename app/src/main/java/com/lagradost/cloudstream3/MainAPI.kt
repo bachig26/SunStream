@@ -778,6 +778,23 @@ interface SearchResponse {
     var rating: Double?
 }
 
+interface TmdbNetwork {
+    val name: String
+    val id: Int // network id for tv shows (content produced by the network)
+    val watchProviderId: Int // for movies (content available on the platform)
+    val networkImagePath: String // for exemple /wwemzKWzjKYJFfCeiB57q3r4Bcm.svg --> https://image.tmdb.org/t/p/original/wwemzKWzjKYJFfCeiB57q3r4Bcm.svg
+    val enableNetworkTint: Int // 1 for true / 0 for false
+}
+
+data class networkClass(
+    // implementing 'name' is not required
+    override val name: String,
+    override val id: Int,
+    override val watchProviderId: Int,
+    override val networkImagePath: String,
+    override val enableNetworkTint: Int,
+) : TmdbNetwork
+
 fun MainAPI.newMovieSearchResponse(
     name: String,
     url: String,

@@ -255,6 +255,10 @@
             android:name="autosearch"
             android:defaultValue="@null"
             app:argType="string" />
+        <argument
+            android:name="networkfiltername"
+            android:defaultValue="@null"
+            app:argType="string" />
     </action>
 
     <fragment

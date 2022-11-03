@@ -100,6 +100,9 @@ import kotlinx.android.synthetic.main.fragment_home.result_error_text
 import kotlinx.android.synthetic.main.fragment_home_tv.*
 import kotlinx.android.synthetic.main.home_episodes_expanded.*
 import java.util.*
+import com.lagradost.cloudstream3.TmdbNetwork
+import com.lagradost.cloudstream3.ui.search.SearchHelper.handleNetworkSearchClickCallback
+import kotlinx.android.synthetic.main.fragment_home.home_network_child_recyclerview
 
 const val HOME_BOOKMARK_VALUE_LIST = "home_bookmarked_last_list"
 const val HOME_PREF_HOMEPAGE = "home_pref_homepage"
@@ -504,6 +507,10 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun homeNetworkFilter(callback: NetworkClickCallback) {
+        handleNetworkSearchClickCallback(activity, callback)
+    }
+
     private var currentApiName: String? = null
     private var toggleRandomButton = false
 
@@ -520,6 +527,26 @@ class HomeFragment : Fragment() {
                 activity.loadSearchResult(listHomepageItems.random())
             }
         }
+        val listOfNetworkNames = resources.getStringArray(R.array.tmdb_networks_names)
+        val listOfNetworkValues = resources.getIntArray(R.array.tmdb_networks_values)
+        val listOfWatchProvidersValues = resources.getIntArray(R.array.just_watch_networks_values)
+        val networkImages = resources.getStringArray(R.array.tmdb_networks_images)
+        val listEnableNetworkTint = resources.getIntArray(R.array.tmdb_networks_color_tint)
+        val listOfNetwork: MutableList<TmdbNetwork> = mutableListOf()
+        for (networkIndex in listOfNetworkNames.indices) {
+            listOfNetwork.add(networkClass(listOfNetworkNames[networkIndex], listOfNetworkValues[networkIndex], listOfWatchProvidersValues[networkIndex], networkImages[networkIndex], listEnableNetworkTint[networkIndex]))
+        }
+
+        home_network_child_recyclerview?.adapter =
+            HomeNetworkChildItemAdapter(
+                listOfNetwork,
+                R.layout.home_network_grid,
+                nextFocusUp = home_main_poster_recyclerview.nextFocusUpId,
+                nextFocusDown = home_main_poster_recyclerview.nextFocusDownId
+            ) { callback ->
+                homeNetworkFilter(callback)
+            }
+
 
         //Load value for toggling Random button. Hide at startup
         context?.let {

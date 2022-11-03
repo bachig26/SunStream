@@ -5,12 +5,14 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.LoadResponse.Companion.addImdbId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
+import com.lagradost.cloudstream3.utils.AppUtils
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.uwetrottmann.tmdb2.Tmdb
 import com.uwetrottmann.tmdb2.entities.*
 import com.uwetrottmann.tmdb2.entities.DiscoverFilter
 import com.uwetrottmann.tmdb2.enumerations.AppendToResponseItem
 import com.uwetrottmann.tmdb2.enumerations.ReleaseType
+import com.uwetrottmann.tmdb2.enumerations.SortBy
 import com.uwetrottmann.tmdb2.enumerations.VideoType
 import retrofit2.awaitResponse
 import java.util.*
@@ -32,6 +34,13 @@ data class TmdbLink(
 
 open class TmdbProvider : MainAPI() {
     // This should always be false, but might as well make it easier for forks
+
+    data class CrossSearch(
+        @JsonProperty("query") val query: String? = null,
+        @JsonProperty("network_filter") val network_filter: Int? = null,
+        @JsonProperty("watch_provider_filter") val watch_provider_filter: Int? = null,
+    )
+
     open val includeAdult = false
 
     // Use the LoadResponse from the metadata provider
@@ -246,7 +255,6 @@ open class TmdbProvider : MainAPI() {
     override val mainPage = mainPageOf(
         Pair("discoverMovies", "Popular Movies"),
         Pair("discoverSeries", "Popular Series"),
-        Pair("horrormovies", "Horror Movies \uD83C\uDF83"),
         Pair("topMovies", "Top Movies"),
         Pair("topSeries", "Top Series"),
         Pair("airingToday", "Series airing today"),
@@ -254,6 +262,7 @@ open class TmdbProvider : MainAPI() {
         Pair("actionseries", "Action & Adventure Series"),
         Pair("comedymovies", "Comedy Movies"),
         Pair("comedyseries", "Comedy Series"),
+        Pair("horrormovies", "Horror Movies"),
         Pair("scifiseries", "Sci-Fi Series"),
         Pair("documentaryseries", "Documentary Series"),
     )
@@ -470,9 +479,40 @@ open class TmdbProvider : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse>? {
-        return tmdb.searchService().multi(query, 1, "en-Us", "US", includeAdult).awaitResponse()
-            .body()?.results?.sortedByDescending { it.movie?.popularity ?: it.tvShow?.popularity }?.mapNotNull {
-                it.movie?.toSearchResponse() ?: it.tvShow?.toSearchResponse()
-            }
+        println(query)
+        val searchQuery = AppUtils.tryParseJson<CrossSearch>(query)
+        val directSearch = searchQuery?.query // the searched content (like The Simpsons)
+        val networkFilter = searchQuery?.network_filter // the network (like Netflix)
+        val watchProviderFilter = searchQuery?.watch_provider_filter // the platform (like Netflix); for movies
+        return if (networkFilter == null && directSearch != null) {
+            tmdb.searchService().multi(directSearch, 1, "en-Us", "US", includeAdult).awaitResponse()
+                .body()?.results?.sortedByDescending { it.movie?.popularity ?: it.tvShow?.popularity }?.mapNotNull {
+                    it.movie?.toSearchResponse() ?: it.tvShow?.toSearchResponse()
+                }
+        } else if (networkFilter != null && directSearch == null) {
+            val networkDiscoverFilter = DiscoverFilter(networkFilter) // netflix
+            val watchProviderDiscoverFilter = DiscoverFilter(watchProviderFilter) // netflix
+            val tvshowList = tmdb.discoverTv().page(1).with_networks(networkDiscoverFilter).build().awaitResponse().body()?.results?.map {
+                it.toSearchResponse()
+            } ?: listOf()
+            val movieList = tmdb.discoverMovie().page(1).with_watch_providers(watchProviderDiscoverFilter).watch_region("US").build().awaitResponse().body()?.results?.map {
+                it.toSearchResponse()
+            } ?: listOf()
+
+            sequence {
+                val first = tvshowList.iterator()
+                val second = movieList.iterator()
+                while (first.hasNext() && second.hasNext()) {
+                    yield(first.next())
+                    yield(second.next())
+                }
+
+                yieldAll(first)
+                yieldAll(second)
+            }.toList() // merge both list and alternate tvshow / movie https://stackoverflow.com/questions/55404428/how-to-combine-two-different-length-lists-in-kotlin
+        } else {
+            null
+        }
+
     }
 }

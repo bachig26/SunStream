@@ -82,6 +82,11 @@ class CrossTmdbProvider : TmdbProvider() {
     }
 
     override suspend fun search(query: String): List<SearchResponse>? {
+        if (!query.startsWith("{") && !query.endsWith("}")) { // if it is not json (direct query by the user)
+            return super.search(CrossSearch(
+                query
+            ).toJson())
+        }
         return super.search(query)
     }
 

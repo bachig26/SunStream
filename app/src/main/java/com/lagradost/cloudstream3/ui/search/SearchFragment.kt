@@ -425,7 +425,7 @@ class SearchFragment : Fragment() {
         })
 
         observe(searchViewModel.currentHistory) { list ->
-            (search_history_recycler.adapter as? SearchHistoryAdaptor?)?.updateList(list)
+            (search_history_recycler.adapter as? SearchHistoryAdaptor?)?.updateList(list) // TODO disable history for network search
         }
 
         searchViewModel.updateHistory()
