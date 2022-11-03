@@ -395,7 +395,7 @@
         <item>adult swim</item>
         <item>Hulu</item>
         <item>HBO</item>
-        <item>Paramont+</item>
+        <item>Paramount+</item>
         <item>AMC</item>
     </string-array>
     <integer-array name="tmdb_networks_values">
