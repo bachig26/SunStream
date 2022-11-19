@@ -121,6 +121,8 @@
     <string name="result_open_in_browser">Open In Browser</string>
     <string name="skip_loading">Skip Loading</string>
     <string name="loading">Loading…</string>
+    <string name="loaded_links_number" formatted="true">%s loaded links. Skip loading</string>
+    <string name="loaded_link_singular_number" formatted="true">%s loaded link. Skip loading</string>
 
     <string name="type_watching">Watching</string>
     <string name="type_on_hold">On-Hold</string>

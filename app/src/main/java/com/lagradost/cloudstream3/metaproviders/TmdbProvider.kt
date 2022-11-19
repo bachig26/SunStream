@@ -14,6 +14,7 @@ import com.uwetrottmann.tmdb2.enumerations.ReleaseType
 import com.uwetrottmann.tmdb2.enumerations.VideoType
 import retrofit2.awaitResponse
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -27,7 +28,8 @@ data class TmdbLink(
     @JsonProperty("episode") val episode: Int?,
     @JsonProperty("season") val season: Int?,
     @JsonProperty("movieName") val movieName: String? = null,
-    @JsonProperty("alternativeTitles") val alternativeTitles: List<AlternativeTitle>? = null,
+    @JsonProperty("alternativeTitles") val alternativeTitles: List<Translations.Translation>? = null,
+    @JsonProperty("year") val year: Int? = null,
 )
 
 open class TmdbProvider : MainAPI() {
@@ -136,8 +138,9 @@ open class TmdbProvider : MainAPI() {
                             this.id,
                             episode.episode_number,
                             episode.season_number,
-                            null,
-                            this.alternative_titles?.titles,
+                            this@toLoadResponse.name,
+                            this.translations?.translations,
+                            this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year
                         ).toJson(),
                         episode.name,
                         episode.season_number,
@@ -167,6 +170,9 @@ open class TmdbProvider : MainAPI() {
                             this.id,
                             episodeNum,
                             seasonIndex+1,
+                            this@toLoadResponse.name,
+                            this.translations?.translations,
+                            this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year
                         ).toJson(),
                         season = seasonIndex+1,
                         posterUrl = getImageUrl(episodeBody?.still_path),
@@ -174,7 +180,6 @@ open class TmdbProvider : MainAPI() {
                     )
                 }
             }?.flatten() ?: listOf()
-
         return newTvSeriesLoadResponse(
             this.name ?: this.original_name,
             getUrl(id, true),
@@ -224,7 +229,8 @@ open class TmdbProvider : MainAPI() {
                     null,
                     null,
                     this.title ?: this.original_title,
-                    this.alternative_titles?.titles,
+                    this.translations?.translations,
+                    this@toLoadResponse.release_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year
                 ).toJson()
         ) {
             posterUrl = getImageUrl(poster_path)
@@ -239,7 +245,7 @@ open class TmdbProvider : MainAPI() {
             duration = runtime
             rating = this@toLoadResponse.vote_average?.toDouble()?.toInt()
             //rating = this@toLoadResponse.rating
-            // addTrailer(videos.toTrailers()) //TODO ADD BACK
+            addTrailer(videos.toTrailers())
             recommendations = (this@toLoadResponse.recommendations
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
             addActors(credits?.cast?.toList().toActors())
@@ -408,7 +414,6 @@ open class TmdbProvider : MainAPI() {
                             AppendToResponseItem.EXTERNAL_IDS,
                             AppendToResponseItem.VIDEOS,
                             AppendToResponseItem.CREDITS,
-                            AppendToResponseItem.ALTERNATIVE_TITLES,
                             // AppendToResponseItem.IMAGES, // display all posters
                         ),
                         // mapOf("include_image_language" to "null"), // display all posters
@@ -440,7 +445,6 @@ open class TmdbProvider : MainAPI() {
                             AppendToResponseItem.EXTERNAL_IDS,
                             AppendToResponseItem.VIDEOS,
                             AppendToResponseItem.CREDITS,
-                            AppendToResponseItem.ALTERNATIVE_TITLES,
                             // AppendToResponseItem.IMAGES, // display all posters
                         ),
                         // mapOf("include_image_language" to "null") //  display all posters

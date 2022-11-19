@@ -1240,6 +1240,11 @@ class GeneratorPlayer : FullScreenPlayer() {
         observe(viewModel.currentLinks) {
             currentLinks = it
             val turnVisible = it.isNotEmpty()
+            overlay_loading_skip_button?.text = if(it.size ==1) {
+                getString(R.string.loaded_link_singular_number).format(it.size.toString())
+            } else {
+                getString(R.string.loaded_links_number).format(it.size.toString())
+            }
             val wasGone = overlay_loading_skip_button?.isGone == true
             overlay_loading_skip_button?.isVisible = turnVisible
             if (turnVisible && wasGone) {

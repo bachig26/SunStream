@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
+import com.lagradost.cloudstream3.movieproviders.*
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.aniListApi
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.malApi
@@ -19,7 +20,7 @@ import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTvSet
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.Coroutines.threadSafeListOf
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.uwetrottmann.tmdb2.entities.AlternativeTitle
+import com.uwetrottmann.tmdb2.entities.Translations
 import okhttp3.Interceptor
 import java.text.SimpleDateFormat
 import java.util.*
@@ -699,7 +700,7 @@ data class TmdbProviderSearchFilter(
     val tmdbPlot: String?,
     val duration: Int?,
     val type: TvType?,
-    var alternativeTitles: List<AlternativeTitle>? = null,
+    var alternativeTitles: List<Translations.Translation>? = null,
 )
 
 data class HomePageList(
