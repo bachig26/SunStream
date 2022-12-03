@@ -30,6 +30,7 @@ data class TmdbLink(
     @JsonProperty("movieName") val movieName: String? = null,
     @JsonProperty("alternativeTitles") val alternativeTitles: List<Translations.Translation>? = null,
     @JsonProperty("year") val year: Int? = null,
+    @JsonProperty("lastSeason") val lastSeason: Int? = null,
 )
 
 open class TmdbProvider : MainAPI() {
@@ -53,10 +54,11 @@ open class TmdbProvider : MainAPI() {
     override val providerType = ProviderType.MetaProvider
 
     override val hasSearch: Boolean = false // only CrossTmdbProvider has search
-
+    override var mainUrl = "https://api.themoviedb.org/3"
+    private val apiKey = "1dbf84763e0115344e61effd0743d694" // PLEASE DON'T STEAL
     // Fuck it, public private api key because github actions won't co-operate.
     // Please no stealy.
-    private val tmdb = Tmdb("1dbf84763e0115344e61effd0743d694") // sarlay's api key
+    private val tmdb = Tmdb(apiKey) // sarlay's api key
 
     private fun getImageUrl(link: String?): String? {
         if (link == null) return null
@@ -88,7 +90,7 @@ open class TmdbProvider : MainAPI() {
             },
             null,
             this.id,
-            rating = this.vote_average,
+            rating = String.format("%.1f", this.vote_average).toDouble(),
         )
     }
 
@@ -105,7 +107,7 @@ open class TmdbProvider : MainAPI() {
                 }.get(Calendar.YEAR)
             },
             this.id,
-            rating = this.vote_average,
+            rating = String.format("%.1f", this.vote_average).toDouble(),
         )
     }
 
@@ -119,6 +121,7 @@ open class TmdbProvider : MainAPI() {
     }
 
     private suspend fun TvShow.toLoadResponse(): TvSeriesLoadResponse {
+        val lastSeason = (this.seasons?.size) // may be wrong depending on season 0 ? + ?.minus(1)
         val episodes = this.seasons?.filter { !disableSeasonZero || (it.season_number ?: 0) != 0 }
             ?.apmapIndexed { seasonIndex, season ->
                 season.episodes?.apmapIndexed { episodeIndex, episode ->
@@ -140,13 +143,14 @@ open class TmdbProvider : MainAPI() {
                             episode.season_number,
                             this@toLoadResponse.name,
                             this.translations?.translations,
-                            this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year
+                            this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
+                            lastSeason,
                         ).toJson(),
                         episode.name,
                         episode.season_number,
                         episode.episode_number,
                         getImageUrl(episodeBody?.still_path),
-                        episodeBody?.vote_average?.toInt(), // TODO Not working ??
+                        episodeBody?.vote_average?.toInt(),
                         episode.overview,
                         episode.air_date?.time,
                     )
@@ -172,11 +176,12 @@ open class TmdbProvider : MainAPI() {
                             seasonIndex+1,
                             this@toLoadResponse.name,
                             this.translations?.translations,
-                            this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year
+                            this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
+                            lastSeason,
                         ).toJson(),
                         season = seasonIndex+1,
                         posterUrl = getImageUrl(episodeBody?.still_path),
-                        rating = (episodeBody?.vote_average?.times(10))?.toInt(), // TODO Not working ??
+                        rating = (episodeBody?.vote_average?.times(10))?.toInt(),
                     )
                 }
             }?.flatten() ?: listOf()
@@ -230,7 +235,8 @@ open class TmdbProvider : MainAPI() {
                     null,
                     this.title ?: this.original_title,
                     this.translations?.translations,
-                    this@toLoadResponse.release_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year
+                    this@toLoadResponse.release_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
+                    null,
                 ).toJson()
         ) {
             posterUrl = getImageUrl(poster_path)
@@ -257,123 +263,49 @@ open class TmdbProvider : MainAPI() {
 
 
     override val mainPage = mainPageOf(
-        Pair("discoverMovies", "Popular Movies"),
-        Pair("discoverSeries", "Popular Series"),
-        Pair("animeseries", "Popular Anime"),
-        // Pair("airingToday", "Series airing today"), // kinda garbage
-        Pair("actionmovies", "Action Movies"),
-        Pair("actionseries", "Action & Adventure Series"),
-        Pair("animemovies", "Popular Anime Movies"),
-        Pair("comedymovies", "Comedy Movies"),
-        Pair("comedyseries", "Comedy Series"),
-        Pair("horrormovies", "Horror Movies"),
-        Pair("scifiseries", "Sci-Fi Series"),
-        Pair("topMovies", "Top Movies"),
-        Pair("topSeries", "Top Series"),
-        Pair("documentaryseries", "Documentary Series"),
+        "$mainUrl/trending/all/day?api_key=$apiKey&region=&page=" to "Trending Today",
+        "$mainUrl/movie/popular?api_key=$apiKey&region=&page=" to "Popular Movies",
+        "$mainUrl/tv/popular?api_key=$apiKey&region=&page=" to "Popular TV Shows",
+        "$mainUrl/tv/on_the_air?api_key=$apiKey&region=&page=" to "On The Air TV Shows",
+        //"$mainUrl/tv/airing_today?api_key=$apiKey&region=&page=" to "Airing Today TV Shows",
+        "$mainUrl/movie/top_rated?api_key=$apiKey&region=&page=" to "Top Rated Movies",
+        "$mainUrl/tv/top_rated?api_key=$apiKey&region=&page=" to "Top Rated TV Shows",
+        "$mainUrl/discover/tv?api_key=$apiKey&with_original_language=ko&page=" to "Korean Shows",
+        "$mainUrl/discover/tv?api_key=$apiKey&with_keywords=210024|222243&page=" to "Anime",
+        "$mainUrl/discover/movie?api_key=$apiKey&with_keywords=210024|222243&page=" to "Anime Movies",
     )
 
-    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
-
-        // SAME AS DISCOVER IT SEEMS
-//        val popularSeries = tmdb.tvService().popular(1, "en-US").execute().body()?.results?.map {
-//           it.toSearchResponse()
-//        } ?: listOf()
-//
-
-
-        // tmdb java wrapper api exemple https://useof.org/java-open-source/com.uwetrottmann.tmdb2.entities.DiscoverFilter
-
-
-        /*
-        1st- Theater
-        2dn- Physical
-        3rd- Digital
-
-
-         It's important to note the order of the release types that are used. Specifying "2|3" would return the limited theatrical release date as opposed to "3|2" which would return the theatrical date.
-
-
-
-           1- Premiere
-           2- Theatrical (limited)
-           3- Theatrical
-           4- Digital
-           5- Physical
-            TV
-
-         */
-
-        val releasedOnlineFilter = DiscoverFilter(DiscoverFilter.Separator.OR, ReleaseType.PHYSICAL, ReleaseType.DIGITAL) // only show physical release and digital (hide theater cams: those are really annoying)
-        val releasedBeforeDate = TmdbDate(LocalDate.now().minusDays(3).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))) // get date of 3 days ago
-
-
-
-        suspend fun discoverMovie(genre: Int, page: Int): List<SearchResponse>{
-            return tmdb.discoverMovie().page(page).with_genres(DiscoverFilter(genre)).build().awaitResponse().body()?.results?.map {// TODO change region
-                it.toSearchResponse()
-            } ?: listOf()
-        }
-
-        suspend fun discoverTv(genre: Int, page: Int): List<SearchResponse>{
-            return tmdb.discoverTv().page(page).with_genres(DiscoverFilter(genre)).build().awaitResponse().body()?.results?.map {// TODO change region
-                it.toSearchResponse()
-            } ?: listOf()
-        }
-
-        val responseContent = when (request.data) {
-            "discoverMovies" -> tmdb.discoverMovie().page(page).with_release_type(releasedOnlineFilter).release_date_lte(releasedBeforeDate).build().awaitResponse().body()?.results?.map { // show movies released in physical or digital at least three days ago (time to upload rip)
-                it.toSearchResponse()
-            } ?: listOf()
-
-            "discoverSeries" ->  tmdb.discoverTv().page(page).build().awaitResponse().body()?.results?.map { // no need for release type for tv show
-                it.toSearchResponse()
-            } ?: listOf()
-
-            "topMovies" -> tmdb.moviesService().topRated(page, "en-US", "US").awaitResponse() // TODO change region
-                    .body()?.results?.map {
-                        it.toSearchResponse()
-                    } ?: listOf()
-
-
-            "topSeries" -> tmdb.tvService().topRated(page, "en-US").awaitResponse().body()?.results?.map {// TODO change region
-                it.toSearchResponse()
-            } ?: listOf()
-
-            "airingToday" -> tmdb.tvService().airingToday(page, "en-US").awaitResponse().body()?.results?.map {// TODO change region
-                it.toSearchResponse()
-            } ?: listOf()
-
-
-            "actionmovies" -> discoverMovie(28, page)
-            "actionseries" -> discoverTv(10759, page)
-
-            "comedymovies" -> discoverMovie(35, page)
-            "comedyseries" -> discoverTv(35, page)
-
-            "horrormovies" -> discoverMovie(27, page)
-            "documentaryseries" -> discoverTv(99, page)
-
-            "scifimovies" -> discoverMovie(878, page)
-            "scifiseries" -> discoverTv(10765, page)
-
-            "animemovies" -> tmdb.discoverMovie().page(page).with_keywords(DiscoverFilter(DiscoverFilter.Separator.OR, 210024,222243)).build().awaitResponse().body()?.results?.map { // no need for release type for tv show
-                it.toSearchResponse()
-            } ?: listOf()
-            "animeseries" ->  tmdb.discoverTv().page(page).with_keywords(DiscoverFilter(DiscoverFilter.Separator.OR, 210024,222243)).build().awaitResponse().body()?.results?.map {
-                it.toSearchResponse()
-            } ?: listOf()
-
-            else -> throw ErrorLoadingException()
-        }
-
-        return newHomePageResponse(
-            HomePageList(
-                request.name,
-                responseContent,
-            ),
-            true
+    private fun Media.toSearchResponse(type: String? = null): SearchResponse? {
+        val newType = type ?: if(this.title != null) "movie" else "tv" // check again type if "/movie" was not in the request, only movies have title
+        return MovieSearchResponse(
+            this.title ?: this.name ?: this.originalTitle ?: return null,
+            getUrl(id, newType == "tv"), // type=="tv"
+            apiName,
+            if(newType == "movie") {TvType.Movie} else TvType.TvSeries,
+            getImageUrl(this.posterPath),  // POSTER
+            null, // YEAR
+            this.id,
+            rating = String.format("%.1f", this.voteAverage).toDouble(), // will format to: 8.6
         )
+    }
+
+
+    override suspend fun getMainPage(
+        page: Int,
+        request: MainPageRequest
+    ): HomePageResponse {
+        val type =
+            if (request.data.contains("/movie")) "movie"
+        else {
+            if (request.data.contains("/tv")) "tv"
+            else null //unknown type
+        }
+        val home = app.get(request.data + page)
+            .parsedSafe<Results>()?.results
+            ?.mapNotNull { media ->
+                media.toSearchResponse(type)
+            } ?: throw ErrorLoadingException("Invalid Json reponse")
+        return newHomePageResponse(request.name, home, true)
     }
 
     open fun loadFromImdb(imdb: String, seasons: List<TvSeason>): LoadResponse? {
@@ -490,7 +422,6 @@ open class TmdbProvider : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse>? {
-        println(query)
         val searchQuery = AppUtils.tryParseJson<CrossSearch>(query)
         val directSearch = searchQuery?.query // the searched content (like The Simpsons)
         val networkFilter = searchQuery?.network_filter // the network (like Netflix)
@@ -526,4 +457,23 @@ open class TmdbProvider : MainAPI() {
         }
 
     }
+    data class Results(
+        @JsonProperty("results") val results: ArrayList<Media>? = arrayListOf(),
+    )
+
+    data class Media(
+        @JsonProperty("id") val id: Int? = null,
+        @JsonProperty("name") val name: String? = null, // tv show
+        @JsonProperty("title") val title: String? = null, // movie
+        @JsonProperty("original_title") val originalTitle: String? = null, // movie
+        @JsonProperty("original_name") val originalName: String? = null, // tv show
+        @JsonProperty("media_type") val mediaType: String? = null,
+        @JsonProperty("poster_path") val posterPath: String? = null,
+        @JsonProperty("release_date") val releaseDate: String? = null,
+        @JsonProperty("first_air_date") val firstAirDate: String? = null,
+        @JsonProperty("vote_count") val voteCount: Int? = null,
+        @JsonProperty("vote_average") val voteAverage: Double? = null,
+    )
+
+
 }

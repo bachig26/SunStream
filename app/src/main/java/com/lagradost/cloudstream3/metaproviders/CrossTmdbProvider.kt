@@ -33,7 +33,7 @@ class CrossTmdbProvider : TmdbProvider() {
 
 
     private fun getAllEnabledMetaProviders(): List<MainAPI?> {
-        return apis.filter { it::class.java != this::class.java && it.providerType == ProviderType.MetaProvider }
+            return apis.filter { it::class.java != this::class.java && it.providerType == ProviderType.MetaProvider }
         //return listOf(HDMovieBox(),FilmxProvider(),)
     // it.lang == this.lang &&
     }
@@ -59,7 +59,6 @@ class CrossTmdbProvider : TmdbProvider() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        println(data)
         val dataTmdbLink = tryParseJson<TmdbLink>(data)
         getAllEnabledMetaProviders().amap {api ->
             try {
@@ -120,10 +119,10 @@ class CrossTmdbProvider : TmdbProvider() {
             api.search(title)?.firstOrNull{ element -> // search in any language ?
                     filterName(element.name).equals(
                         filterName(title), // search the provider language's title
-                        ignoreCase = true,
+                        ignoreCase = true
                     ) || filterName(element.name).equals(
-                        filterName(title), // search in vo (official title in tmdb)
-                        ignoreCase = true,)
+                        filterName(filter.movieName ?: title), // search in vo (official title in tmdb)
+                        ignoreCase = true)
                 }
         }
     }
