@@ -136,7 +136,7 @@ open class TmdbProvider : MainAPI() {
                             this.external_ids?.imdb_id,
                             this.id,
                             EpisodeNumber,
-                            1,
+                            null,
                             this@toLoadResponse.original_name ?: this@toLoadResponse.name,
                             this.translations?.translations,
                             this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,

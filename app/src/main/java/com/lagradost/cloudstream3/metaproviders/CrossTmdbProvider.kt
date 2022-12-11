@@ -1,21 +1,12 @@
 package com.lagradost.cloudstream3.metaproviders
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.APIHolder.apis
-import com.lagradost.cloudstream3.APIHolder.getApiFromNameNull
-import com.lagradost.cloudstream3.movieproviders.FilmxProvider
-import com.lagradost.cloudstream3.movieproviders.HDMovieBox
-import com.lagradost.cloudstream3.movieproviders.UptoboxliveProvider
 import com.lagradost.cloudstream3.mvvm.logError
-import com.lagradost.cloudstream3.mvvm.safeApiCall
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.getQualityFromName
-import com.uwetrottmann.tmdb2.entities.AlternativeTitle
-import com.uwetrottmann.tmdb2.entities.Translations
 
 class CrossTmdbProvider : TmdbProvider() {
     override var name = "TheMovieDatabase"
@@ -48,16 +39,35 @@ class CrossTmdbProvider : TmdbProvider() {
         return null
     }
 
+    private suspend fun getAnimeEpisodeUrl(api: MainAPI, url: String, wantedEpisode: Int?): String? {
+        wantedEpisode ?: return null
+        val foundAnime = api.load(url)
+        if(foundAnime is AnimeLoadResponse) {
+            val listOfEpisodeWithDubStatus = foundAnime.episodes
+            listOfEpisodeWithDubStatus.toList().forEach { element ->
+                val listOfEpisode: List<Episode> = element.second
+                val test = listOfEpisode[wantedEpisode-1].data
+                return listOfEpisode[wantedEpisode-1].data // first episode is number 0; episode 2 is number 1 ...
+            }
+        }
+        return null
+    }
+
     private suspend fun getTvShowEpisodeUrl(api: MainAPI, url: String, wantedEpisode: Int?, wantedSeason: Int?): String? {
         val foundTvShow = api.load(url)
+        if(foundTvShow is AnimeLoadResponse) {
+            val listOfEpisodeWithDubStatus = foundTvShow.episodes
+            listOfEpisodeWithDubStatus.toList().forEach { element ->
+                val listOfEpisode: List<Episode> = element.second
+                return listOfEpisode.firstOrNull {
+                    it.episode == wantedEpisode
+                }?.data
+            }
+        }
         if(foundTvShow is TvSeriesLoadResponse) return foundTvShow.episodes.firstOrNull {
             it.episode == wantedEpisode && it.season == wantedSeason
         }?.data
-        if(foundTvShow is AnimeLoadResponse) {
-            return foundTvShow.episodes.toList()[1].second.firstOrNull{
-                (it.episode ?: 1) == wantedEpisode
-            }?.data
-        }
+
         return null
     }
 
@@ -76,33 +86,36 @@ class CrossTmdbProvider : TmdbProvider() {
             }
         }
         val isTvShow = (dataTmdbLink?.season != null && dataTmdbLink.episode != null)
-
+        val isAnime = (dataTmdbLink?.season == null && dataTmdbLink?.episode != null)
         getAllEnabledDirectProviders().amap { api ->
             if (api != null && dataTmdbLink != null) {
                 searchForMediaDirectProvider(api, dataTmdbLink)?.let { searchResponse ->
-                    println("found searchResponse $searchResponse")
                     suspendSafeApiCall {
                         if (isTvShow) {
-                            println("This is a tv show")
                             getTvShowEpisodeUrl(
                                 api, searchResponse.url,
                                 dataTmdbLink.episode, dataTmdbLink.season
                             )
                         } else {
-                            getMovieLoadContentUrl(api, searchResponse.url)
+                            if (isAnime) {
+                                getAnimeEpisodeUrl(
+                                    api, searchResponse.url,
+                                    dataTmdbLink.episode
+                                )
+                            } else {
+                                getMovieLoadContentUrl(api, searchResponse.url)
+                            }
                         }
                     }
                 }.let { loadContentUrl ->
-                    println("extracting url: $loadContentUrl")
                     suspendSafeApiCall {
                         if (loadContentUrl != null) {
                             api.loadLinks(loadContentUrl, isCasting, subtitleCallback, callback)
                         }
                     }
-                    }
                 }
+            }
         }
-
         return true
     }
 
@@ -123,8 +136,6 @@ class CrossTmdbProvider : TmdbProvider() {
         val foundTranslation = filter.alternativeTitles?.firstOrNull{ translation ->// idk if its working
             translation.iso_639_1?.equals(api.lang, ignoreCase = true) == true
         }
-
-        println(foundTranslation?.data?.name)
         val title =
             if(!foundTranslation?.data?.name.isNullOrEmpty()) {
                 foundTranslation?.data?.name
@@ -137,7 +148,6 @@ class CrossTmdbProvider : TmdbProvider() {
                 }
             }
         title ?: return null
-        println("$title:$api")
         return suspendSafeApiCall {
             api.search(title)?.firstOrNull{ element -> // search in any language ?
                 filterName(title).contains(
