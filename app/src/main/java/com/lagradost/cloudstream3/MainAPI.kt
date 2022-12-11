@@ -10,7 +10,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.lagradost.cloudstream3.APIHolder.getApiDubstatusSettings
 import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
+import com.lagradost.cloudstream3.metaproviders.TmdbProvider
 import com.lagradost.cloudstream3.movieproviders.*
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.aniListApi
@@ -694,14 +696,6 @@ data class HomePageResponse(
     val hasNext: Boolean = false
 )
 
-data class TmdbProviderSearchFilter(
-    val title: String,
-    val tmdbYear: Int?,
-    val tmdbPlot: String?,
-    val duration: Int?,
-    val type: TvType?,
-    var alternativeTitles: List<Translations.Translation>? = null,
-)
 
 data class HomePageList(
     val name: String,

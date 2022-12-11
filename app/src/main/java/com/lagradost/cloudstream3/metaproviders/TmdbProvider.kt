@@ -17,6 +17,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.math.roundToInt
 
 /**
  * episode and season starting from 1
@@ -35,6 +36,10 @@ data class TmdbLink(
 
 open class TmdbProvider : MainAPI() {
     // This should always be false, but might as well make it easier for forks
+
+    companion object {
+        var localeLang: String? = null
+    }
 
     data class CrossSearch(
         @JsonProperty("query") val query: String? = null,
@@ -90,7 +95,7 @@ open class TmdbProvider : MainAPI() {
             },
             null,
             this.id,
-            rating = String.format("%.1f", this.vote_average).toDouble(),
+            rating = this.vote_average?.round(),
         )
     }
 
@@ -107,7 +112,7 @@ open class TmdbProvider : MainAPI() {
                 }.get(Calendar.YEAR)
             },
             this.id,
-            rating = String.format("%.1f", this.vote_average).toDouble(),
+            rating = this.vote_average?.round(),
         )
     }
 
@@ -120,71 +125,65 @@ open class TmdbProvider : MainAPI() {
         }
     }
 
-    private suspend fun TvShow.toLoadResponse(): TvSeriesLoadResponse {
+    private suspend fun TvShow.toLoadResponse(): TvSeriesLoadResponse? {
         val lastSeason = (this.seasons?.size) // may be wrong depending on season 0 ? + ?.minus(1)
-        val episodes = this.seasons?.filter { !disableSeasonZero || (it.season_number ?: 0) != 0 }
-            ?.apmapIndexed { seasonIndex, season ->
-                season.episodes?.apmapIndexed { episodeIndex, episode ->
-                    val episodeBody = this@toLoadResponse.id?.let {
-                        tmdb.tvEpisodesService()
-                            .episode(
-                                it,
-                                seasonIndex+1,
-                                episodeIndex+1,
-                                "en-US",
-                            )
-                    }?.awaitResponse()?.body()
-
+        val isAnime = this.keywords?.keywords?.any { it.id == 210024 } // true if has anime keyword  (210024)
+        val episodes =
+            if (isAnime == true) { // todo episode groups: https://www.themoviedb.org/tv/30984-bleach/episode_groups
+                (1..(this.number_of_episodes ?: 1)).toList().map { EpisodeNumber ->
                     Episode(
                         TmdbLink(
-                            episode.external_ids?.imdb_id ?: this.external_ids?.imdb_id,
+                            this.external_ids?.imdb_id,
                             this.id,
-                            episode.episode_number,
-                            episode.season_number,
-                            this@toLoadResponse.name,
+                            EpisodeNumber,
+                            1,
+                            this@toLoadResponse.original_name ?: this@toLoadResponse.name,
                             this.translations?.translations,
                             this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
                             lastSeason,
                         ).toJson(),
-                        episode.name,
-                        episode.season_number,
-                        episode.episode_number,
-                        getImageUrl(episodeBody?.still_path),
-                        episodeBody?.vote_average?.toInt(),
-                        episode.overview,
-                        episode.air_date?.time,
                     )
-                } ?: (1..(season.episode_count ?: 1)).toList().apmap { episodeNum: Int ->
+                }
+            } else { // threat it as a tv show (query each episode normally as in season)
 
-                    val episodeBody = this@toLoadResponse.id?.let {
-                        tmdb.tvEpisodesService()
-                            .episode(
+                // todo fix tv show episode
+                // ?.filter { !disableSeasonZero || (it.season_number ?: 0) != 0 } TODO add it back
+                this.seasons?.apmapIndexed { seasonIndex, season ->
+
+                    val seasonBody = this@toLoadResponse.id?.let {
+                        tmdb.tvSeasonsService()
+                            .season(
                                 it,
-                                seasonIndex+1, // 0 is special season
-                                episodeNum, //
-                                "en-US",
+                                seasonIndex+1,
+                                localeLang,
                             )
                     }?.awaitResponse()?.body()
 
-                    Episode(
-                        name = episodeBody?.name,
-                        episode = episodeNum,
-                        data = TmdbLink(
-                            this.external_ids?.imdb_id,
-                            this.id,
-                            episodeNum,
-                            seasonIndex+1,
-                            this@toLoadResponse.name,
-                            this.translations?.translations,
-                            this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
-                            lastSeason,
-                        ).toJson(),
-                        season = seasonIndex+1,
-                        posterUrl = getImageUrl(episodeBody?.still_path),
-                        rating = (episodeBody?.vote_average?.times(10))?.toInt(),
-                    )
-                }
-            }?.flatten() ?: listOf()
+                    seasonBody?.episodes?.apmap { episode ->
+                        Episode(
+                            TmdbLink(
+                                episode.external_ids?.imdb_id ?: this.external_ids?.imdb_id,
+                                this.id,
+                                episode.episode_number,
+                                episode.season_number,
+                                this@toLoadResponse.original_name ?: this@toLoadResponse.name,
+                                this.translations?.translations,
+                                this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
+                                lastSeason,
+                            ).toJson(),
+                            episode.name,
+                            episode.season_number,
+                            episode.episode_number,
+                            getImageUrl(episode?.still_path),
+                            episode?.vote_average?.toString()?.replace(",", ".")?.toDouble()?.toInt(), // TODO FIX 0.8 instead of 8.0
+                            episode.overview,
+                            episode.air_date?.time,
+                        )
+                    }
+                }?.filterNotNull()?.flatten()
+            }
+
+        episodes ?: return null
         return newTvSeriesLoadResponse(
             this.name ?: this.original_name,
             getUrl(id, true),
@@ -202,7 +201,7 @@ open class TmdbProvider : MainAPI() {
 
             tags = genres?.mapNotNull { it.name }
             duration = episode_run_time?.average()?.toInt()
-            rating = this@toLoadResponse.vote_average?.toDouble()?.toInt()
+            rating = this@toLoadResponse.vote_average?.round()?.toInt()
             addTrailer(videos.toTrailers())
             recommendations = (this@toLoadResponse.recommendations
                 ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
@@ -211,6 +210,7 @@ open class TmdbProvider : MainAPI() {
             backgroundPosterUrl = getBackdropUrl(backdrop_path)
         }
     }
+
 
     private fun Videos?.toTrailers(): List<String>? {
         return this?.results?.filter { it.type != VideoType.OPENING_CREDITS && it.type != VideoType.FEATURETTE }
@@ -228,16 +228,16 @@ open class TmdbProvider : MainAPI() {
     private suspend fun Movie.toLoadResponse(): MovieLoadResponse {
         return newMovieLoadResponse(
             this.title ?: this.original_title, getUrl(id, false), TvType.Movie,
-                TmdbLink(
-                    this.imdb_id,
-                    this.id,
-                    null,
-                    null,
-                    this.title ?: this.original_title,
-                    this.translations?.translations,
-                    this@toLoadResponse.release_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
-                    null,
-                ).toJson()
+            TmdbLink(
+                this.imdb_id,
+                this.id,
+                null,
+                null,
+                this.original_title ?: this.title, // use traduction if their is one and fallback on orignal name
+                this.translations?.translations,
+                this@toLoadResponse.release_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
+                null,
+            ).toJson()
         ) {
             posterUrl = getImageUrl(poster_path)
             year = release_date?.let {
@@ -249,7 +249,7 @@ open class TmdbProvider : MainAPI() {
             addImdbId(external_ids?.imdb_id)
             tags = genres?.mapNotNull { it.name }
             duration = runtime
-            rating = this@toLoadResponse.vote_average?.toDouble()?.toInt()
+            rating = this@toLoadResponse.vote_average?.round()?.toInt()
             //rating = this@toLoadResponse.rating
             addTrailer(videos.toTrailers())
             recommendations = (this@toLoadResponse.recommendations
@@ -275,6 +275,10 @@ open class TmdbProvider : MainAPI() {
         "$mainUrl/discover/movie?api_key=$apiKey&with_keywords=210024|222243&page=" to "Anime Movies",
     )
 
+    private fun Double.round(): Double {
+        return (this * 10.0).roundToInt() / 10.0 // 1 decimal 10.0 ; 2 decimal 100.0
+    }
+
     private fun Media.toSearchResponse(type: String? = null): SearchResponse? {
         val newType = type ?: if(this.title != null) "movie" else "tv" // check again type if "/movie" was not in the request, only movies have title
         return MovieSearchResponse(
@@ -285,7 +289,7 @@ open class TmdbProvider : MainAPI() {
             getImageUrl(this.posterPath),  // POSTER
             null, // YEAR
             this.id,
-            rating = String.format("%.1f", this.voteAverage).toDouble(), // will format to: 8.6
+            rating = this.voteAverage?.round(), // will format to: 8.6
         )
     }
 
@@ -296,11 +300,12 @@ open class TmdbProvider : MainAPI() {
     ): HomePageResponse {
         val type =
             if (request.data.contains("/movie")) "movie"
-        else {
-            if (request.data.contains("/tv")) "tv"
-            else null //unknown type
-        }
-        val home = app.get(request.data + page)
+            else {
+                if (request.data.contains("/tv")) "tv"
+                else null //unknown type
+            }
+        val language = "&language=${localeLang ?: "en"}"
+        val home = app.get(request.data + page + language)
             .parsedSafe<Results>()?.results
             ?.mapNotNull { media ->
                 media.toSearchResponse(type)
@@ -341,11 +346,13 @@ open class TmdbProvider : MainAPI() {
                 val body = tmdb.tvService()
                     .tv(
                         id,
-                        "en-US",
+                        localeLang,
                         AppendToResponse(
                             AppendToResponseItem.EXTERNAL_IDS,
                             AppendToResponseItem.VIDEOS,
                             AppendToResponseItem.CREDITS,
+                            AppendToResponseItem.KEYWORDS,
+                            AppendToResponseItem.TRANSLATIONS,
                             // AppendToResponseItem.IMAGES, // display all posters
                         ),
                         // mapOf("include_image_language" to "null"), // display all posters
@@ -354,7 +361,7 @@ open class TmdbProvider : MainAPI() {
                 val response = body?.toLoadResponse()
                 if (response != null) {
                     if (response.recommendations.isNullOrEmpty())
-                        tmdb.tvService().recommendations(id, 1, "en-US").awaitResponse().body()
+                        tmdb.tvService().recommendations(id, 1, localeLang).awaitResponse().body()
                             ?.let {
                                 it.results?.map { res -> res.toSearchResponse() }
                             }?.let { list ->
@@ -362,7 +369,7 @@ open class TmdbProvider : MainAPI() {
                             }
 
                     if (response.actors.isNullOrEmpty())
-                        tmdb.tvService().credits(id, "en-US").awaitResponse().body()?.let {
+                        tmdb.tvService().credits(id, localeLang).awaitResponse().body()?.let {
                             response.addActors(it.cast?.toActors())
                         }
                 }
@@ -372,11 +379,12 @@ open class TmdbProvider : MainAPI() {
                 val body = tmdb.moviesService()
                     .summary(
                         id,
-                        "en-US",
+                        localeLang,
                         AppendToResponse(
                             AppendToResponseItem.EXTERNAL_IDS,
                             AppendToResponseItem.VIDEOS,
                             AppendToResponseItem.CREDITS,
+                            AppendToResponseItem.TRANSLATIONS,
                             // AppendToResponseItem.IMAGES, // display all posters
                         ),
                         // mapOf("include_image_language" to "null") //  display all posters
@@ -385,7 +393,7 @@ open class TmdbProvider : MainAPI() {
                 val response = body?.toLoadResponse()
                 if (response != null) {
                     if (response.recommendations.isNullOrEmpty())
-                        tmdb.moviesService().recommendations(id, 1, "en-US").awaitResponse().body()
+                        tmdb.moviesService().recommendations(id, 1, localeLang).awaitResponse().body()
                             ?.let {
                                 it.results?.map { res -> res.toSearchResponse() }
                             }?.let { list ->
@@ -402,10 +410,10 @@ open class TmdbProvider : MainAPI() {
         } else {
             loadFromTmdb(id)?.let { return it }
             if (isTvSeries) {
-                tmdb.tvService().externalIds(id, "en-US").awaitResponse().body()?.imdb_id?.let {
+                tmdb.tvService().externalIds(id, localeLang).awaitResponse().body()?.imdb_id?.let {
                     val fromImdb = loadFromImdb(it)
                     val result = if (fromImdb == null) {
-                        val details = tmdb.tvService().tv(id, "en-US").awaitResponse().body()
+                        val details = tmdb.tvService().tv(id, localeLang).awaitResponse().body()
                         loadFromImdb(it, details?.seasons ?: listOf())
                             ?: loadFromTmdb(id, details?.seasons ?: listOf())
                     } else {
@@ -415,7 +423,7 @@ open class TmdbProvider : MainAPI() {
                     result
                 }
             } else {
-                tmdb.moviesService().externalIds(id, "en-US").awaitResponse()
+                tmdb.moviesService().externalIds(id, localeLang).awaitResponse()
                     .body()?.imdb_id?.let { loadFromImdb(it) }
             }
         }
@@ -427,7 +435,7 @@ open class TmdbProvider : MainAPI() {
         val networkFilter = searchQuery?.network_filter // the network (like Netflix)
         val watchProviderFilter = searchQuery?.watch_provider_filter // the platform (like Netflix); for movies
         return if (networkFilter == null && directSearch != null) {
-            tmdb.searchService().multi(directSearch, 1, "en-Us", "US", includeAdult).awaitResponse()
+            tmdb.searchService().multi(directSearch, 1, localeLang, "US", includeAdult).awaitResponse()
                 .body()?.results?.sortedByDescending { it.movie?.popularity ?: it.tvShow?.popularity }?.mapNotNull {
                     it.movie?.toSearchResponse() ?: it.tvShow?.toSearchResponse()
                 }

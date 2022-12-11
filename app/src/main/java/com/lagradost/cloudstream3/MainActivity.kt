@@ -519,6 +519,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         settingsForProvider.enableAdult =
             settingsManager.getBoolean(getString(R.string.enable_nsfw_on_providers_key), false)
 
+        TmdbProvider.localeLang = settingsManager.getString(getString(R.string.locale_key), "en")
+
         MainAPI.settingsForProvider = settingsForProvider
 
         val enableLocalServer = try { // TODO server as an extension
