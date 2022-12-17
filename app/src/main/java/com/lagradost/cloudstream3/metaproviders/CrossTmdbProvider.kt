@@ -39,16 +39,14 @@ class CrossTmdbProvider : TmdbProvider() {
         return null
     }
 
-    private suspend fun getAnimeEpisodeUrl(api: MainAPI, url: String, wantedEpisode: Int?): String? {
+    private suspend fun getAnimeEpisodeUrl(api: MainAPI, url: String, wantedEpisode: Int?, dubStatus: DubStatus?): String? {
         wantedEpisode ?: return null
+        dubStatus ?: return null
         val foundAnime = api.load(url)
         if(foundAnime is AnimeLoadResponse) {
             val listOfEpisodeWithDubStatus = foundAnime.episodes
-            listOfEpisodeWithDubStatus.toList().forEach { element ->
-                val listOfEpisode: List<Episode> = element.second
-                val test = listOfEpisode[wantedEpisode-1].data
-                return listOfEpisode[wantedEpisode-1].data // first episode is number 0; episode 2 is number 1 ...
-            }
+            val listOfEpisode: List<Episode> = listOfEpisodeWithDubStatus.toList().first { it.first == dubStatus}.second
+            return listOfEpisode[wantedEpisode-1].data // first episode is number 0; episode 2 is number 1 ...
         }
         return null
     }
@@ -79,38 +77,38 @@ class CrossTmdbProvider : TmdbProvider() {
     ): Boolean {
         val dataTmdbLink = tryParseJson<TmdbLink>(data)
         getAllEnabledMetaProviders().amap {api ->
-            try {
+            suspendSafeApiCall {
                 api?.loadLinks(data, isCasting, subtitleCallback, callback) // load all meta providers
-            } catch (e: Exception) {
-                logError(e)
             }
         }
         val isTvShow = (dataTmdbLink?.season != null && dataTmdbLink.episode != null)
-        val isAnime = (dataTmdbLink?.season == null && dataTmdbLink?.episode != null)
-        getAllEnabledDirectProviders().amap { api ->
-            if (api != null && dataTmdbLink != null) {
-                searchForMediaDirectProvider(api, dataTmdbLink)?.let { searchResponse ->
-                    suspendSafeApiCall {
-                        if (isTvShow) {
-                            getTvShowEpisodeUrl(
-                                api, searchResponse.url,
-                                dataTmdbLink.episode, dataTmdbLink.season
-                            )
-                        } else {
-                            if (isAnime) {
-                                getAnimeEpisodeUrl(
+        val isAnime = (dataTmdbLink?.season == null && dataTmdbLink?.episode != null && dataTmdbLink.dubStatus != null)
+        suspendSafeApiCall {
+            getAllEnabledDirectProviders().amap { api ->
+                if (api != null && dataTmdbLink != null) {
+                    searchForMediaDirectProvider(api, dataTmdbLink)?.let { searchResponse ->
+                        suspendSafeApiCall {
+                            if (isTvShow) {
+                                getTvShowEpisodeUrl(
                                     api, searchResponse.url,
-                                    dataTmdbLink.episode
+                                    dataTmdbLink.episode, dataTmdbLink.season
                                 )
                             } else {
-                                getMovieLoadContentUrl(api, searchResponse.url)
+                                if (isAnime) {
+                                    getAnimeEpisodeUrl(
+                                        api, searchResponse.url,
+                                        dataTmdbLink.episode, dataTmdbLink.dubStatus
+                                    )
+                                } else {
+                                    getMovieLoadContentUrl(api, searchResponse.url)
+                                }
                             }
                         }
-                    }
-                }.let { loadContentUrl ->
-                    suspendSafeApiCall {
-                        if (loadContentUrl != null) {
-                            api.loadLinks(loadContentUrl, isCasting, subtitleCallback, callback)
+                    }.let { loadContentUrl ->
+                        suspendSafeApiCall {
+                            if (loadContentUrl != null) {
+                                api.loadLinks(loadContentUrl, isCasting, subtitleCallback, callback)
+                            }
                         }
                     }
                 }

@@ -32,6 +32,7 @@ data class TmdbLink(
     @JsonProperty("alternativeTitles") val alternativeTitles: List<Translations.Translation>? = null,
     @JsonProperty("year") val year: Int? = null,
     @JsonProperty("lastSeason") val lastSeason: Int? = null,
+    @JsonProperty("dubStatus") val dubStatus: DubStatus? = null,
 )
 
 open class TmdbProvider : MainAPI() {
@@ -125,70 +126,97 @@ open class TmdbProvider : MainAPI() {
         }
     }
 
-    private suspend fun TvShow.toLoadResponse(): TvSeriesLoadResponse? {
-        val lastSeason = (this.seasons?.size) // may be wrong depending on season 0 ? + ?.minus(1)
+
+    private fun getEpisodesAnime(anime: TvShow, dubStatus: DubStatus?): List<Episode>? {
+        return (1..(anime.number_of_episodes ?: 1)).toList().map { EpisodeNumber ->
+            Episode(
+                TmdbLink(
+                    anime.external_ids?.imdb_id,
+                    anime.id,
+                    EpisodeNumber,
+                    null,
+                    anime.original_name ?: anime.name,
+                    anime.translations?.translations,
+                    anime.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
+                    anime.seasons?.size,
+                    dubStatus,
+                ).toJson(),
+            )
+        }
+    }
+
+    private suspend fun TvShow.toLoadResponse(): LoadResponse? {
         val isAnime = this.keywords?.keywords?.any { it.id == 210024 } // true if has anime keyword  (210024)
-        val episodes =
-            if (isAnime == true) { // todo episode groups: https://www.themoviedb.org/tv/30984-bleach/episode_groups
-                (1..(this.number_of_episodes ?: 1)).toList().map { EpisodeNumber ->
-                    Episode(
-                        TmdbLink(
-                            this.external_ids?.imdb_id,
-                            this.id,
-                            EpisodeNumber,
-                            null,
-                            this@toLoadResponse.original_name ?: this@toLoadResponse.name,
-                            this.translations?.translations,
-                            this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
-                            lastSeason,
-                        ).toJson(),
-                    )
+        if (isAnime == true) {
+            return newAnimeLoadResponse(this.name ?: this.original_name,
+                getUrl(id, true),
+                TvType.Anime,
+            ) {
+                addEpisodes(DubStatus.Subbed, getEpisodesAnime(this@toLoadResponse, DubStatus.Subbed))
+                addEpisodes(DubStatus.Dubbed, getEpisodesAnime(this@toLoadResponse, DubStatus.Dubbed))
+                posterUrl = getImageUrl(poster_path)
+                year = first_air_date?.let {
+                    Calendar.getInstance().apply {
+                        time = it
+                    }.get(Calendar.YEAR)
                 }
-            } else { // threat it as a tv show (query each episode normally as in season)
+                plot = overview
+                addImdbId(external_ids?.imdb_id)
 
-                // todo fix tv show episode
-                // ?.filter { !disableSeasonZero || (it.season_number ?: 0) != 0 } TODO add it back
-                this.seasons?.apmapIndexed { seasonIndex, season ->
-
-                    val seasonBody = this@toLoadResponse.id?.let {
-                        tmdb.tvSeasonsService()
-                            .season(
-                                it,
-                                seasonIndex+1,
-                                localeLang,
-                            )
-                    }?.awaitResponse()?.body()
-
-                    seasonBody?.episodes?.apmap { episode ->
-                        Episode(
-                            TmdbLink(
-                                episode.external_ids?.imdb_id ?: this.external_ids?.imdb_id,
-                                this.id,
-                                episode.episode_number,
-                                episode.season_number,
-                                this@toLoadResponse.original_name ?: this@toLoadResponse.name,
-                                this.translations?.translations,
-                                this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
-                                lastSeason,
-                            ).toJson(),
-                            episode.name,
-                            episode.season_number,
-                            episode.episode_number,
-                            getImageUrl(episode?.still_path),
-                            episode?.vote_average?.toString()?.replace(",", ".")?.toDouble()?.toInt(), // TODO FIX 0.8 instead of 8.0
-                            episode.overview,
-                            episode.air_date?.time,
-                        )
-                    }
-                }?.filterNotNull()?.flatten()
+                tags = genres?.mapNotNull { it.name }
+                duration = episode_run_time?.average()?.toInt()
+                rating = this@toLoadResponse.vote_average?.round()?.toInt()
+                addTrailer(videos.toTrailers())
+                recommendations = (this@toLoadResponse.recommendations
+                    ?: this@toLoadResponse.similar)?.results?.map { it.toSearchResponse() }
+                addActors(credits?.cast?.toList().toActors())
+                // backdropUrl = getBackdropUrl(images?.backdrops?.first()?.file_path) get all backdrops
+                backgroundPosterUrl = getBackdropUrl(backdrop_path)
             }
+        }
 
-        episodes ?: return null
+        val episodeList =
+        // todo fix tv show episode
+        // ?.filter { !disableSeasonZero || (it.season_number ?: 0) != 0 } TODO add it back
+        this.seasons?.apmapIndexed { seasonIndex, season ->
+
+            val seasonBody = this@toLoadResponse.id?.let {
+                tmdb.tvSeasonsService()
+                    .season(
+                        it,
+                        seasonIndex+1,
+                        localeLang,
+                    )
+            }?.awaitResponse()?.body()
+
+            seasonBody?.episodes?.apmap { episode ->
+                Episode(
+                    TmdbLink(
+                        episode.external_ids?.imdb_id ?: this.external_ids?.imdb_id,
+                        this.id,
+                        episode.episode_number,
+                        episode.season_number,
+                        this@toLoadResponse.original_name ?: this@toLoadResponse.name,
+                        this.translations?.translations,
+                        this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
+                        this.seasons?.size,
+                    ).toJson(),
+                    episode.name,
+                    episode.season_number,
+                    episode.episode_number,
+                    getImageUrl(episode?.still_path),
+                    episode?.vote_average?.toString()?.replace(",", ".")?.toDouble()?.times(10)?.toInt(), // TODO FIX 0.8 instead of 8.0
+                    episode.overview,
+                    episode.air_date?.time,
+                )
+            }
+        }?.filterNotNull()?.flatten()
+        episodeList ?: return null
         return newTvSeriesLoadResponse(
             this.name ?: this.original_name,
             getUrl(id, true),
             TvType.TvSeries,
-            episodes
+            episodeList
         ) {
             posterUrl = getImageUrl(poster_path)
             year = first_air_date?.let {
@@ -353,6 +381,7 @@ open class TmdbProvider : MainAPI() {
                             AppendToResponseItem.CREDITS,
                             AppendToResponseItem.KEYWORDS,
                             AppendToResponseItem.TRANSLATIONS,
+                            AppendToResponseItem.SIMILAR
                             // AppendToResponseItem.IMAGES, // display all posters
                         ),
                         // mapOf("include_image_language" to "null"), // display all posters
