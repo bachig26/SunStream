@@ -90,7 +90,8 @@ object APIHolder {
         synchronized(allProviders) {
             initMap()
             return apiMap?.get(apiName)?.let { apis.getOrNull(it) }
-                ?: allProviders.firstOrNull { it.name == apiName }
+                // Leave the ?. null check, it can crash regardless
+                ?: allProviders.firstOrNull { it?.name == apiName }
         }
     }
 
@@ -251,7 +252,6 @@ object APIHolder {
     }
 
     private fun Context.getHasTrailers(): Boolean {
-        if (isTvSettings()) return false
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         return settingsManager.getBoolean(this.getString(R.string.show_trailers_key), true)
     }
@@ -259,11 +259,17 @@ object APIHolder {
     fun Context.filterProviderByPreferredMedia(hasHomePageIsRequired: Boolean = true): List<MainAPI> {
         // We are getting the weirdest crash ever done:
         // java.lang.ClassCastException: com.lagradost.cloudstream3.TvType cannot be cast to com.lagradost.cloudstream3.TvType
-        // enumValues<TvType>() might be the cause, hence I am trying TvType.values()
+        // Trying fixing using classloader fuckery
+        val oldLoader = Thread.currentThread().contextClassLoader
+        Thread.currentThread().contextClassLoader = TvType::class.java.classLoader
+
         val default = TvType.values()
             .sorted()
             .filter { it != TvType.NSFW }
             .map { it.ordinal }
+
+        Thread.currentThread().contextClassLoader = oldLoader
+
         val defaultSet = default.map { it.toString() }.toSet()
         val currentPrefMedia = try {
             PreferenceManager.getDefaultSharedPreferences(this)
@@ -1191,18 +1197,43 @@ interface LoadResponse {
 
 fun getDurationFromString(input: String?): Int? {
     val cleanInput = input?.trim()?.replace(" ", "") ?: return null
+    //Use first as sometimes the text passes on the 2 other Regex, but failed to provide accurate return value
+    Regex("(\\d+\\shr)|(\\d+\\shour)|(\\d+\\smin)|(\\d+\\ssec)").findAll(input).let { values ->
+        var seconds = 0
+        values.forEach {
+            val time_text = it.value
+            if (time_text.isNotBlank()) {
+                val time = time_text.filter { s -> s.isDigit() }.trim().toInt()
+                val scale = time_text.filter { s -> !s.isDigit() }.trim()
+                //println("Scale: $scale")
+                val timeval = when (scale) {
+                    "hr", "hour" -> time * 60 * 60
+                    "min" -> time * 60
+                    "sec" -> time
+                    else -> 0
+                }
+                seconds += timeval
+            }
+        }
+        if (seconds > 0) {
+            return seconds / 60
+        }
+    }
     Regex("([0-9]*)h.*?([0-9]*)m").find(cleanInput)?.groupValues?.let { values ->
         if (values.size == 3) {
             val hours = values[1].toIntOrNull()
             val minutes = values[2].toIntOrNull()
-            return if (minutes != null && hours != null) {
-                hours * 60 + minutes
-            } else null
+            if (minutes != null && hours != null) {
+                return hours * 60 + minutes
+            }
         }
     }
     Regex("([0-9]*)m").find(cleanInput)?.groupValues?.let { values ->
         if (values.size == 2) {
-            return values[1].toIntOrNull()
+            val return_value = values[1].toIntOrNull()
+            if (return_value != null) {
+                return return_value
+            }
         }
     }
     return null

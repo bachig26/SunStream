@@ -10,14 +10,17 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.fragment.app.FragmentActivity
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.Gson
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.APIHolder.getApiProviderLangSettings
 import com.lagradost.cloudstream3.APIHolder.removePluginMapping
 import com.lagradost.cloudstream3.AcraApplication.Companion.getKey
 import com.lagradost.cloudstream3.AcraApplication.Companion.removeKey
 import com.lagradost.cloudstream3.AcraApplication.Companion.setKey
 import com.lagradost.cloudstream3.CommonActivity.showToast
+import com.lagradost.cloudstream3.MainAPI.Companion.settingsForProvider
 import com.lagradost.cloudstream3.MainActivity.Companion.afterPluginsLoadedEvent
 import com.lagradost.cloudstream3.mvvm.debugPrint
 import com.lagradost.cloudstream3.mvvm.logError
@@ -26,6 +29,8 @@ import com.lagradost.cloudstream3.plugins.RepositoryManager.ONLINE_PLUGINS_FOLDE
 import com.lagradost.cloudstream3.plugins.RepositoryManager.PREBUILT_REPOSITORIES
 import com.lagradost.cloudstream3.plugins.RepositoryManager.downloadPluginToFile
 import com.lagradost.cloudstream3.plugins.RepositoryManager.getRepoPlugins
+import com.lagradost.cloudstream3.ui.result.UiText
+import com.lagradost.cloudstream3.ui.result.txt
 import com.lagradost.cloudstream3.ui.settings.extensions.REPOSITORIES_KEY
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
 import com.lagradost.cloudstream3.utils.Coroutines.main
@@ -219,9 +224,7 @@ object PluginManager {
     fun updateAllOnlinePluginsAndLoadThem(activity: Activity) {
         // Load all plugins as fast as possible!
         loadAllOnlinePlugins(activity)
-
-            afterPluginsLoadedEvent.invoke(true)
-
+        afterPluginsLoadedEvent.invoke(false)
 
         val urls = (getKey<Array<RepositoryData>>(REPOSITORIES_KEY)
             ?: emptyArray()) + PREBUILT_REPOSITORIES
@@ -265,14 +268,100 @@ object PluginManager {
         }
 
         main {
-            createNotification(activity, updatedPlugins)
+            val uitext = txt(R.string.plugins_updated, updatedPlugins.size)
+            createNotification(activity, uitext, updatedPlugins)
         }
 
-       // ioSafe {
-            afterPluginsLoadedEvent.invoke(true)
-       // }
+        // ioSafe {
+        afterPluginsLoadedEvent.invoke(false)
+        // }
 
         Log.i(TAG, "Plugin update done!")
+    }
+
+    /**
+     * Automatically download plugins not yet existing on local
+     * 1. Gets all online data from online plugins repo
+     * 2. Fetch all not downloaded plugins
+     * 3. Download them and reload plugins
+     **/
+    fun downloadNotExistingPluginsAndLoad(activity: Activity) {
+        val newDownloadPlugins = mutableListOf<String>()
+        val urls = (getKey<Array<RepositoryData>>(REPOSITORIES_KEY)
+            ?: emptyArray()) + PREBUILT_REPOSITORIES
+        val onlinePlugins = urls.toList().apmap {
+            getRepoPlugins(it.url)?.toList() ?: emptyList()
+        }.flatten().distinctBy { it.second.url }
+
+        val providerLang = activity.getApiProviderLangSettings()
+        //Log.i(TAG, "providerLang => ${providerLang.toJson()}")
+
+        // Iterate online repos and returns not downloaded plugins
+        val notDownloadedPlugins = onlinePlugins.mapNotNull { onlineData ->
+            val sitePlugin = onlineData.second
+            //Don't include empty urls
+            if (sitePlugin.url.isBlank()) {
+                return@mapNotNull null
+            }
+            if (sitePlugin.repositoryUrl.isNullOrBlank()) {
+                return@mapNotNull null
+            }
+
+            //Omit already existing plugins
+            if (getPluginPath(activity, sitePlugin.internalName, onlineData.first).exists()) {
+                Log.i(TAG, "Skip > ${sitePlugin.internalName}")
+                return@mapNotNull null
+            }
+
+            //Omit lang not selected on language setting
+            val lang = sitePlugin.language ?: return@mapNotNull null
+            //If set to 'universal', don't skip any language
+            if (!providerLang.contains(AllLanguagesName) && !providerLang.contains(lang)) {
+                return@mapNotNull null
+            }
+            //Log.i(TAG, "sitePlugin lang => $lang")
+
+            //Omit NSFW, if disabled
+            sitePlugin.tvTypes?.let { tvtypes ->
+                if (!settingsForProvider.enableAdult) {
+                    if (tvtypes.contains(TvType.NSFW.name)) {
+                        return@mapNotNull null
+                    }
+                }
+            }
+            val savedData = PluginData(
+                url = sitePlugin.url,
+                internalName = sitePlugin.internalName,
+                isOnline = true,
+                filePath = "",
+                version = sitePlugin.version
+            )
+            OnlinePluginData(savedData, onlineData)
+        }
+        //Log.i(TAG, "notDownloadedPlugins => ${notDownloadedPlugins.toJson()}")
+
+        notDownloadedPlugins.apmap { pluginData ->
+            downloadAndLoadPlugin(
+                activity,
+                pluginData.onlineData.second.url,
+                pluginData.savedData.internalName,
+                pluginData.onlineData.first
+            ).let { success ->
+                if (success)
+                    newDownloadPlugins.add(pluginData.onlineData.second.name)
+            }
+        }
+
+        main {
+            val uitext = txt(R.string.plugins_downloaded, newDownloadPlugins.size)
+            createNotification(activity, uitext, newDownloadPlugins)
+        }
+
+        // ioSafe {
+        afterPluginsLoadedEvent.invoke(false)
+        // }
+
+        Log.i(TAG, "Plugin download done!")
     }
 
     /**
@@ -289,7 +378,23 @@ object PluginManager {
         }
     }
 
-    fun loadAllLocalPlugins(activity: Activity) {
+    /**
+     * Reloads all local plugins and forces a page update, used for hot reloading with deployWithAdb
+     **/
+    fun hotReloadAllLocalPlugins(activity: FragmentActivity?) {
+        Log.d(TAG, "Reloading all local plugins!")
+        if (activity == null) return
+        getPluginsLocal().forEach {
+            unloadPlugin(it.filePath)
+        }
+        loadAllLocalPlugins(activity, true)
+    }
+
+    /**
+     * @param forceReload see afterPluginsLoadedEvent, basically a way to load all local plugins
+     * and reload all pages even if they are previously valid
+     **/
+    fun loadAllLocalPlugins(activity: Activity, forceReload: Boolean) {
         val dir = File(LOCAL_PLUGINS_PATH)
         removeKey(PLUGINS_KEY_LOCAL)
 
@@ -311,7 +416,7 @@ object PluginManager {
         }
 
         loadedLocalPlugins = true
-        afterPluginsLoadedEvent.invoke(true)
+        afterPluginsLoadedEvent.invoke(forceReload)
     }
 
     /**
@@ -492,7 +597,8 @@ object PluginManager {
     }
 
     suspend fun deletePlugin(file: File): Boolean {
-        val list = (getPluginsLocal() + getPluginsOnline()).filter { it.filePath == file.absolutePath }
+        val list =
+            (getPluginsLocal() + getPluginsOnline()).filter { it.filePath == file.absolutePath }
 
         return try {
             if (File(file.absolutePath).delete()) {
@@ -527,12 +633,14 @@ object PluginManager {
 
     private fun createNotification(
         context: Context,
-        extensionNames: List<String>
+        uitext: UiText,
+        extensions: List<String>
     ): Notification? {
         try {
-            if (extensionNames.isEmpty()) return null
 
-            val content = extensionNames.joinToString(", ")
+            if (extensions.isEmpty()) return null
+
+            val content = extensions.joinToString(", ")
 //        main { // DON'T WANT TO SLOW IT DOWN
             val builder = NotificationCompat.Builder(context, EXTENSIONS_CHANNEL_ID)
                 .setAutoCancel(false)
@@ -541,7 +649,8 @@ object PluginManager {
                 .setSilent(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setColor(context.colorFromAttribute(R.attr.colorPrimary))
-                .setContentTitle(context.getString(R.string.plugins_updated, extensionNames.size))
+                .setContentTitle(uitext.asString(context))
+                //.setContentTitle(context.getString(title, extensionNames.size))
                 .setSmallIcon(R.drawable.ic_baseline_extension_24)
                 .setStyle(
                     NotificationCompat.BigTextStyle()

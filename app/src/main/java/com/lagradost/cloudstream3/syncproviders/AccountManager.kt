@@ -14,6 +14,7 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
         val indexSubtitlesApi = IndexSubtitleApi()
         val radarrApi = RadarrApi(0)
         val remoteApi = RemoteApi(0)
+        val addic7ed = Addic7ed()
 
         // used to login via app intent
         val OAuth2Apis
@@ -39,11 +40,18 @@ abstract class AccountManager(private val defIndex: Int) : AuthAPI {
         val subtitleProviders
             get() = listOf(
                 openSubtitlesApi,
-                indexSubtitlesApi // they got anti scraping measures in place :(
+                indexSubtitlesApi, // they got anti scraping measures in place :(
+                addic7ed
             )
 
         const val appString = "sunstreamapp"
         const val appStringRepo = "sunstreamrepo"
+
+        // Instantly start the search given a query
+        const val appStringSearch = "cloudstreamsearch"
+
+        // Instantly resume watching a show
+        const val appStringResumeWatching = "cloudstreamcontinuewatching"
 
         val unixTime: Long
             get() = System.currentTimeMillis() / 1000L

@@ -14,36 +14,6 @@ Based on the amazing [Cloudstream-3](https://github.com/recloudstream/cloudstrea
 ***TODO:***
 + self-hosted providers like jellyfin
 
-***Screenshots:***
-
-<img src="./.github/home.jpg" height="400"/><img src="./.github/search.jpg" height="400"/><img src="./.github/downloads.jpg" height="400"/><img src="./.github/results.jpg" height="400"/>
-<img src="./.github/player.jpg" height="200"/>
-
-***The list of supported languages:***
-* 🇱🇧 Arabic
-* 🇧🇬 Bulgarian
-* 🇭🇷 Croatian
-* 🇨🇿 Czech
-* 🇳🇱 Dutch
-* 🇬🇧 English
-* 🇫🇷 French
-* 🇩🇪 German
-* 🇬🇷 Greek
-* 🇮🇳 Hindi
-* 🇮🇩 Indonesian
-* 🇮🇹 Italian
-* 🇲🇰 Macedonian
-* 🇮🇳 Malayalam
-* 🇳🇴 Norsk
-* 🇵🇱 Polish
-* 🇧🇷 Portuguese (Brazil)
-* 🇷🇴 Romanian
-* 🇪🇸 Spanish
-* 🇸🇪 Swedish
-* 🇵🇭 Tagalog
-* 🇹🇷 Turkish
-* 🇻🇳 Vietnamese
-
 ***Disclaimer:***
 
 __**WE DO NOT HOST CONTENT**__
@@ -55,3 +25,8 @@ In case of copyright infringement, please directly contact the responsible parti
 The app is purely for educational and personal use.
 
 SunStream does not host any content on the app, and has no control over what media is put up or taken down. SunStream functions like any other search engine, such as Google. SunStream does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface.
+
+### Supported languages:
+<a href="https://hosted.weblate.org/engage/cloudstream/">
+  <img src="https://hosted.weblate.org/widgets/cloudstream/-/app/multi-auto.svg" alt="Translation status" />
+</a>

@@ -265,17 +265,14 @@
                                         android:nextFocusDown="@id/home_main_poster_recyclerview"
                                         android:nextFocusUp="@id/nav_rail_view"
                                         android:nextFocusLeft="@id/nav_rail_view"
-
                                         android:id="@+id/home_change_api"
                                         android:layout_margin="10dp"
                                         android:layout_gravity="center|end"
                                         android:background="?android:attr/selectableItemBackgroundBorderless"
-
                                         android:src="@drawable/ic_baseline_keyboard_arrow_down_24"
                                         android:layout_width="30dp"
                                         android:layout_height="30dp"
                                         android:contentDescription="@string/home_change_provider_img_des">
-
                                     <requestFocus />
                                 </ImageView>-->
             </FrameLayout>
@@ -335,7 +332,6 @@
                                     android:background="?android:attr/selectableItemBackgroundBorderless"
                                     android:layout_gravity="start"
                                     android:gravity="center"
-
                                     android:textSize="20dp"
                                     android:layout_margin="20dp"
                                     android:layout_width="wrap_content"

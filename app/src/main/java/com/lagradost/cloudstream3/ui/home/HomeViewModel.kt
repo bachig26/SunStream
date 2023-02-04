@@ -36,6 +36,42 @@ import java.util.*
 import kotlin.collections.set
 
 class HomeViewModel : ViewModel() {
+    companion object {
+        suspend fun getResumeWatching(): List<DataStoreHelper.ResumeWatchingResult>? {
+            val resumeWatching = withContext(Dispatchers.IO) {
+                getAllResumeStateIds()?.mapNotNull { id ->
+                    getLastWatched(id)
+                }?.sortedBy { -it.updateTime }
+            }
+            val resumeWatchingResult = withContext(Dispatchers.IO) {
+                resumeWatching?.mapNotNull { resume ->
+
+                    val data = getKey<VideoDownloadHelper.DownloadHeaderCached>(
+                        DOWNLOAD_HEADER_CACHE,
+                        resume.parentId.toString()
+                    ) ?: return@mapNotNull null
+
+                    val watchPos = getViewPos(resume.episodeId)
+
+                    DataStoreHelper.ResumeWatchingResult(
+                        data.name,
+                        data.url,
+                        data.apiName,
+                        data.type,
+                        data.poster,
+                        watchPos,
+                        resume.episodeId,
+                        resume.parentId,
+                        resume.episode,
+                        resume.season,
+                        resume.isFromDownload
+                    )
+                }
+            }
+            return resumeWatchingResult
+        }
+    }
+
     private var repo: APIRepository? = null
 
     private val _apiName = MutableLiveData<String>()
@@ -66,36 +102,7 @@ class HomeViewModel : ViewModel() {
     val preview: LiveData<Resource<Pair<Boolean, List<LoadResponse>>>> = _preview
 
     fun loadResumeWatching() = viewModelScope.launchSafe {
-        val resumeWatching = withContext(Dispatchers.IO) {
-            getAllResumeStateIds()?.mapNotNull { id ->
-                getLastWatched(id)
-            }?.sortedBy { -it.updateTime }
-        }
-
-        // val resumeWatchingResult = ArrayList<DataStoreHelper.ResumeWatchingResult>()
-
-        val resumeWatchingResult = withContext(Dispatchers.IO) {
-            resumeWatching?.map { resume ->
-                val data = getKey<VideoDownloadHelper.DownloadHeaderCached>(
-                    DOWNLOAD_HEADER_CACHE,
-                    resume.parentId.toString()
-                ) ?: return@map null
-                val watchPos = getViewPos(resume.episodeId)
-                DataStoreHelper.ResumeWatchingResult(
-                    data.name,
-                    data.url,
-                    data.apiName,
-                    data.type,
-                    data.poster,
-                    watchPos,
-                    resume.episodeId,
-                    resume.parentId,
-                    resume.episode,
-                    resume.season,
-                    resume.isFromDownload
-                )
-            }?.filterNotNull()
-        }
+        val resumeWatchingResult = getResumeWatching()
         resumeWatchingResult?.let {
             _resumeWatching.postValue(it)
         }
@@ -121,6 +128,7 @@ class HomeViewModel : ViewModel() {
         currentWatchTypes.remove(WatchType.NONE)
 
         if (currentWatchTypes.size <= 0) {
+            _availableWatchStatusTypes.postValue(setOf<WatchType>() to setOf())
             _bookmarks.postValue(Pair(false, ArrayList()))
             return@launchSafe
         }
@@ -257,80 +265,83 @@ class HomeViewModel : ViewModel() {
         _apiName.postValue(repo?.name)
         _randomItems.postValue(listOf())
 
-        if (repo?.hasMainPage == true) {
-            _page.postValue(Resource.Loading())
-            _preview.postValue(Resource.Loading())
-            addJob?.cancel()
-
-            when (val data = repo?.getMainPage(1, null)) {
-                is Resource.Success -> {
-                    try {
-                        expandable.clear()
-                        data.value.forEach { home ->
-                            home?.items?.forEach { list ->
-                                val filteredList =
-                                    context?.filterHomePageListByFilmQuality(list) ?: list
-                                expandable[list.name] =
-                                    ExpandableHomepageList(filteredList, 1, home.hasNext)
-                            }
-                        }
-
-                        val items = data.value.mapNotNull { it?.items }.flatten()
-
-
-                        previewResponses.clear()
-                        previewResponsesAdded.clear()
-
-                        //val home = data.value
-                        if (items.isNotEmpty()) {
-                            val currentList =
-                                items.shuffled().filter { it.list.isNotEmpty() }
-                                    .flatMap { it.list }
-                                    .distinctBy { it.url }
-                                    .toList()
-
-                            if (currentList.isNotEmpty()) {
-                                val randomItems =
-                                    context?.filterSearchResultByFilmQuality(currentList.shuffled())
-                                        ?: currentList.shuffled()
-
-                                updatePreviewResponses(
-                                    previewResponses,
-                                    previewResponsesAdded,
-                                    randomItems,
-                                    3
-                                )
-
-                                _randomItems.postValue(randomItems)
-                                currentShuffledList = randomItems
-                            }
-                        }
-                        if (previewResponses.isEmpty()) {
-                            _preview.postValue(
-                                Resource.Failure(
-                                    false,
-                                    null,
-                                    null,
-                                    "No homepage responses"
-                                )
-                            )
-                        } else {
-                            _preview.postValue(Resource.Success((previewResponsesAdded.size < currentShuffledList.size) to previewResponses))
-                        }
-                        _page.postValue(Resource.Success(expandable))
-                    } catch (e: Exception) {
-                        _randomItems.postValue(emptyList())
-                        logError(e)
-                    }
-                }
-                is Resource.Failure -> {
-                    _page.postValue(data!!)
-                }
-                else -> Unit
-            }
-        } else {
+        if (repo?.hasMainPage != true) {
             _page.postValue(Resource.Success(emptyMap()))
             _preview.postValue(Resource.Failure(false, null, null, "No homepage"))
+            return@ioSafe
+        }
+
+
+        _page.postValue(Resource.Loading())
+        _preview.postValue(Resource.Loading())
+        addJob?.cancel()
+
+        when (val data = repo?.getMainPage(1, null)) {
+            is Resource.Success -> {
+                try {
+                    expandable.clear()
+                    data.value.forEach { home ->
+                        home?.items?.forEach { list ->
+                            val filteredList =
+                                context?.filterHomePageListByFilmQuality(list) ?: list
+                            expandable[list.name] =
+                                ExpandableHomepageList(filteredList, 1, home.hasNext)
+                        }
+                    }
+
+                    val items = data.value.mapNotNull { it?.items }.flatten()
+
+
+                    previewResponses.clear()
+                    previewResponsesAdded.clear()
+
+                    //val home = data.value
+                    if (items.isNotEmpty()) {
+                        val currentList =
+                            items.shuffled().filter { it.list.isNotEmpty() }
+                                .flatMap { it.list }
+                                .distinctBy { it.url }
+                                .toList()
+
+                        if (currentList.isNotEmpty()) {
+                            val randomItems =
+                                context?.filterSearchResultByFilmQuality(currentList.shuffled())
+                                    ?: currentList.shuffled()
+
+                            updatePreviewResponses(
+                                previewResponses,
+                                previewResponsesAdded,
+                                randomItems,
+                                3
+                            )
+
+                            _randomItems.postValue(randomItems)
+                            currentShuffledList = randomItems
+                        }
+                    }
+                    if (previewResponses.isEmpty()) {
+                        _preview.postValue(
+                            Resource.Failure(
+                                false,
+                                null,
+                                null,
+                                "No homepage responses"
+                            )
+                        )
+                    } else {
+                        _preview.postValue(Resource.Success((previewResponsesAdded.size < currentShuffledList.size) to previewResponses))
+                    }
+                    _page.postValue(Resource.Success(expandable))
+                } catch (e: Exception) {
+                    _randomItems.postValue(emptyList())
+                    logError(e)
+                }
+            }
+            is Resource.Failure -> {
+                _page.postValue(data!!)
+                _preview.postValue(data!!)
+            }
+            else -> Unit
         }
     }
 
