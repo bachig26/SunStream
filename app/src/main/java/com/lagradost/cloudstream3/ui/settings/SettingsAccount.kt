@@ -231,6 +231,7 @@ class SettingsAccount : PreferenceFragmentCompat() {
                 R.string.mal_key to malApi,
                 R.string.anilist_key to aniListApi,
                 R.string.opensubtitles_key to openSubtitlesApi,
+                R.string.remote_key to remoteApi,
             )
 
         for ((key, api) in syncApis) {

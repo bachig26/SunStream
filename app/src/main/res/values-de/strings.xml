@@ -17,7 +17,7 @@
     <string name="skip_type_intro">Intro</string>
     <string name="clear_history">Verlauf löschen</string>
     <string name="history">Verlauf</string>
-    <string name="enable_skip_op_from_database_des">Überspringen Button für Openings/Endings anzeigen</string>
+    <string name="enable_skip_op_from_database_des">Überspringen Knopf für Openings/Endings anzeigen</string>
     <string name="clipboard_too_large">Zu viel Text. Kann nicht in der Zwischenablage gespeichert werden.</string>
     <string name="episode_poster_img_des">Episodenvorschaubild</string>
     <string name="home_main_poster_img_des">Medienvorschaubild</string>
@@ -410,7 +410,7 @@
     <string name="delete_repository">Repository löschen</string>
     <string name="setup_extensions_subtext">Lade eine Liste der Websiten herunter, welche du verwenden möchtest</string>
     <string name="plugins_downloaded" formatted="true">Heruntergeladen: %d</string>
-    <string name="plugins_disabled" formatted="true">Heruntergeladen: %d</string>
+    <string name="plugins_disabled" formatted="true">Deaktiviert: %d</string>
     <string name="plugins_not_downloaded" formatted="true">Nicht heruntergeladen: %d</string>
     <string name="blank_repo_message">CloudStream hat standardmäßig keine Websites installiert. Websites müssen aus Repositories installiert werden.
 \n
@@ -427,7 +427,7 @@
     <string name="video_tracks">Videospuren</string>
     <string name="apply_on_restart">Bei Neustart anwenden</string>
     <string name="safe_mode_title">Abgesicherter Modus aktiviert</string>
-    <string name="safe_mode_description">Ein nicht behebbarer Absturz ist aufgetreten, und wir haben automatisch alle Erweiterungen deaktiviert, damit du die Erweiterung finden und entfernen kannst, die das Problem verursacht.</string>
+    <string name="safe_mode_description">Alle Erweiterungen wurden aufgrund eines Absturzes deaktiviert, damit Sie diejenige finden können, die Probleme verursacht.</string>
     <string name="safe_mode_crash_info">Absturzinfo ansehen</string>
     <string name="extension_rating" formatted="true">Bewertung: %s</string>
     <string name="extension_description">Beschreibung</string>
@@ -476,7 +476,7 @@
     <string name="pref_category_looks">Aussehen</string>
     <string name="pref_category_ui_features">Funktionen</string>
     <string name="plugins_updated" formatted="true">%d Plugins aktualisiert</string>
-    <string name="action_mark_as_watched">Als beobachtet markieren</string>
+    <string name="action_mark_as_watched">Als gesehen markieren</string>
     <string name="confirm_exit_dialog">Sind Sie sicher, dass Sie die App beenden möchten\?</string>
     <string name="yes">Ja</string>
     <string name="no">Nein</string>
@@ -485,4 +485,25 @@
     <string name="update_notification_failed">Konnte die neue Version der App nicht installieren</string>
     <string name="apk_installer_legacy">Legacy</string>
     <string name="apk_installer_package_installer">PackageInstaller</string>
+    <string name="update_started">Aktualisierung gestartet</string>
+    <string name="delayed_update_notice">Die Anwendung wird beim Beenden aktualisiert</string>
+    <string name="plugin_downloaded">Das Plugin wurde heruntergeladen</string>
+    <string name="action_remove_from_watched">Von geschaut entfernen</string>
+    <string name="library">Bibliothek</string>
+    <string name="browser">Browser</string>
+    <string name="sort_by">Sortieren nach</string>
+    <string name="sort">Sortieren</string>
+    <string name="sort_rating_desc">Bewertung (gut bis schlecht)</string>
+    <string name="sort_rating_asc">Bewertung (schlecht bis gut)</string>
+    <string name="sort_updated_new">Aktualisiert (neu bis alt)</string>
+    <string name="sort_updated_old">Aktualisiert (alt bis neu)</string>
+    <string name="sort_alphabetical_a">Alphabetisch (A bis Z)</string>
+    <string name="sort_alphabetical_z">Alphabetisch (Z bis A)</string>
+    <string name="select_library">Bibliothek auswählen</string>
+    <string name="open_with">Öffnen mit</string>
+    <string name="empty_library_no_accounts_message">Sieht aus, als wäre deine Bibliothek leer :(
+\nMelde dich mit einem Bibliothekskonto an oder füge Titel zu deiner lokalen Bibliothek hinzu</string>
+    <string name="empty_library_logged_in_message">Diese Liste scheint leer zu sein. Versuche, zu einer anderen Liste zu wechseln.</string>
+    <string name="safe_mode_file">Datei für abgesicherten Modus gefunden!
+\nBeim Start werden keine Erweiterungen geladen, bis die Datei entfernt wird.</string>
 </resources>

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.lagradost.cloudstream3.AcraApplication.Companion.context
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.ui.player.CSPlayerEvent
 import com.lagradost.cloudstream3.utils.Coroutines.main
 import io.ktor.http.*
@@ -17,8 +18,14 @@ class SettingsRemoteViewModel : ViewModel()  {
         val updatedQuery = server + "/player?action=" + Event.value.toString()
 
         viewModelScope.launch {
+            try {
             val output = app.get(updatedQuery).code
             onResult(output)
+            } catch (e: Exception) {
+                logError(e)
+                Toast.makeText(context, "Error: $e", Toast.LENGTH_SHORT)
+            }
+
         }
     }
 

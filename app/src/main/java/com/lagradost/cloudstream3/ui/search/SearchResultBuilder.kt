@@ -1,12 +1,14 @@
 package com.lagradost.cloudstream3.ui.search
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.view.View
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.core.view.isVisible
+import androidx.palette.graphics.Palette
 import androidx.preference.PreferenceManager
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTrueTvSettings
@@ -41,6 +43,7 @@ object SearchResultBuilder {
         nextFocusBehavior: Boolean? = null,
         nextFocusUp: Int? = null,
         nextFocusDown: Int? = null,
+        colorCallback : ((Palette) -> Unit)? = null
     ) {
         val cardView: ImageView = itemView.imageView
         val cardText: TextView? = itemView.imageText
@@ -49,13 +52,13 @@ object SearchResultBuilder {
         val textIsSub: TextView? = itemView.text_is_sub
         val textFlag: TextView? = itemView.text_flag
         val textQuality: TextView? = itemView.text_quality
-        val textRating: TextView? = itemView.text_rating
         val shadow: View? = itemView.title_shadow
-
+        val textRating: TextView? = itemView.text_rating
         val bg: CardView = itemView.background_card
 
         val bar: ProgressBar? = itemView.watchProgress
         val playImg: ImageView? = itemView.search_item_download_play
+        val textRatingHolder: CardView? = itemView.text_rating_holder
 
         // Do logic
 
@@ -64,7 +67,7 @@ object SearchResultBuilder {
         textIsDub?.isVisible = false
         textIsSub?.isVisible = false
 
-        textRating?.isVisible = true // visible unless null
+        textRatingHolder?.isVisible = true // visible unless null
 
         textFlag?.isVisible = false
 
@@ -107,14 +110,14 @@ object SearchResultBuilder {
         cardView.isVisible = true
 
 
-        if (card.rating == null || card.rating == 0.0 || !showRating) {
+        if (card.rating == null || !showRating) {
             textRating?.isVisible = false // hide if no rating or rating disabled
         } else {
             textRating?.text = card.rating?.toString()
         }
 
+        if (!cardView.setImage(card.posterUrl, card.posterHeaders, colorCallback = colorCallback)) {
 
-        if (!cardView.setImage(card.posterUrl, card.posterHeaders)) {
             cardView.setImageResource(R.drawable.default_cover)
         }
 

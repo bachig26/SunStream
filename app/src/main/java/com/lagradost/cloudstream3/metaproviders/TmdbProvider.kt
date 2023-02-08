@@ -303,8 +303,8 @@ open class TmdbProvider : MainAPI() {
         "$mainUrl/discover/movie?api_key=$apiKey&with_keywords=210024|222243&page=" to "Anime Movies",
     )
 
-    private fun Double.round(): Double {
-        return (this * 10.0).roundToInt() / 10.0 // 1 decimal 10.0 ; 2 decimal 100.0
+    private fun Double.round(): Int {
+        return (this * 10).roundToInt()
     }
 
     private fun Media.toSearchResponse(type: String? = null): SearchResponse? {

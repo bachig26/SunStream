@@ -18,6 +18,7 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.*
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -31,6 +32,7 @@ import com.lagradost.cloudstream3.APIHolder.filterProviderByPreferredMedia
 import com.lagradost.cloudstream3.APIHolder.getApiProviderLangSettings
 import com.lagradost.cloudstream3.AcraApplication.Companion.getKey
 import com.lagradost.cloudstream3.MainActivity.Companion.afterPluginsLoadedEvent
+import com.lagradost.cloudstream3.MainActivity.Companion.bookmarksUpdatedEvent
 import com.lagradost.cloudstream3.MainActivity.Companion.mainPluginsLoadedEvent
 import com.lagradost.cloudstream3.mvvm.Resource
 import com.lagradost.cloudstream3.mvvm.logError
@@ -48,6 +50,9 @@ import com.lagradost.cloudstream3.utils.AppUtils.addProgramsToContinueWatching
 import com.lagradost.cloudstream3.utils.AppUtils.isRecyclerScrollable
 import com.lagradost.cloudstream3.utils.AppUtils.loadResult
 import com.lagradost.cloudstream3.utils.AppUtils.loadSearchResult
+import com.lagradost.cloudstream3.utils.AppUtils.ownHide
+import com.lagradost.cloudstream3.utils.AppUtils.ownShow
+import com.lagradost.cloudstream3.utils.AppUtils.setDefaultFocus
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.DataStore.getKey
 import com.lagradost.cloudstream3.utils.DataStore.setKey
@@ -79,8 +84,12 @@ import kotlinx.android.synthetic.main.tvtypes_chips.*
 import kotlinx.android.synthetic.main.tvtypes_chips.view.*
 import java.util.*
 import com.lagradost.cloudstream3.TmdbNetwork
+import com.lagradost.cloudstream3.ui.result.LinearListLayout
+import com.lagradost.cloudstream3.ui.result.setLinearListLayout
 import com.lagradost.cloudstream3.ui.search.SearchHelper.handleNetworkSearchClickCallback
-import kotlinx.android.synthetic.main.fragment_home.home_network_child_recyclerview
+import kotlinx.android.synthetic.main.fragment_home_head.*
+import kotlinx.android.synthetic.main.fragment_result.result_episodes
+import kotlinx.android.synthetic.main.fragment_result_tv.*
 
 
 const val HOME_BOOKMARK_VALUE_LIST = "home_bookmarked_last_list"
@@ -107,26 +116,32 @@ class HomeFragment : Fragment() {
 
         val errorProfilePic = errorProfilePics.random()
 
-        fun Activity.loadHomepageList(
-            item: HomePageList,
-            deleteCallback: (() -> Unit)? = null,
-        ) {
-            loadHomepageList(
-                expand = HomeViewModel.ExpandableHomepageList(item, 1, false),
-                deleteCallback = deleteCallback,
-                expandCallback = null
-            )
-        }
+        //fun Activity.loadHomepageList(
+        //    item: HomePageList,
+        //    deleteCallback: (() -> Unit)? = null,
+        //) {
+        //    loadHomepageList(
+        //        expand = HomeViewModel.ExpandableHomepageList(item, 1, false),
+        //        deleteCallback = deleteCallback,
+        //        expandCallback = null
+        //    )
+        //}
 
+        // returns a BottomSheetDialog that will be hidden with OwnHidden upon hide, and must be saved to be able call ownShow in onCreateView
         fun Activity.loadHomepageList(
             expand: HomeViewModel.ExpandableHomepageList,
             deleteCallback: (() -> Unit)? = null,
-            expandCallback: (suspend (String) -> HomeViewModel.ExpandableHomepageList?)? = null
-        ) {
+            expandCallback: (suspend (String) -> HomeViewModel.ExpandableHomepageList?)? = null,
+            dismissCallback : (() -> Unit),
+        ): BottomSheetDialog {
             val context = this
             val bottomSheetDialogBuilder = BottomSheetDialog(context)
+
             bottomSheetDialogBuilder.setContentView(R.layout.home_episodes_expanded)
             val title = bottomSheetDialogBuilder.findViewById<TextView>(R.id.home_expanded_text)!!
+
+            //title.findViewTreeLifecycleOwner().lifecycle.addObserver()
+
             val item = expand.list
             title.text = item.name
             val recycle =
@@ -134,6 +149,23 @@ class HomeFragment : Fragment() {
             val titleHolder =
                 bottomSheetDialogBuilder.findViewById<FrameLayout>(R.id.home_expanded_drag_down)!!
 
+            // main {
+            //(bottomSheetDialogBuilder.ownerActivity as androidx.fragment.app.FragmentActivity?)?.supportFragmentManager?.fragments?.lastOrNull()?.viewLifecycleOwner?.apply {
+            //    println("GOT LIFE: lifecycle $this")
+            //    this.lifecycle.addObserver(object : DefaultLifecycleObserver {
+            //        override fun onResume(owner: LifecycleOwner) {
+            //            super.onResume(owner)
+            //            println("onResume!!!!")
+            //            bottomSheetDialogBuilder?.ownShow()
+            //        }
+
+            //        override fun onStop(owner: LifecycleOwner) {
+            //            super.onStop(owner)
+            //            bottomSheetDialogBuilder?.ownHide()
+            //        }
+            //    })
+            //}
+            // }
             val delete = bottomSheetDialogBuilder.home_expanded_delete
             delete.isGone = deleteCallback == null
             if (deleteCallback != null) {
@@ -159,7 +191,7 @@ class HomeFragment : Fragment() {
                             )
                             .setPositiveButton(R.string.delete, dialogClickListener)
                             .setNegativeButton(R.string.cancel, dialogClickListener)
-                            .show()
+                            .show().setDefaultFocus()
                     } catch (e: Exception) {
                         logError(e)
                         // ye you somehow fucked up formatting did you?
@@ -178,7 +210,8 @@ class HomeFragment : Fragment() {
             recycle.adapter = SearchAdapter(item.list.toMutableList(), recycle) { callback ->
                 handleSearchClickCallback(this, callback)
                 if (callback.action == SEARCH_ACTION_LOAD || callback.action == SEARCH_ACTION_PLAY_FILE) {
-                    bottomSheetDialogBuilder.dismissSafe(this)
+                    bottomSheetDialogBuilder.ownHide() // we hide here because we want to resume it later
+                    //bottomSheetDialogBuilder.dismissSafe(this)
                 }
             }.apply {
                 hasNext = expand.hasNext
@@ -219,12 +252,14 @@ class HomeFragment : Fragment() {
             configEvent += spanListener
 
             bottomSheetDialogBuilder.setOnDismissListener {
+                dismissCallback.invoke()
                 configEvent -= spanListener
             }
 
             //(recycle.adapter as SearchAdapter).notifyDataSetChanged()
 
             bottomSheetDialogBuilder.show()
+            return bottomSheetDialogBuilder
         }
 
         fun getPairList(
@@ -402,9 +437,15 @@ class HomeFragment : Fragment() {
     ): View? {
         //homeViewModel =
         //     ViewModelProvider(this).get(HomeViewModel::class.java)
+        bottomSheetDialog?.ownShow()
         val layout =
             if (isTvSettings()) R.layout.fragment_home_tv else R.layout.fragment_home
         return inflater.inflate(layout, container, false)
+    }
+
+    override fun onDestroyView() {
+        bottomSheetDialog?.ownHide()
+        super.onDestroyView()
     }
 
     private fun fixGrid() {
@@ -433,14 +474,20 @@ class HomeFragment : Fragment() {
         fixGrid()
     }
 
+    fun bookmarksUpdated(_data : Boolean) {
+        reloadStored()
+    }
+
     override fun onResume() {
         super.onResume()
         reloadStored()
+        bookmarksUpdatedEvent += ::bookmarksUpdated
         afterPluginsLoadedEvent += ::afterPluginsLoaded
         mainPluginsLoadedEvent += ::afterMainPluginsLoaded
     }
 
     override fun onStop() {
+        bookmarksUpdatedEvent -= ::bookmarksUpdated
         afterPluginsLoadedEvent -= ::afterPluginsLoaded
         mainPluginsLoadedEvent -= ::afterMainPluginsLoaded
         super.onStop()
@@ -481,11 +528,13 @@ class HomeFragment : Fragment() {
     }
 
     private fun homeNetworkFilter(callback: NetworkClickCallback) {
-        handleNetworkSearchClickCallback(activity, callback)
+        SearchHelper.handleNetworkSearchClickCallback(activity, callback)
     }
 
     private var currentApiName: String? = null
     private var toggleRandomButton = false
+
+    private var bottomSheetDialog: BottomSheetDialog? = null
 
     @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -499,25 +548,15 @@ class HomeFragment : Fragment() {
                 activity.loadSearchResult(listHomepageItems.random())
             }
         }
-        val listOfNetworkNames = resources.getStringArray(R.array.tmdb_networks_names)
-        val listOfNetworkValues = resources.getIntArray(R.array.tmdb_networks_values)
-        val listOfWatchProvidersValues = resources.getIntArray(R.array.just_watch_networks_values)
-        val networkImages = resources.getStringArray(R.array.tmdb_networks_images)
-        val listEnableNetworkTint = resources.getIntArray(R.array.tmdb_networks_color_tint)
-        val listOfNetwork: MutableList<TmdbNetwork> = mutableListOf()
-        for (networkIndex in listOfNetworkNames.indices) {
-            listOfNetwork.add(networkClass(listOfNetworkNames[networkIndex], listOfNetworkValues[networkIndex], listOfWatchProvidersValues[networkIndex], networkImages[networkIndex], listEnableNetworkTint[networkIndex]))
-        }
 
-        home_network_child_recyclerview?.adapter =
-            HomeNetworkChildItemAdapter(
-                listOfNetwork,
-                R.layout.home_network_grid,
-                nextFocusUp = home_bookmarked_child_recyclerview.nextFocusUpId,
-                nextFocusDown = home_network_child_recyclerview.nextFocusDownId
-            ) { callback ->
-                homeNetworkFilter(callback)
-            }
+
+
+
+        //omeParentItemAdapterPreview.setNetworkData()
+        //fun getListOfNetworks(): MutableList<TmdbNetwork> {
+        //    return listOfNetwork
+        //}
+
 
 
         //Load value for toggling Random button. Hide at startup
@@ -551,7 +590,7 @@ class HomeFragment : Fragment() {
                     val mutableListOfResponse = mutableListOf<SearchResponse>()
                     listHomepageItems.clear()
 
-                    (home_master_recycler?.adapter as? ParentItemAdapter?)?.updateList(
+                    (home_master_recycler?.adapter as? ParentItemAdapter)?.updateList(
                         d.values.toMutableList(),
                         home_master_recycler
                     )
@@ -606,7 +645,7 @@ class HomeFragment : Fragment() {
 
 
                 is Resource.Loading -> {
-                    (home_master_recycler?.adapter as? ParentItemAdapter?)?.updateList(listOf())
+                    (home_master_recycler?.adapter as? ParentItemAdapter)?.updateList(listOf())
                     home_loading_shimmer?.startShimmer()
                     home_loading?.isVisible = true
                     home_loading_error?.isVisible = false
@@ -656,8 +695,10 @@ class HomeFragment : Fragment() {
             HomeParentItemAdapterPreview(mutableListOf(), { callback ->
                 homeHandleSearch(callback)
             }, { item ->
-                activity?.loadHomepageList(item, expandCallback = {
+                bottomSheetDialog = activity?.loadHomepageList(item, expandCallback = {
                     homeViewModel.expandAndReturn(it)
+                }, dismissCallback = {
+                    bottomSheetDialog = null
                 })
             }, { name ->
                 homeViewModel.expand(name)
@@ -678,7 +719,11 @@ class HomeFragment : Fragment() {
                         text,
                         currentApiName?.let { arrayOf(it) })
                 }
-            })
+            },
+            { callback ->
+                    homeNetworkFilter(callback)
+            }
+            )
 
         reloadStored()
         loadHomePage(false)

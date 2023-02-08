@@ -42,6 +42,8 @@ import kotlinx.android.synthetic.main.activity_main_tv.*
 import kotlinx.android.synthetic.main.activity_main_tv.view.*
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.view.*
+import kotlinx.android.synthetic.main.fragment_home_head.*
+import kotlinx.android.synthetic.main.fragment_home_head.view.*
 import kotlinx.android.synthetic.main.fragment_home_head_tv.*
 import kotlinx.android.synthetic.main.fragment_home_head_tv.view.*
 import kotlinx.android.synthetic.main.fragment_home_head_tv.view.home_preview
@@ -184,9 +186,9 @@ open class ParentItemAdapter(
         private val expandCallback: ((String) -> Unit)? = null,
     ) :
         RecyclerView.ViewHolder(itemView) {
-        val title: TextView = itemView.home_parent_item_title
+        val title: TextView = itemView.home_child_more_info
         val recyclerView: RecyclerView = itemView.home_child_recyclerview
-        private val moreInfo: FrameLayout? = itemView.home_child_more_info
+        // val networkRecyclerView: RecyclerView = itemView.home_network_child_recyclerview
 
         fun update(expand: HomeViewModel.ExpandableHomepageList) {
             val info = expand.list
@@ -248,9 +250,10 @@ open class ParentItemAdapter(
             })
 
             //(recyclerView.adapter as HomeChildItemAdapter).notifyDataSetChanged()
-
-            moreInfo?.setOnClickListener {
-                moreInfoClickCallback.invoke(expand)
+            if (!isTvSettings()) {
+                title.setOnClickListener {
+                    moreInfoClickCallback.invoke(expand)
+                }
             }
         }
     }

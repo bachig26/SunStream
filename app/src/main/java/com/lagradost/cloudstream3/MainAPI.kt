@@ -17,8 +17,11 @@ import com.lagradost.cloudstream3.movieproviders.*
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.aniListApi
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.malApi
+import com.lagradost.cloudstream3.syncproviders.SyncIdName
 import com.lagradost.cloudstream3.ui.player.SubtitleData
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTvSettings
+import com.lagradost.cloudstream3.utils.*
+import com.lagradost.cloudstream3.ui.result.UiText
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.Coroutines.threadSafeListOf
 import com.lagradost.cloudstream3.utils.ExtractorLink
@@ -90,7 +93,7 @@ object APIHolder {
         synchronized(allProviders) {
             initMap()
             return apiMap?.get(apiName)?.let { apis.getOrNull(it) }
-                // Leave the ?. null check, it can crash regardless
+            // Leave the ?. null check, it can crash regardless
                 ?: allProviders.firstOrNull { it?.name == apiName }
         }
     }
@@ -333,6 +336,57 @@ object APIHolder {
     }
 }
 
+/*
+// THIS IS WORK IN PROGRESS API
+interface ITag {
+    val name: UiText
+}
+
+data class SimpleTag(override val name: UiText, val data: String) : ITag
+
+enum class SelectType {
+    SingleSelect,
+    MultiSelect,
+    MultiSelectAndExclude,
+}
+
+enum class SelectValue {
+    Selected,
+    Excluded,
+}
+
+interface GenreSelector {
+    val title: UiText
+    val id : Int
+}
+
+data class TagSelector(
+    override val title: UiText,
+    override val id : Int,
+    val tags: Set<ITag>,
+    val defaultTags : Set<ITag> = setOf(),
+    val selectType: SelectType = SelectType.SingleSelect,
+) : GenreSelector
+
+data class BoolSelector(
+    override val title: UiText,
+    override val id : Int,
+
+    val defaultValue : Boolean = false,
+) : GenreSelector
+
+data class InputField(
+    override val title: UiText,
+    override val id : Int,
+
+    val hint : UiText? = null,
+) : GenreSelector
+
+// This response describes how a user might filter the homepage or search results
+data class GenreResponse(
+    val searchSelectors : List<GenreSelector>,
+    val filterSelectors: List<GenreSelector> = searchSelectors
+) */
 
 /*
 0 = Site not good
@@ -474,6 +528,20 @@ abstract class MainAPI {
 
     open val hasSearchFilter = false
 
+    /**
+     * A set of which ids the provider can open with getLoadUrl()
+     * If the set contains SyncIdName.Imdb then getLoadUrl() can be started with
+     * an Imdb class which inherits from SyncId.
+     *
+     * getLoadUrl() is then used to get page url based on that ID.
+     *
+     * Example:
+     * "tt6723592" -> getLoadUrl(ImdbSyncId("tt6723592")) -> "mainUrl/imdb/tt6723592" -> load("mainUrl/imdb/tt6723592")
+     *
+     * This is used to launch pages from personal lists or recommendations using IDs.
+     **/
+    open val supportedSyncNames = setOf<SyncIdName>()
+
     open val supportedTypes = setOf(
         TvType.Movie,
         TvType.TvSeries,
@@ -542,6 +610,14 @@ abstract class MainAPI {
 
     /** An okhttp interceptor for used in OkHttpDataSource */
     open fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor? {
+        return null
+    }
+
+    /**
+     * Get the load() url based on a sync ID like IMDb or MAL.
+     * Only contains SyncIds based on supportedSyncUrls.
+     **/
+    open suspend fun getLoadUrl(name: SyncIdName, id: String): String? {
         return null
     }
 }
@@ -783,7 +859,7 @@ interface SearchResponse {
     var posterHeaders: Map<String, String>?
     var id: Int?
     var quality: SearchQuality?
-    var rating: Double?
+    var rating: Int?
 }
 
 interface TmdbNetwork {
@@ -911,7 +987,7 @@ data class AnimeSearchResponse(
     override var id: Int? = null,
     override var quality: SearchQuality? = null,
     override var posterHeaders: Map<String, String>? = null,
-    override var rating: Double? = null,
+    override var rating: Int? = null,
 ) : SearchResponse
 
 fun AnimeSearchResponse.addDubStatus(status: DubStatus, episodes: Int? = null) {
@@ -966,7 +1042,7 @@ data class TorrentSearchResponse(
     override var id: Int? = null,
     override var quality: SearchQuality? = null,
     override var posterHeaders: Map<String, String>? = null,
-    override var rating: Double? = null,
+    override var rating: Int? = null,
 ) : SearchResponse
 
 data class MovieSearchResponse(
@@ -980,7 +1056,7 @@ data class MovieSearchResponse(
     override var id: Int? = null,
     override var quality: SearchQuality? = null,
     override var posterHeaders: Map<String, String>? = null,
-    override var rating: Double? = null,
+    override var rating: Int? = null,
 ) : SearchResponse
 
 data class LiveSearchResponse(
@@ -993,7 +1069,7 @@ data class LiveSearchResponse(
     override var id: Int? = null,
     override var quality: SearchQuality? = null,
     override var posterHeaders: Map<String, String>? = null,
-    override var rating: Double? = null,
+    override var rating: Int? = null,
     val lang: String? = null,
 ) : SearchResponse
 
@@ -1009,7 +1085,7 @@ data class TvSeriesSearchResponse(
     override var id: Int? = null,
     override var quality: SearchQuality? = null,
     override var posterHeaders: Map<String, String>? = null,
-    override var rating: Double? = null,
+    override var rating: Int? = null,
 ) : SearchResponse
 
 data class TrailerData(

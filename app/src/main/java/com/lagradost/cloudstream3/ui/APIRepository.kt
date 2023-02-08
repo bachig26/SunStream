@@ -83,6 +83,8 @@ class APIRepository(val api: MainAPI) {
             }
 
             api.load(fixedUrl)?.also { response ->
+                // Remove all blank tags as early as possible
+                response.tags = response.tags?.filter { it.isNotBlank() }
                 val add = SavedLoadResponse(unixTime, response, lookingForHash)
 
                 synchronized(cache) {
@@ -124,7 +126,6 @@ class APIRepository(val api: MainAPI) {
         delay(delta)
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     suspend fun getMainPage(page: Int, nameIndex: Int? = null): Resource<List<HomePageResponse?>> {
         return safeApiCall {
             api.lastHomepageRequest = unixTimeMS

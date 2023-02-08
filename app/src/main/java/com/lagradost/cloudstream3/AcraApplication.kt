@@ -33,7 +33,6 @@ import kotlin.system.exitProcess
 
 
 
-
 class ExceptionHandler(val errorFile: File, val onError: (() -> Unit)) :
     Thread.UncaughtExceptionHandler {
     override fun uncaughtException(thread: Thread, error: Throwable) {

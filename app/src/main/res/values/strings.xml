@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--https://newbedev.com/concatenate-multiple-strings-in-xml--><resources>
+<!--https://newbedev.com/concatenate-multiple-strings-in-xml-->
+<resources>
     <!-- KEYS DON'T TRANSLATE -->
     <string name="search_providers_list_key" translatable="false">search_providers_list</string>
     <string name="locale_key" translatable="false">app_locale</string>
@@ -115,6 +116,7 @@
     <string name="result_tags">Genres</string>
     <string name="result_share">Share</string>
     <string name="result_open_in_browser">Open In Browser</string>
+    <string name="browser">Browser</string>
     <string name="skip_loading">Skip Loading</string>
     <string name="loading">Loading…</string>
     <string name="loaded_links_number" formatted="true">%s loaded links. Skip loading</string>
@@ -145,6 +147,7 @@
     <string name="download_canceled">Download Canceled</string>
     <string name="download_done">Download Done</string>
     <string name="download_format" translatable="false">%s - %s</string>
+    <string name="update_started">Update Started</string>
     <string name="stream">Stream</string>
     <string name="error_loading_links_toast">Error Loading Links</string>
     <string name="download_storage_text">Internal Storage</string>
@@ -240,6 +243,7 @@
     <string name="backup_failed">Storage permissions missing. Please try again.</string>
     <string name="backup_failed_error_format">Error backing up %s</string>
     <string name="search">Search</string>
+    <string name="library">Library</string>
     <string name="category_account">Accounts</string>
     <string name="category_updates">Updates and backup</string>
     <string name="settings_info">Info</string>
@@ -602,6 +606,7 @@
     <string name="repository_name_hint">Repository name</string>
     <string name="repository_url_hint">Repository URL</string>
     <string name="plugin_loaded">Plugin Loaded</string>
+    <string name="plugin_downloaded">Plugin Downloaded</string>
     <string name="plugin_deleted">Plugin Deleted</string>
     <string name="plugin_load_fail" formatted="true">Could not load %s</string>
     <string name="is_adult">18+</string>
@@ -667,6 +672,7 @@
     <string name="enable_skip_op_from_database_des">Show skip popups for opening/ending</string>
     <string name="clipboard_too_large">Too much text. Unable to save to clipboard.</string>
     <string name="action_mark_as_watched">Mark as watched</string>
+    <string name="action_remove_from_watched">Remove from watched</string>
     <string name="confirm_exit_dialog">Are you sure you want to exit\?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -676,5 +682,19 @@
 
     <string name="apk_installer_legacy">Legacy</string>
     <string name="apk_installer_package_installer">PackageInstaller</string>
-
+    <string name="delayed_update_notice">App will be updated upon exit</string>
+    <string name="sort_by">Sort by</string>
+    <string name="sort">Sort</string>
+    <string name="sort_rating_desc">Rating (High to Low)</string>
+    <string name="sort_rating_asc">Rating (Low to High)</string>
+    <string name="sort_updated_new">Updated (New to Old)</string>
+    <string name="sort_updated_old">Updated (Old to New)</string>
+    <string name="sort_alphabetical_a">Alphabetical (A to Z)</string>
+    <string name="sort_alphabetical_z">Alphabetical (Z to A)</string>
+    <string name="select_library">Select Library</string>
+    <string name="open_with">Open with</string>
+    <string name="empty_library_no_accounts_message">Looks like your library is empty :(\nLogin to a library account or add shows to your local library</string>
+    <string name="empty_library_logged_in_message">Looks like this list is empty, try switching to another one</string>
+    <string name="safe_mode_file">Safe mode file found!\nNot loading any extensions on startup until file is removed.</string>
+>>>>>>> 2ff90c03cadb97741b0cc08d3ff91b03aa8aad7a
 </resources>

@@ -49,6 +49,7 @@ import com.lagradost.cloudstream3.utils.AppUtils.loadCache
 import com.lagradost.cloudstream3.utils.AppUtils.openBrowser
 import com.lagradost.cloudstream3.utils.Coroutines.ioWorkSafe
 import com.lagradost.cloudstream3.utils.Coroutines.main
+import com.lagradost.cloudstream3.utils.DataStoreHelper.getVideoWatchState
 import com.lagradost.cloudstream3.utils.DataStoreHelper.getViewPos
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
 import com.lagradost.cloudstream3.utils.UIHelper.colorFromAttribute
@@ -106,6 +107,15 @@ import kotlinx.coroutines.runBlocking
 const val START_ACTION_RESUME_LATEST = 1
 const val START_ACTION_LOAD_EP = 2
 
+/**
+ * Future proofed way to mark episodes as watched
+ **/
+enum class VideoWatchState {
+    /** Default value when no key is set */
+    None,
+    Watched
+}
+
 data class ResultEpisode(
     val headerName: String,
     val name: String?,
@@ -124,6 +134,10 @@ data class ResultEpisode(
     val isFiller: Boolean?,
     val tvType: TvType,
     val parentId: Int,
+    /**
+     * Conveys if the episode itself is marked as watched
+     **/
+    val videoWatchState: VideoWatchState
 )
 
 fun ResultEpisode.getRealPosition(): Long {
@@ -160,6 +174,7 @@ fun buildResultEpisode(
     parentId: Int,
 ): ResultEpisode {
     val posDur = getViewPos(id)
+    val videoWatchState = getVideoWatchState(id) ?: VideoWatchState.None
     return ResultEpisode(
         headerName,
         name,
@@ -178,6 +193,7 @@ fun buildResultEpisode(
         isFiller,
         tvType,
         parentId,
+        videoWatchState
     )
 }
 
@@ -261,7 +277,7 @@ open class ResultFragment : ResultTrailerPlayer() {
     private var downloadButton: EasyDownloadButton? = null
     override fun onDestroyView() {
         updateUIListener = null
-        (result_episodes?.adapter as EpisodeAdapter?)?.killAdapter()
+        (result_episodes?.adapter as? EpisodeAdapter)?.killAdapter()
         downloadButton?.dispose()
         super.onDestroyView()
     }
@@ -441,7 +457,7 @@ open class ResultFragment : ResultTrailerPlayer() {
                     temporary_no_focus?.requestFocus()
                 }
 
-                (result_episodes?.adapter as? EpisodeAdapter?)?.updateList(episodes.value)
+                (result_episodes?.adapter as? EpisodeAdapter)?.updateList(episodes.value)
 
                 if (isTv && hasEpisodes) main {
                     delay(500)
@@ -558,6 +574,19 @@ open class ResultFragment : ResultTrailerPlayer() {
             )
 
 
+        observe(viewModel.episodeSynopsis) { description ->
+            view.context?.let { ctx ->
+                val builder: AlertDialog.Builder =
+                    AlertDialog.Builder(ctx, R.style.AlertDialogCustom)
+                builder.setMessage(description.html())
+                    .setTitle(R.string.synopsis)
+                    .setOnDismissListener {
+                        viewModel.releaseEpisodeSynopsis()
+                    }
+                    .show()
+            }
+        }
+
         observe(viewModel.watchStatus) { watchType ->
             result_bookmark_button?.text = getString(watchType.stringRes)
             result_bookmark_fab?.text = getString(watchType.stringRes)
@@ -657,7 +686,7 @@ open class ResultFragment : ResultTrailerPlayer() {
             val newList = list.filter { it.isSynced && it.hasAccount }
 
             result_mini_sync?.isVisible = newList.isNotEmpty()
-            (result_mini_sync?.adapter as? ImageAdapter?)?.updateList(newList.mapNotNull { it.icon })
+            (result_mini_sync?.adapter as? ImageAdapter)?.updateList(newList.mapNotNull { it.icon })
         }
 
         var currentSyncProgress = 0
@@ -822,6 +851,7 @@ open class ResultFragment : ResultTrailerPlayer() {
 
         observe(viewModel.page) { data ->
 
+            if(data == null) return@observe
             when (data) {
                 is Resource.Success -> {
                     val d = data.value
@@ -872,7 +902,7 @@ open class ResultFragment : ResultTrailerPlayer() {
 
 
                     result_cast_items?.isVisible = d.actors != null
-                    (result_cast_items?.adapter as ActorAdaptor?)?.apply {
+                    (result_cast_items?.adapter as? ActorAdaptor)?.apply {
                         updateList(d.actors ?: emptyList())
                     }
 
@@ -946,6 +976,7 @@ open class ResultFragment : ResultTrailerPlayer() {
                             chip.isCheckable = false
                             chip.isFocusable = false
                             chip.isClickable = false
+                            chip.setTextColor(context.colorFromAttribute(R.attr.textColor))
                             addView(chip)
                         }
                     }

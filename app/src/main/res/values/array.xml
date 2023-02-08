@@ -14,9 +14,8 @@
         <item>@id/cast_button_type_forward_30_seconds</item>
     </array>
 
-    <array name="dns_pref"><!-- TODO FIX DNS MESS -->
+    <array name="dns_pref">
         <item>@string/none</item>
-        <item>Quad9</item>
         <item>Google</item>
         <item>Cloudflare</item>
         <!--        <item>OpenDns</item>-->
@@ -26,7 +25,6 @@
     </array>
     <array name="dns_pref_values">
         <item>0</item>
-        <item>5</item>
         <item>1</item>
         <item>2</item>
         <!--        <item>3</item>-->
@@ -407,6 +405,14 @@
         <item>HBO</item>
         <item>Paramount+</item>
         <item>AMC</item>
+        <item>Fox</item>
+        <item>Voot</item>
+        <item>Disney+ Hotstar</item>
+        <item>AltBalaji</item>
+        <item>Sony</item>
+        <item>ZEE5</item>
+        <item>Jio</item>
+        <item>Erosnow</item>
     </string-array>
     <integer-array name="tmdb_networks_values">
         <item>213</item> <!-- Netflix -->
@@ -418,6 +424,16 @@
         <item>49</item><!-- hbo -->
         <item>4330</item><!-- Paramont+ -->
         <item>174</item><!-- AMC -->
+        <item>19</item><!-- Fox -->
+        <item>2532</item><!-- voot -->
+        <item>3919</item><!-- Disney + Hotstar -->
+        <item>2112</item><!-- AltBalaji -->
+        <item>2646</item><!-- Sony -->
+        <item>2590</item><!-- ZEE5 -->
+        <item>4008</item><!-- Jio -->
+        <item>2716</item><!-- Erosnow -->
+
+
     </integer-array>
     <integer-array name="just_watch_networks_values"> <!-- https://developers.themoviedb.org/3/watch-providers/get-tv-providers -->
         <item>8</item> <!-- Netflix -->
@@ -429,6 +445,16 @@
         <item>118</item><!-- hbo -->
         <item>531</item><!-- Paramont+ -->
         <item>528</item><!-- AMC (its amc plus actually ?) -->
+        <item>328</item><!-- Fox -->
+        <item>121</item><!-- Voot -->
+        <item>122</item><!-- Hotstar (Not sure about that one) -->
+        <item>319</item><!-- AltBalaji -->
+        <item>237</item><!-- Sony -->
+        <item>232</item><!-- ZEE5 -->
+        <item>220</item><!-- Jio -->
+        <item>218</item><!-- Erosnow -->
+
+
     </integer-array>
     <string-array name="tmdb_networks_images">
         <item>/wwemzKWzjKYJFfCeiB57q3r4Bcm.png</item><!-- Netflix -->
@@ -440,6 +466,14 @@
         <item>/tuomPhY2UtuPTqqFnKMVHvSb724.png</item><!-- hbo -->
         <item>/fi83B1oztoS47xxcemFdPMhIzK.png</item><!-- Paramont+ -->
         <item>/pmvRmATOCaDykE6JrVoeYxlFHw3.png</item><!-- AMC -->
+        <item>/aDyf54uS0HLrEi5kEbA5nK4BNGa.jpg</item><!-- Fox -->
+        <item>/ycJT3Xh9E4OH3eW1QZ1OOR9pCCj.jpg</item><!-- Voot -->
+        <item>/eApzJtzOngfBlEC3lCjuAtzsOTf.jpg</item><!-- Hotstar -->
+        <item>/bCGhTYk40DcLO1kuz8Ge2jiut3a.jpg</item><!-- AltBalaji -->
+        <item>/w7kXF4vhToDuBOXxByI5zN7MMut.jpg</item><!-- Sony -->
+        <item>/t8NdQoo0r07eD4LskObuz50WNPW.jpg</item><!-- ZEE5 -->
+        <item>/yPF7DHtGaXTQpH05hU06lYTa4M8.jpg</item><!-- Jio -->
+        <item>/qGX10EUnDugNeKTsgly9OFikPll.jpg</item><!-- ErosNow -->
     </string-array>
     <integer-array name="tmdb_networks_color_tint"><!-- 1 to enable white filter / 0 to keep logo color  -->
         <item>0</item><!-- Netflix -->
@@ -451,5 +485,13 @@
         <item>1</item><!-- hbo -->
         <item>0</item><!-- Paramont+ -->
         <item>1</item><!-- AMC -->
+        <item>0</item><!-- Fox -->
+        <item>0</item><!-- Voot -->
+        <item>0</item><!-- Hotstar-->
+        <item>0</item><!-- AltBalaji -->
+        <item>0</item><!-- Sony -->
+        <item>0</item><!-- ZEE5 -->
+        <item>0</item><!-- Jio -->
+        <item>0</item><!-- ErosNow -->
     </integer-array>
 </resources>

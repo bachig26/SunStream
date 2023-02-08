@@ -8,18 +8,17 @@ import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream3.SearchResponse
 import com.lagradost.cloudstream3.TmdbNetwork
-import com.lagradost.cloudstream3.ui.download.DownloadHeaderClickEvent
-import com.lagradost.cloudstream3.ui.search.*
-import com.lagradost.cloudstream3.utils.DataStoreHelper
+import com.lagradost.cloudstream3.ui.search.NetworkClickCallback
+import com.lagradost.cloudstream3.ui.search.SearchClickCallback
+import com.lagradost.cloudstream3.ui.search.SearchResultBuilder
 import com.lagradost.cloudstream3.utils.UIHelper.IsBottomLayout
 import com.lagradost.cloudstream3.utils.UIHelper.setImage
-import com.lagradost.cloudstream3.utils.UIHelper.toDp
 import com.lagradost.cloudstream3.utils.UIHelper.toPx
 import kotlinx.android.synthetic.main.home_network_grid.view.*
 import kotlinx.android.synthetic.main.home_result_grid.view.background_card
 import kotlinx.android.synthetic.main.home_result_grid_expanded.view.*
-import kotlinx.android.synthetic.main.home_result_grid_expanded.view.imageView
 
 class HomeNetworkChildItemAdapter(
     val cardList: MutableList<TmdbNetwork>,
@@ -29,6 +28,7 @@ class HomeNetworkChildItemAdapter(
     private val clickCallback: (NetworkClickCallback) -> Unit,
 ) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    var isHorizontal: Boolean = false
     var hasNext: Boolean = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -40,6 +40,7 @@ class HomeNetworkChildItemAdapter(
             itemCount,
             nextFocusUp,
             nextFocusDown,
+            isHorizontal
         )
     }
 
@@ -61,8 +62,14 @@ class HomeNetworkChildItemAdapter(
     }
 
     fun updateList(newList: List<TmdbNetwork>) {
+        val diffResult = DiffUtil.calculateDiff(
+            HomeNetworkChildDiffCallback(this.cardList, newList)
+        )
+
         cardList.clear()
         cardList.addAll(newList)
+
+        diffResult.dispatchUpdatesTo(this)
     }
 
     class CardViewHolder
@@ -72,8 +79,10 @@ class HomeNetworkChildItemAdapter(
         var itemCount: Int,
         private val nextFocusUp: Int? = null,
         private val nextFocusDown: Int? = null,
+        private val isHorizontal: Boolean = false
     ) :
         RecyclerView.ViewHolder(itemView) {
+
         fun bind(card: TmdbNetwork, position: Int) {
 
             // TV focus fixing
@@ -91,6 +100,14 @@ class HomeNetworkChildItemAdapter(
                         height = 114.toPx
                     }
             }
+            (itemView.network_filter_background_card)?.apply {
+
+                layoutParams =
+                    layoutParams.apply {
+                        width = 180.toPx
+                        height = 114.toPx
+                    }
+            }
 
             if (card.enableNetworkTint == 1) {
                 itemView.networkImageView.setColorFilter(Color.argb(240, 255, 255, 255)); // 180: kinda transparent
@@ -98,11 +115,24 @@ class HomeNetworkChildItemAdapter(
                 itemView.networkImageView.colorFilter = null
             }
 
-
+            /*SearchResultBuilder.bind(
+                clickCallback,
+                card,
+                position,
+                itemView,
+                nextFocusBehavior,
+                nextFocusUp,
+                nextFocusDown
+            )*/
             itemView.networkImageText.text = card.name
             val imagePath =  "https://image.tmdb.org/t/p/w500" + card.networkImagePath
             itemView.networkImageView?.setImage(imagePath)
             itemView.tag = position
+
+            if (position == 0) { // to fix tv
+                itemView.network_filter_background_card?.nextFocusLeftId = R.id.nav_rail_view
+            }
+
 
             fun click(view: View?) {
                 clickCallback.invoke(
@@ -119,14 +149,26 @@ class HomeNetworkChildItemAdapter(
                 click(it)
             }
 
-            if (position == 0) { // to fix tv
-                itemView.background_card?.nextFocusLeftId = R.id.nav_rail_view
-            }
             //val ani = ScaleAnimation(0.9f, 1.0f, 0.9f, 1f)
             //ani.fillAfter = true
             //ani.duration = 200
             //itemView.startAnimation(ani)
-
         }
     }
+}
+
+class HomeNetworkChildDiffCallback(
+    private val oldList: List<TmdbNetwork>,
+    private val newList: List<TmdbNetwork>
+) :
+    DiffUtil.Callback() {
+    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int) =
+        oldList[oldItemPosition].name == newList[newItemPosition].name
+
+    override fun getOldListSize() = oldList.size
+
+    override fun getNewListSize() = newList.size
+
+    override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int) =
+        oldList[oldItemPosition] == newList[newItemPosition] && oldItemPosition < oldList.size - 1 // always update the last item
 }

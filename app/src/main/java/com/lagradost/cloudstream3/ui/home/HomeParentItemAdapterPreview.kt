@@ -12,18 +12,14 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipDrawable
+import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.APIHolder.getId
 import com.lagradost.cloudstream3.AcraApplication.Companion.getActivity
-import com.lagradost.cloudstream3.LoadResponse
-import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.SearchResponse
 import com.lagradost.cloudstream3.mvvm.Resource
 import com.lagradost.cloudstream3.ui.WatchType
 import com.lagradost.cloudstream3.ui.result.ResultViewModel2
 import com.lagradost.cloudstream3.ui.result.START_ACTION_RESUME_LATEST
-import com.lagradost.cloudstream3.ui.search.SEARCH_ACTION_LOAD
-import com.lagradost.cloudstream3.ui.search.SEARCH_ACTION_SHOW_METADATA
-import com.lagradost.cloudstream3.ui.search.SearchClickCallback
+import com.lagradost.cloudstream3.ui.search.*
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTvSettings
 import com.lagradost.cloudstream3.utils.DataStoreHelper
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
@@ -31,9 +27,11 @@ import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showOptionSelectSt
 import com.lagradost.cloudstream3.utils.UIHelper.fixPaddingStatusbar
 import com.lagradost.cloudstream3.utils.UIHelper.fixPaddingStatusbarView
 import com.lagradost.cloudstream3.utils.UIHelper.setImage
-import kotlinx.android.synthetic.main.activity_main_tv.view.*
+import kotlinx.android.synthetic.main.activity_main.view.*
+import kotlinx.android.synthetic.main.fragment_home_head.*
 import kotlinx.android.synthetic.main.fragment_home_head.view.*
 import kotlinx.android.synthetic.main.fragment_home_head.view.home_bookmarked_child_recyclerview
+import kotlinx.android.synthetic.main.fragment_home_head.view.home_watch_parent_item_title
 import kotlinx.android.synthetic.main.fragment_home_head_tv.view.*
 import kotlinx.android.synthetic.main.fragment_home_head_tv.view.home_bookmarked_holder
 import kotlinx.android.synthetic.main.fragment_home_head_tv.view.home_none_padding
@@ -46,18 +44,20 @@ import kotlinx.android.synthetic.main.fragment_home_head_tv.view.home_type_on_ho
 import kotlinx.android.synthetic.main.fragment_home_head_tv.view.home_type_watching_btt
 import kotlinx.android.synthetic.main.fragment_home_head_tv.view.home_watch_child_recyclerview
 import kotlinx.android.synthetic.main.fragment_home_head_tv.view.home_watch_holder
+import kotlinx.android.synthetic.main.toast.view.*
 
 class HomeParentItemAdapterPreview(
     items: MutableList<HomeViewModel.ExpandableHomepageList>,
     val clickCallback: (SearchClickCallback) -> Unit,
-    moreInfoClickCallback: (HomeViewModel.ExpandableHomepageList) -> Unit,
+    private val moreInfoClickCallback: (HomeViewModel.ExpandableHomepageList) -> Unit,
     expandCallback: ((String) -> Unit)? = null,
     private val loadCallback: (LoadClickCallback) -> Unit,
     private val loadMoreCallback: (() -> Unit),
     private val changeHomePageCallback: ((View) -> Unit),
     private val reloadStored: (() -> Unit),
     private val loadStoredData: ((Set<WatchType>) -> Unit),
-    private val searchQueryCallback: ((Pair<Boolean, String>) -> Unit)
+    private val searchQueryCallback: ((Pair<Boolean, String>) -> Unit),
+    private val homeNetworkFilterCallback: (NetworkClickCallback) -> Unit,
 ) : ParentItemAdapter(items, clickCallback, moreInfoClickCallback, expandCallback) {
     private var previewData: Resource<Pair<Boolean, List<LoadResponse>>> = Resource.Loading()
     private var resumeWatchingData: List<SearchResponse> = listOf()
@@ -84,6 +84,7 @@ class HomeParentItemAdapterPreview(
         resumeWatchingData = resumeWatching
         holder?.updateResume(resumeWatchingData)
     }
+
 
     fun setPreviewData(preview: Resource<Pair<Boolean, List<LoadResponse>>>) {
         previewData = preview
@@ -113,6 +114,7 @@ class HomeParentItemAdapterPreview(
                 holder.updatePreview(previewData)
                 holder.updateResume(resumeWatchingData)
                 holder.updateBookmarks(bookmarkData)
+                //holder.updateNetworks()
                 holder.setAvailableWatchStatusTypes(availableWatchStatusTypes)
                 holder.updateApiName(apiName)
             }
@@ -136,7 +138,9 @@ class HomeParentItemAdapterPreview(
                 clickCallback,
                 reloadStored,
                 loadStoredData,
-                searchQueryCallback
+                searchQueryCallback,
+                moreInfoClickCallback,
+                homeNetworkFilterCallback,
             ).also {
                 this.holder = it
             }
@@ -182,7 +186,9 @@ class HomeParentItemAdapterPreview(
         private val searchClickCallback: (SearchClickCallback) -> Unit,
         private val reloadStored: () -> Unit,
         private val loadStoredData: ((Set<WatchType>) -> Unit),
-        private val searchQueryCallback: ((Pair<Boolean, String>) -> Unit)
+        private val searchQueryCallback: ((Pair<Boolean, String>) -> Unit),
+        private val moreInfoClickCallback: (HomeViewModel.ExpandableHomepageList) -> Unit,
+        private val homeNetworkFilterCallback: (NetworkClickCallback) -> Unit,
     ) : RecyclerView.ViewHolder(itemView) {
         private var previewAdapter: HomeScrollAdapter? = null
         private val previewViewpager: ViewPager2? = itemView.home_preview_viewpager
@@ -268,11 +274,23 @@ class HomeParentItemAdapterPreview(
                                     )
                                 )
                             }
+
+                            // This makes the hidden next buttons only available when on the info button
+                            // Otherwise you might be able to go to the next item without being at the info button
+                            itemView.home_preview_info_btt?.setOnFocusChangeListener { _, hasFocus ->
+                                itemView.home_preview_hidden_next_focus?.isFocusable = hasFocus
+                            }
+                            itemView.home_preview_play_btt?.setOnFocusChangeListener { _, hasFocus ->
+                                itemView.home_preview_hidden_prev_focus?.isFocusable = hasFocus
+                            }
+
+
                             itemView.home_preview_info_btt?.setOnClickListener { view ->
                                 clickCallback?.invoke(
                                     LoadClickCallback(0, view, position, this)
                                 )
                             }
+
                             itemView.home_preview_hidden_next_focus?.setOnFocusChangeListener { _, hasFocus ->
                                 if (hasFocus) {
                                     previewViewpager?.apply {
@@ -281,6 +299,7 @@ class HomeParentItemAdapterPreview(
                                     itemView.home_preview_info_btt?.requestFocus()
                                 }
                             }
+
                             itemView.home_preview_hidden_prev_focus?.setOnFocusChangeListener { _, hasFocus ->
                                 if (hasFocus) {
                                     previewViewpager?.apply {
@@ -346,6 +365,8 @@ class HomeParentItemAdapterPreview(
         private var bookmarkAdapter: HomeChildItemAdapter? = null
         private var bookmarkRecyclerView: RecyclerView? =
             itemView.home_bookmarked_child_recyclerview
+        private var networkAdapter: HomeNetworkChildItemAdapter? = null
+        private var networkRecyclerView: RecyclerView? = itemView.home_network_child_recyclerview
 
         fun onViewDetachedFromWindow() {
             previewViewpager?.unregisterOnPageChangeCallback(previewCallback)
@@ -508,6 +529,17 @@ class HomeParentItemAdapterPreview(
             }
             bookmarkAdapter = bookmarkRecyclerView?.adapter as? HomeChildItemAdapter
 
+            if (networkAdapter == null) {
+                networkRecyclerView?.adapter = HomeNetworkChildItemAdapter(
+                    getNetworkList(),
+                    nextFocusUp = itemView.nextFocusUpId,
+                    nextFocusDown = itemView.nextFocusDownId
+                ) { callback ->
+                    homeNetworkFilterCallback(callback)
+                }
+            }
+            networkAdapter = networkRecyclerView?.adapter as? HomeNetworkChildItemAdapter
+
             for ((chip, watch) in toggleList) {
                 chip?.isChecked = false
                 chip?.setOnCheckedChangeListener { _, isChecked ->
@@ -589,11 +621,63 @@ class HomeParentItemAdapterPreview(
         fun updateResume(resumeWatching: List<SearchResponse>) {
             resumeHolder?.isVisible = resumeWatching.isNotEmpty()
             resumeAdapter?.updateList(resumeWatching)
+
+            if (!isTvSettings()) {
+                itemView.home_watch_parent_item_title?.setOnClickListener {
+                    moreInfoClickCallback.invoke(
+                        HomeViewModel.ExpandableHomepageList(
+                            HomePageList(
+                                itemView.home_watch_parent_item_title?.text.toString(),
+                                resumeWatching,
+                                false
+                            ), 1, false
+                        )
+                    )
+                }
+            }
         }
 
         fun updateBookmarks(data: Pair<Boolean, List<SearchResponse>>) {
             bookmarkHolder?.isVisible = data.first
             bookmarkAdapter?.updateList(data.second)
+            if (!isTvSettings()) {
+                itemView.home_bookmark_parent_item_title?.setOnClickListener {
+                    val items = toggleList.mapNotNull { it.first }.filter { it.isChecked }
+                    if (items.isEmpty()) return@setOnClickListener // we don't want to show an empty dialog
+                    val textSum = items
+                        .mapNotNull { it.text }.joinToString()
+
+                    moreInfoClickCallback.invoke(
+                        HomeViewModel.ExpandableHomepageList(
+                            HomePageList(
+                                textSum,
+                                data.second,
+                                false
+                            ), 1, false
+                        )
+                    )
+                }
+            }
+        }
+
+        fun updateNetworks(data: List<TmdbNetwork>) {
+            networkAdapter?.updateList(data)
+        }
+
+        private fun getNetworkList(): MutableList<TmdbNetwork> {
+            val resources = networkRecyclerView?.getResources()
+            val listOfNetworkNames = resources?.getStringArray(R.array.tmdb_networks_names)
+            val listOfNetworkValues = resources?.getIntArray(R.array.tmdb_networks_values)
+            val listOfWatchProvidersValues = resources?.getIntArray(R.array.just_watch_networks_values)
+            val networkImages = resources?.getStringArray(R.array.tmdb_networks_images)
+            val listEnableNetworkTint = resources?.getIntArray(R.array.tmdb_networks_color_tint)
+            val listOfNetworkNamesIndices = listOfNetworkNames?.indices
+            val listOfNetwork: MutableList<TmdbNetwork> = mutableListOf()
+            if (listOfNetworkNamesIndices!= null && listOfNetworkValues != null && listOfWatchProvidersValues != null && networkImages!= null && listEnableNetworkTint != null)
+            for (networkIndex in listOfNetworkNamesIndices) {
+                listOfNetwork.add(networkClass(listOfNetworkNames[networkIndex], listOfNetworkValues[networkIndex], listOfWatchProvidersValues[networkIndex], networkImages[networkIndex], listEnableNetworkTint[networkIndex]))
+            }
+            return listOfNetwork
         }
 
         fun setAvailableWatchStatusTypes(availableWatchStatusTypes: Pair<Set<WatchType>, Set<WatchType>>) {

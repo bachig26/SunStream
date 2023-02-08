@@ -86,7 +86,7 @@
     <string name="episode_action_reload_links">Recargar enlaces</string>
     <string name="sync_total_episodes_none">/\?\?</string>
     <string name="sync_total_episodes_some" formatted="true">/%d</string>
-    <string name="delete_message" formatted="true">Esto eliminará %s permanentemente 
+    <string name="delete_message" formatted="true">Esto eliminará %s permanentemente
 \nEstá seguro\?</string>
     <string name="confirm_exit_dialog">Está seguro que quiere salir\?</string>
     <string name="popup_resume_download">Continuar Descarga</string>
@@ -288,9 +288,9 @@
     <string name="extension_language">Idioma</string>
     <string name="apk_installer_legacy">Legacy (método antiguo)</string>
     <string name="apk_installer_package_installer">Instalador de paquetes</string>
-    <string name="blank_repo_message">CloudStream no tiene sitios instalados de forma predeterminada. Necesita instalalos desde los repositorios.
+    <string name="blank_repo_message">CloudStream no tiene sitios instalados de forma predeterminada. Necesita instalarlos desde repositorios.
 \n
-\nDebido a la eliminación sin sentido de DMCA por parte de Sky UK Limited 🤮, no podemos vincular el sitio del repositorio en la aplicación.
+\nDebido a que dieron de baja el proyecto de manera arbitraria por infracción a la lay de derechos de autor (DMCA) de parte de Sky UK Limited 🤮, no podemos vincular el sitio del repositorio en la aplicación.
 \n
 \nÚnete a nuestro Discord o busca en línea.</string>
     <string name="download_all_plugins_from_repo">Descarga todos los plugins desde este repositorio\?</string>
@@ -485,4 +485,25 @@
     <string name="skip_type_intro">Intro</string>
     <string name="enable_skip_op_from_database_des">Muestrar botones emergentes para saltar apertura/finalización del video</string>
     <string name="yes">Si</string>
+    <string name="delayed_update_notice">La aplicación se actualizará al salir</string>
+    <string name="update_started">Actualización iniciada</string>
+    <string name="plugin_downloaded">Complemento descargado</string>
+    <string name="action_remove_from_watched">Quitar de visto</string>
+    <string name="sort_by">Ordenar por</string>
+    <string name="sort">Ordenar</string>
+    <string name="sort_rating_desc">Valoración (más a menos)</string>
+    <string name="sort_rating_asc">Valoración (menos a más)</string>
+    <string name="sort_updated_new">Actualizado (nuevo a viejo)</string>
+    <string name="sort_updated_old">Actualizado (viejo a nuevo)</string>
+    <string name="sort_alphabetical_a">Alfabéticamente (A a Z)</string>
+    <string name="browser">Navegador</string>
+    <string name="library">Biblioteca</string>
+    <string name="empty_library_logged_in_message">Parece que esta lista está vacía, intenta cambiar a otra</string>
+    <string name="sort_alphabetical_z">Alfabéticamente (Z a A)</string>
+    <string name="select_library">Seleccionar biblioteca</string>
+    <string name="open_with">Abrir con</string>
+    <string name="empty_library_no_accounts_message">Parece que tu biblioteca está vacía :(
+\nInicia sesión en una cuenta de biblioteca o añade series desde tu biblioteca local</string>
+    <string name="safe_mode_file">¡Se encontró un archivo en modo seguro!
+\nNo cargar ninguna extensión al inicio hasta que se elimine el archivo.</string>
 </resources>

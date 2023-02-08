@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import com.lagradost.cloudstream3.APIHolder.apis
 import com.lagradost.cloudstream3.CommonActivity.showToast
+import com.lagradost.cloudstream3.MainActivity
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
 import com.lagradost.cloudstream3.metaproviders.TmdbProvider
@@ -13,6 +14,7 @@ import com.lagradost.cloudstream3.ui.download.DownloadButtonSetup.handleDownload
 import com.lagradost.cloudstream3.ui.download.DownloadClickEvent
 import com.lagradost.cloudstream3.ui.quicksearch.QuickSearchFragment
 import com.lagradost.cloudstream3.ui.result.START_ACTION_LOAD_EP
+import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTvSettings
 import com.lagradost.cloudstream3.utils.AppUtils.loadSearchResult
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.DataStoreHelper
@@ -60,7 +62,15 @@ object SearchHelper {
                 }
             }
             SEARCH_ACTION_SHOW_METADATA -> {
-                showToast(activity, callback.card.name, Toast.LENGTH_SHORT)
+                if(!isTvSettings()) { // we only want this on phone as UI is not done yet on tv
+                    (activity as? MainActivity?)?.apply {
+                        loadPopup(callback.card)
+                    } ?: kotlin.run {
+                        showToast(activity, callback.card.name, Toast.LENGTH_SHORT)
+                    }
+                } else {
+                    showToast(activity, callback.card.name, Toast.LENGTH_SHORT)
+                }
             }
         }
     }
