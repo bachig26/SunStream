@@ -151,6 +151,9 @@ class CrossTmdbProvider : TmdbProvider() {
                 filterName(title).contains(
                     filterName(element.name), // search the provider language's title
                         ignoreCase = true
+                    ) || filterName(element.name).contains(
+                    filterName(title), // search the provider language's title
+                        ignoreCase = true
                     )
             }
         }
