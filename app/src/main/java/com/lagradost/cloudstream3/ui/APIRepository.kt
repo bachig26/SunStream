@@ -126,7 +126,7 @@ class APIRepository(val api: MainAPI) {
         delay(delta)
     }
 
-    suspend fun getMainPage(page: Int, nameIndex: Int? = null): Resource<List<HomePageResponse?>> {
+    suspend fun getMainPage(page: Int, nameIndex: Int? = null, filter: TvType? = null): Resource<List<HomePageResponse?>> {
         return safeApiCall {
             api.lastHomepageRequest = unixTimeMS
 
@@ -134,7 +134,7 @@ class APIRepository(val api: MainAPI) {
                 listOf(
                     api.getMainPage(
                         page,
-                        MainPageRequest(data.name, data.data, data.horizontalImages)
+                        MainPageRequest(data.name, data.data, data.horizontalImages, filter)
                     )
                 )
             } ?: run {
@@ -147,7 +147,7 @@ class APIRepository(val api: MainAPI) {
 
                         api.getMainPage(
                             page,
-                            MainPageRequest(data.name, data.data, data.horizontalImages)
+                            MainPageRequest(data.name, data.data, data.horizontalImages, filter)
                         )
                     }
                 } else {
@@ -156,7 +156,7 @@ class APIRepository(val api: MainAPI) {
                             async {
                                 api.getMainPage(
                                     page,
-                                    MainPageRequest(data.name, data.data, data.horizontalImages)
+                                    MainPageRequest(data.name, data.data, data.horizontalImages, filter)
                                 )
                             }
                         }.map { it.await() }

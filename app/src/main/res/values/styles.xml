@@ -97,6 +97,29 @@
         <item name="backgroundColor">@color/transparent</item>
     </style>
 
+    <style name="ChipHomeFilter" parent="@style/Widget.Material3.Chip.Filter">
+        <item name="chipSurfaceColor">@color/transparent</item>
+        <item name="backgroundColor">@color/transparent</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:layout_marginLeft">20dp</item>
+        <item name="android:layout_marginRight">20dp</item>
+        <item name="android:layout_marginBottom">2dp</item>
+        <item name="chipBackgroundColor">@color/home_filter_chip_color</item>
+        <item name="chipStrokeColor">@color/white_transparent_toggle</item>
+        <item name="chipStrokeWidth">2dp</item>
+        <item name="textColor">@color/chip_color_text</item>
+        <item name="android:textColor">@color/chip_color_text</item>
+        <item name="checkedIconTint">@color/chip_color_text</item>
+        <item name="fontFamily">@font/google_sans</item>
+        <item name="chipIconTint">@color/chip_color_text</item>
+        <item name="android:fontFamily">@font/google_sans</item>
+        <item name="chipMinTouchTargetSize">0dp</item>
+        <item name="chipCornerRadius">20dp</item>
+        <item name="checkedIcon">@null</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:width">80dp</item>
+    </style>
+
     <style name="ChipParent">
         <item name="chipSpacingVertical">5dp</item>
         <item name="chipSpacingHorizontal">5dp</item>

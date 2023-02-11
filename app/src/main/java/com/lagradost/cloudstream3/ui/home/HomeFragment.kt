@@ -722,7 +722,10 @@ class HomeFragment : Fragment() {
             },
             { callback ->
                     homeNetworkFilter(callback)
-            }
+            },
+            {
+                homeViewModel.getMainPageFilter(APIHolder.getApiFromNameNull(currentApiName), it)
+            },
             )
 
         reloadStored()

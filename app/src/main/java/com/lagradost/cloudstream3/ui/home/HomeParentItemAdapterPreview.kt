@@ -58,6 +58,7 @@ class HomeParentItemAdapterPreview(
     private val loadStoredData: ((Set<WatchType>) -> Unit),
     private val searchQueryCallback: ((Pair<Boolean, String>) -> Unit),
     private val homeNetworkFilterCallback: (NetworkClickCallback) -> Unit,
+    private val loadTvType: ((TvType?) -> Unit),
 ) : ParentItemAdapter(items, clickCallback, moreInfoClickCallback, expandCallback) {
     private var previewData: Resource<Pair<Boolean, List<LoadResponse>>> = Resource.Loading()
     private var resumeWatchingData: List<SearchResponse> = listOf()
@@ -141,6 +142,7 @@ class HomeParentItemAdapterPreview(
                 searchQueryCallback,
                 moreInfoClickCallback,
                 homeNetworkFilterCallback,
+                loadTvType,
             ).also {
                 this.holder = it
             }
@@ -189,6 +191,7 @@ class HomeParentItemAdapterPreview(
         private val searchQueryCallback: ((Pair<Boolean, String>) -> Unit),
         private val moreInfoClickCallback: (HomeViewModel.ExpandableHomepageList) -> Unit,
         private val homeNetworkFilterCallback: (NetworkClickCallback) -> Unit,
+        private val loadTvType: ((TvType?) -> Unit),
     ) : RecyclerView.ViewHolder(itemView) {
         private var previewAdapter: HomeScrollAdapter? = null
         private val previewViewpager: ViewPager2? = itemView.home_preview_viewpager
@@ -384,6 +387,12 @@ class HomeParentItemAdapterPreview(
             Pair(itemView.home_plan_to_watch_btt, WatchType.PLANTOWATCH),
         )
 
+        private val filterToggleList = listOf(
+            Pair(itemView.filter_only_movies, TvType.Movie),
+            Pair(itemView.filter_only_series, TvType.TvSeries),
+            Pair(itemView.filter_keep_all, null),
+        )
+
         init {
             itemView.home_preview_change_api?.setOnClickListener { view ->
                 changeHomePageCallback(view)
@@ -554,6 +563,17 @@ class HomeParentItemAdapterPreview(
                     // Else if all are unchecked -> Do not load data
                     else if (toggleList.all { it.first?.isChecked != true }) {
                         loadStoredData(emptySet())
+                    }
+                }
+            }
+
+            for ((chip, tvType) in filterToggleList) {
+                chip?.isChecked = false
+                chip?.setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) {
+                        loadTvType(
+                            tvType
+                        )
                     }
                 }
             }

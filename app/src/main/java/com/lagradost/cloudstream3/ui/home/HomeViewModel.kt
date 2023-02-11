@@ -82,6 +82,8 @@ class HomeViewModel : ViewModel() {
 
     private var currentShuffledList: List<SearchResponse> = listOf()
 
+    private var currentTvTypeFilter: TvType? = null
+
     private fun autoloadRepo(): APIRepository {
         return APIRepository(apis.first { it.hasMainPage })
     }
@@ -255,6 +257,16 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    fun getMainPageFilter(api: MainAPI?, filter: TvType ? = null) = ioSafe {
+        //currentTvTypeFilter = filter
+        val listToFilter = expandable
+        val test = listToFilter.toList().filter {
+            (it.second.list.tvType == filter) || filter == null
+        }.toMap()
+        _page.postValue(Resource.Success(test))
+    }
+
+
     private fun load(api: MainAPI?) = ioSafe {
         repo = if (api != null) {
             APIRepository(api)
@@ -276,7 +288,7 @@ class HomeViewModel : ViewModel() {
         _preview.postValue(Resource.Loading())
         addJob?.cancel()
 
-        when (val data = repo?.getMainPage(1, null)) {
+        when (val data = repo?.getMainPage(1, null, currentTvTypeFilter)) {
             is Resource.Success -> {
                 try {
                     expandable.clear()
@@ -331,7 +343,7 @@ class HomeViewModel : ViewModel() {
                     } else {
                         _preview.postValue(Resource.Success((previewResponsesAdded.size < currentShuffledList.size) to previewResponses))
                     }
-                    _page.postValue(Resource.Success(expandable))
+                    _page.postValue(Resource.Success(expandable)) // TODO HERE
                 } catch (e: Exception) {
                     _randomItems.postValue(emptyList())
                     logError(e)

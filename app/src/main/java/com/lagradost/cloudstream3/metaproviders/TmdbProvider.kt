@@ -307,13 +307,13 @@ open class TmdbProvider : MainAPI() {
         return (this * 10).roundToInt()
     }
 
-    private fun Media.toSearchResponse(type: String? = null): SearchResponse? {
-        val newType = type ?: if(this.title != null) "movie" else "tv" // check again type if "/movie" was not in the request, only movies have title
+    private fun Media.toSearchResponse(type: TvType? = null): SearchResponse? {
+        val newType = type ?: if(this.title != null) TvType.Movie else TvType.TvSeries // check again type if "/movie" was not in the request, only movies have title
         return MovieSearchResponse(
             this.title ?: this.name ?: this.originalTitle ?: return null,
-            getUrl(id, newType == "tv"), // type=="tv"
+            getUrl(id, newType == TvType.TvSeries), // type=="tv"
             apiName,
-            if(newType == "movie") {TvType.Movie} else TvType.TvSeries,
+            if(newType == TvType.Movie) {TvType.Movie} else TvType.TvSeries,
             getImageUrl(this.posterPath),  // POSTER
             null, // YEAR
             this.id,
@@ -325,11 +325,11 @@ open class TmdbProvider : MainAPI() {
     override suspend fun getMainPage(
         page: Int,
         request: MainPageRequest
-    ): HomePageResponse {
+    ): HomePageResponse? {
         val type =
-            if (request.data.contains("/movie")) "movie"
+            if (request.data.contains("/movie")) TvType.Movie
             else {
-                if (request.data.contains("/tv")) "tv"
+                if (request.data.contains("/tv")) TvType.TvSeries
                 else null //unknown type
             }
         val language = "&language=${localeLang ?: "en"}"
@@ -338,7 +338,7 @@ open class TmdbProvider : MainAPI() {
             ?.mapNotNull { media ->
                 media.toSearchResponse(type)
             } ?: throw ErrorLoadingException("Invalid Json reponse")
-        return newHomePageResponse(request.name, home, true)
+        return newHomePageResponse(request.name, home, true, type)
     }
 
     open fun loadFromImdb(imdb: String, seasons: List<TvSeason>): LoadResponse? {

@@ -414,13 +414,15 @@ data class SettingsJson(
 data class MainPageData(
     val name: String,
     val data: String,
-    val horizontalImages: Boolean = false
+    val horizontalImages: Boolean = false,
+    val tvtypeFilter: TvType? = null,
 )
 
 data class MainPageRequest(
     val name: String,
     val data: String,
     val horizontalImages: Boolean,
+    val tvtypeFilter: TvType? = null,
     //TODO genre selection or smth
 )
 
@@ -455,6 +457,30 @@ fun newHomePageResponse(
 ): HomePageResponse {
     return HomePageResponse(
         listOf(HomePageList(data.name, list, data.horizontalImages)),
+        hasNext = hasNext ?: list.isNotEmpty()
+    )
+}
+
+fun newHomePageResponse(
+    name: String,
+    list: List<SearchResponse>,
+    hasNext: Boolean? = null,
+    tvType: TvType? = null,
+): HomePageResponse {
+    return HomePageResponse(
+        listOf(HomePageList(name, list, tvType = tvType)),
+        hasNext = hasNext ?: list.isNotEmpty(),
+    )
+}
+
+fun newHomePageResponse(
+    data: MainPageRequest,
+    list: List<SearchResponse>,
+    hasNext: Boolean? = null,
+    tvType: TvType? = null,
+): HomePageResponse {
+    return HomePageResponse(
+        listOf(HomePageList(data.name, list, data.horizontalImages, tvType)),
         hasNext = hasNext ?: list.isNotEmpty()
     )
 }
@@ -782,7 +808,8 @@ data class HomePageResponse(
 data class HomePageList(
     val name: String,
     var list: List<SearchResponse>,
-    val isHorizontalImages: Boolean = false
+    val isHorizontalImages: Boolean = false,
+    val tvType: TvType? = null,
 )
 
 enum class SearchQuality(value: Int?) {
