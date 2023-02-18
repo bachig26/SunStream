@@ -174,7 +174,7 @@ class SettingsFragment : Fragment() {
         }
 
         listOf(
-            Pair(settings_general, R.id.action_navigation_settings_to_navigation_settings_general),
+            Pair(settings_general, R.id.action_navigation_settings_to_navigation_settins_general),
             Pair(settings_player, R.id.action_navigation_settings_to_navigation_settings_player),
             Pair(settings_credits, R.id.action_navigation_settings_to_navigation_settings_account),
             Pair(settings_ui, R.id.action_navigation_settings_to_navigation_settings_ui),

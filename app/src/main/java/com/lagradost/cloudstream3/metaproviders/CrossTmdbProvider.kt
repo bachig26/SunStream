@@ -75,14 +75,25 @@ class CrossTmdbProvider : TmdbProvider() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val dataTmdbLink = tryParseJson<TmdbLink>(data)
-        getAllEnabledMetaProviders().amap {api ->
-            suspendSafeApiCall {
-                api?.loadLinks(data, isCasting, subtitleCallback, callback) // load all meta providers
+        val dataTmdbLink = tryParseJson<SunStreamExtendedLinkData>(data)
+        //val alternativeTitles = dataTmdbLink?.alternativeTitles
+        val dubStatus = dataTmdbLink?.dubStatus
+        val link = dataTmdbLink?.link
+        val linkSentToMetaProviders = link?.toJson()
+        if (linkSentToMetaProviders != null) {
+            getAllEnabledMetaProviders().amap { api ->
+                suspendSafeApiCall {
+                    api?.loadLinks(
+                        linkSentToMetaProviders,
+                        isCasting,
+                        subtitleCallback,
+                        callback
+                    ) // load all meta providers
+                }
             }
         }
-        val isTvShow = (dataTmdbLink?.season != null && dataTmdbLink.episode != null)
-        val isAnime = (dataTmdbLink?.season == null && dataTmdbLink?.episode != null && dataTmdbLink.dubStatus != null)
+        val isTvShow = (link?.season != null && link.episode != null)
+        val isAnime = (link?.season == null && link?.episode != null && dubStatus != null)
         suspendSafeApiCall {
             getAllEnabledDirectProviders().amap { api ->
                 if (api != null && dataTmdbLink != null) {
@@ -91,13 +102,13 @@ class CrossTmdbProvider : TmdbProvider() {
                             if (isTvShow) {
                                 getTvShowEpisodeUrl(
                                     api, searchResponse.url,
-                                    dataTmdbLink.episode, dataTmdbLink.season
+                                    link?.episode, link?.season
                                 )
                             } else {
                                 if (isAnime) {
                                     getAnimeEpisodeUrl(
                                         api, searchResponse.url,
-                                        dataTmdbLink.episode, dataTmdbLink.dubStatus
+                                        link?.episode, dubStatus
                                     )
                                 } else {
                                     getMovieLoadContentUrl(api, searchResponse.url)
@@ -130,7 +141,7 @@ class CrossTmdbProvider : TmdbProvider() {
     /**
      * Will return the media if the name matches (main api)
      */
-    private suspend fun searchForMediaDirectProvider(api: MainAPI, filter: TmdbLink): SearchResponse? {
+    private suspend fun searchForMediaDirectProvider(api: MainAPI, filter: SunStreamExtendedLinkData): SearchResponse? {
         val foundTranslation = filter.alternativeTitles?.firstOrNull{ translation ->// idk if its working
             translation.iso_639_1?.equals(api.lang, ignoreCase = true) == true
         }
@@ -142,7 +153,7 @@ class CrossTmdbProvider : TmdbProvider() {
                 if (!foundTranslation?.data?.title.isNullOrEmpty()){
                     foundTranslation?.data?.title
                 } else {
-                    filter.movieName
+                    filter.link.orgTitle
                 }
             }
         title ?: return null

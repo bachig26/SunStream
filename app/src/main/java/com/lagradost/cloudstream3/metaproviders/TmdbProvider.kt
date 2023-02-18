@@ -23,17 +23,30 @@ import kotlin.math.roundToInt
  * episode and season starting from 1
  * they are null if movie
  * */
-data class TmdbLink(
-    @JsonProperty("imdbID") val imdbID: String?,
-    @JsonProperty("tmdbID") val tmdbID: Int?,
-    @JsonProperty("episode") val episode: Int?,
-    @JsonProperty("season") val season: Int?,
-    @JsonProperty("movieName") val movieName: String? = null,
-    @JsonProperty("alternativeTitles") val alternativeTitles: List<Translations.Translation>? = null,
-    @JsonProperty("year") val year: Int? = null,
-    @JsonProperty("lastSeason") val lastSeason: Int? = null,
-    @JsonProperty("dubStatus") val dubStatus: DubStatus? = null,
+
+data class LinkData( // FROM SORASTREAM
+    val id: Int? = null,
+    val imdbId: String? = null,
+    val type: String? = null,
+    val season: Int? = null,
+    val episode: Int? = null,
+    val aniId: String? = null,
+    val animeId: String? = null,
+    val title: String? = null,
+    val year: Int? = null,
+    val orgTitle: String? = null,
+    val isAnime: Boolean = false,
+    val airedYear: Int? = null,
+    val lastSeason: Int? = null,
+    val epsTitle: String? = null,
 )
+
+data class SunStreamExtendedLinkData(
+    val link: LinkData,
+    val alternativeTitles: List<Translations.Translation>? = null,
+    val dubStatus: DubStatus? = null, // movie name = orgTitle
+)
+
 
 open class TmdbProvider : MainAPI() {
     // This should always be false, but might as well make it easier for forks
@@ -127,22 +140,51 @@ open class TmdbProvider : MainAPI() {
     }
 
 
-    private fun getEpisodesAnime(anime: TvShow, dubStatus: DubStatus?): List<Episode>? {
-        return (1..(anime.number_of_episodes ?: 1)).toList().map { EpisodeNumber ->
-            Episode(
-                TmdbLink(
-                    anime.external_ids?.imdb_id,
-                    anime.id,
-                    EpisodeNumber,
-                    null,
-                    anime.original_name ?: anime.name,
-                    anime.translations?.translations,
-                    anime.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
-                    anime.seasons?.size,
-                    dubStatus,
-                ).toJson(),
-            )
-        }
+    private suspend fun getEpisodesAnime(anime: TvShow, dubStatus: DubStatus?): List<Episode>? {
+        val lastSeason = anime.seasons?.lastOrNull()?.season_number
+        val episodes = anime.seasons?.mapNotNull { seasonObject ->
+            tmdb.tvSeasonsService().season(anime.id, seasonObject.season_number, localeLang)?.awaitResponse()?.body()?.episodes?.map { eps: TvEpisode ->
+                Episode(
+                    SunStreamExtendedLinkData(
+                        LinkData(
+                            anime.id,
+                            anime.external_ids?.imdb_id,
+                            "tv",
+                            eps.season_number,
+                            eps.episode_number,
+                            title = eps.name,
+                            year = eps.air_date?.let {
+                                Calendar.getInstance().apply {
+                                    time = it
+                                }.get(Calendar.YEAR)
+                            },
+                            orgTitle = eps.name,
+                            isAnime = true,
+                            airedYear = eps.air_date?.let {
+                                Calendar.getInstance().apply {
+                                    time = it
+                                }.get(Calendar.YEAR)
+                            },
+                            lastSeason = lastSeason,
+                            epsTitle = eps.name,
+                        ),
+                        alternativeTitles = anime.translations?.translations,
+                        dubStatus = dubStatus
+                    ).toJson(),
+                    name = eps.name,
+                    // season = eps.seasonNumber,
+                    episode = eps.episode_number,
+                    posterUrl = getImageUrl(eps.still_path),
+                    rating = eps.vote_average?.times(10)?.roundToInt(),
+                    description = eps.overview
+                ).apply {
+                    this.addDate(eps.air_date)
+                }
+
+
+            }
+        }?.flatten()
+        return episodes
     }
 
     private suspend fun TvShow.toLoadResponse(): LoadResponse? {
@@ -175,43 +217,54 @@ open class TmdbProvider : MainAPI() {
             }
         }
 
-        val episodeList =
+
+        val lastSeason = this.seasons?.lastOrNull()?.season_number
+        val episodeList = this.seasons?.mapNotNull { seasonObject ->
+            tmdb.tvSeasonsService().season(this.id, seasonObject.season_number, localeLang)?.awaitResponse()?.body()?.episodes?.map { eps: TvEpisode ->
+                Episode(
+                    SunStreamExtendedLinkData(
+                        LinkData(
+                            this.id,
+                            this.external_ids?.imdb_id,
+                            "tv",
+                            eps.season_number,
+                            eps.episode_number,
+                            title = eps.name,
+                            year = eps.air_date?.let {
+                                Calendar.getInstance().apply {
+                                    time = it
+                                }.get(Calendar.YEAR)
+                            },
+                            orgTitle = eps.name,
+                            isAnime = false,
+                            airedYear = eps.air_date?.let {
+                                Calendar.getInstance().apply {
+                                    time = it
+                                }.get(Calendar.YEAR)
+                            },
+                            lastSeason = lastSeason,
+                            epsTitle = eps.name,
+                        ),
+                        alternativeTitles = this.translations?.translations,
+                    ).toJson(),
+                    name = eps.name,
+                    season = eps.season_number,
+                    episode = eps.episode_number,
+                    posterUrl = getImageUrl(eps.still_path),
+                    rating = eps.vote_average?.toString()?.replace(",", ".")?.toDouble()?.times(10)?.toInt(),
+                    description = eps.overview,
+                ).apply {
+                    this.addDate(eps.air_date)
+                }
+
+            }
+        }?.flatten()
+        episodeList ?: return null
+
+
         // todo fix tv show episode
         // ?.filter { !disableSeasonZero || (it.season_number ?: 0) != 0 } TODO add it back
-        this.seasons?.apmapIndexed { seasonIndex, season ->
 
-            val seasonBody = this@toLoadResponse.id?.let {
-                tmdb.tvSeasonsService()
-                    .season(
-                        it,
-                        seasonIndex+1,
-                        localeLang,
-                    )
-            }?.awaitResponse()?.body()
-
-            seasonBody?.episodes?.apmap { episode ->
-                Episode(
-                    TmdbLink(
-                        episode.external_ids?.imdb_id ?: this.external_ids?.imdb_id,
-                        this.id,
-                        episode.episode_number,
-                        episode.season_number,
-                        this@toLoadResponse.original_name ?: this@toLoadResponse.name,
-                        this.translations?.translations,
-                        this@toLoadResponse.first_air_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
-                        this.seasons?.size,
-                    ).toJson(),
-                    episode.name,
-                    episode.season_number,
-                    episode.episode_number,
-                    getImageUrl(episode?.still_path),
-                    episode?.vote_average?.toString()?.replace(",", ".")?.toDouble()?.times(10)?.toInt(), // TODO FIX 0.8 instead of 8.0
-                    episode.overview,
-                    episode.air_date?.time,
-                )
-            }
-        }?.filterNotNull()?.flatten()
-        episodeList ?: return null
         return newTvSeriesLoadResponse(
             this.name ?: this.original_name,
             getUrl(id, true),
@@ -256,15 +309,17 @@ open class TmdbProvider : MainAPI() {
     private suspend fun Movie.toLoadResponse(): MovieLoadResponse {
         return newMovieLoadResponse(
             this.title ?: this.original_title, getUrl(id, false), TvType.Movie,
-            TmdbLink(
-                this.imdb_id,
-                this.id,
-                null,
-                null,
-                this.original_title ?: this.title, // use traduction if their is one and fallback on orignal name
-                this.translations?.translations,
-                this@toLoadResponse.release_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
-                null,
+            SunStreamExtendedLinkData(
+                LinkData(
+                    this.id,
+                    this.external_ids.imdb_id,
+                    "movie",
+                    title = this.title,
+                    year = this.release_date?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.year,
+                    orgTitle = this.original_title,
+                    isAnime = false,
+                ),
+                alternativeTitles = this.translations?.translations,
             ).toJson()
         ) {
             posterUrl = getImageUrl(poster_path)
