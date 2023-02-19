@@ -56,6 +56,7 @@ object DataStoreHelper {
         @JsonProperty("year") val year: Int?,
         @JsonProperty("quality") override var quality: SearchQuality? = null,
         @JsonProperty("posterHeaders") override var posterHeaders: Map<String, String>? = null,
+        @JsonProperty("rating") override var rating: Int? = null,
     ) : SearchResponse {
         fun toLibraryItem(): SyncAPI.LibraryItem? {
             return SyncAPI.LibraryItem(
