@@ -58,53 +58,7 @@
                 app:queryHint="@string/search_hint"
                 app:searchIcon="@drawable/search_icon"
                 tools:ignore="RtlSymmetry" />
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:layout_margin="20dp"
-                android:background="@drawable/outline_less_less">
 
-                <com.google.android.material.chip.ChipGroup
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:selectionRequired="true"
-                    app:singleSelection="true"
-                    android:layout_margin="3dp"
-                    android:animateLayoutChanges="true"
-                    android:orientation="horizontal">
-                <com.google.android.material.chip.Chip
-                    style="@style/ChipHomeFilter"
-                    android:id="@+id/filter_only_movies"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false"
-                    android:nextFocusLeft="@id/nav_rail_view"
-                    android:nextFocusRight="@id/home_plan_to_watch_btt"
-                    android:text="Movies" />
-
-                <com.google.android.material.chip.Chip
-                    style="@style/ChipHomeFilter"
-                    android:id="@+id/filter_keep_all"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:nextFocusLeft="@id/home_type_watching_btt"
-                    android:nextFocusRight="@id/home_type_on_hold_btt"
-                    android:text="All" />
-                <com.google.android.material.chip.Chip
-                    style="@style/ChipHomeFilter"
-                    android:id="@+id/filter_only_series"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false"
-                    android:nextFocusLeft="@id/home_type_watching_btt"
-                    android:nextFocusRight="@id/home_type_on_hold_btt"
-                    android:text="Shows" />
-
-                </com.google.android.material.chip.ChipGroup>
-            </LinearLayout>
         </LinearLayout>
 
         <!--
@@ -320,7 +274,6 @@
                 app:drawableTint="?attr/white"
                 android:contentDescription="@string/home_more_info"/>
         </FrameLayout>
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/home_bookmarked_child_recyclerview"
             android:layout_width="wrap_content"
@@ -362,4 +315,51 @@
         android:layout_height="match_parent"
         tools:listitem="@layout/home_network_grid" />
 </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:layout_margin="10dp"
+        android:background="@drawable/outline_less_less">
+
+        <com.google.android.material.chip.ChipGroup
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:selectionRequired="true"
+            app:singleSelection="true"
+            android:layout_margin="3dp"
+            android:animateLayoutChanges="true"
+            android:orientation="horizontal">
+            <com.google.android.material.chip.Chip
+                style="@style/ChipHomeFilter"
+                android:id="@+id/filter_only_movies"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:nextFocusLeft="@id/nav_rail_view"
+                android:nextFocusRight="@id/home_plan_to_watch_btt"
+                android:text="Movies" />
+
+            <com.google.android.material.chip.Chip
+                style="@style/ChipHomeFilter"
+                android:id="@+id/filter_keep_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:nextFocusLeft="@id/home_type_watching_btt"
+                android:nextFocusRight="@id/home_type_on_hold_btt"
+                android:text="All" />
+            <com.google.android.material.chip.Chip
+                style="@style/ChipHomeFilter"
+                android:id="@+id/filter_only_series"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:nextFocusLeft="@id/home_type_watching_btt"
+                android:nextFocusRight="@id/home_type_on_hold_btt"
+                android:text="Shows" />
+
+        </com.google.android.material.chip.ChipGroup>
+    </LinearLayout>
 </LinearLayout>

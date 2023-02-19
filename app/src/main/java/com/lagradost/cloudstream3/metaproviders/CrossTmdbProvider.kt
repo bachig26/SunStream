@@ -93,7 +93,7 @@ class CrossTmdbProvider : TmdbProvider() {
             }
         }
         val isTvShow = (link?.season != null && link.episode != null)
-        val isAnime = (link?.season == null && link?.episode != null && dubStatus != null)
+        val isAnime = (link?.episode != null && dubStatus != null)
         suspendSafeApiCall {
             getAllEnabledDirectProviders().amap { api ->
                 if (api != null && dataTmdbLink != null) {
