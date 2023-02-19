@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--https://newbedev.com/concatenate-multiple-strings-in-xml-->
-<resources>
+<!--https://newbedev.com/concatenate-multiple-strings-in-xml--><resources>
     <!-- KEYS DON'T TRANSLATE -->
     <string name="search_providers_list_key" translatable="false">search_providers_list</string>
     <string name="locale_key" translatable="false">app_locale</string>
@@ -14,6 +13,7 @@
     <string name="fast_forward_button_time_key" translatable="false">fast_forward_button_time</string>
     <string name="benene_count" translatable="false">benene_count</string>
     <string name="subtitle_settings_key" translatable="false">subtitle_settings_key</string>
+    <string name="test_providers_key" translatable="false">test_providers_key</string>
     <string name="subtitle_settings_chromecast_key" translatable="false">subtitle_settings_chromecast_key</string>
     <string name="quality_pref_key" translatable="false">quakitsu_settingslity_pref_key</string>
     <string name="player_pref_key" translatable="false">player_pref_key</string>
@@ -32,6 +32,8 @@
     <string name="double_tap_enabled_key" translatable="false">double_tap_enabled_key</string>
     <string name="double_tap_pause_enabled_key" translatable="false">double_tap_pause_enabled_key</string>
     <string name="double_tap_seek_time_key" translatable="false">double_tap_seek_time_key2</string>
+    <string name="android_tv_interface_off_seek_key" translatable="false">android_tv_interface_off_seek_key</string>
+    <string name="android_tv_interface_on_seek_key" translatable="false">android_tv_interface_on_seek_key</string>
     <string name="swipe_vertical_enabled_key" translatable="false">swipe_vertical_enabled_key</string>
     <string name="autoplay_next_key" translatable="false">autoplay_next_key</string>
     <string name="display_sub_key" translatable="false">display_sub_key</string>
@@ -84,7 +86,7 @@
     <string name="next_episode_time_min_format" formatted="true">%dm</string>
     <!-- IS NOT NEEDED TO TRANSLATE AS THEY ARE ONLY USED FOR SCREEN READERS AND WONT SHOW UP TO NORMAL USERS -->
     <string name="result_poster_img_des">Poster</string>
-    <string name="search_poster_img_des">@string/result_poster_img_des</string>
+    <string name="search_poster_img_des">Poster</string>
     <string name="episode_poster_img_des">Episode Poster</string>
     <string name="home_main_poster_img_des">Main Poster</string>
     <string name="home_next_random_img_des">Next Random</string>
@@ -207,6 +209,7 @@
     <string name="normal_no_plot">No Plot Found</string>
     <string name="torrent_no_plot">No Description Found</string>
     <string name="show_log_cat">Show Logcat 🐈</string>
+    <string name="test_log">Log</string>
     <string name="picture_in_picture">Picture-in-picture</string>
     <string name="picture_in_picture_des">Continues playback in a miniature player on top of other apps</string>
     <string name="player_size_settings">Player resize button</string>
@@ -305,6 +308,9 @@
     <string name="delete">Delete</string>
     <string name="cancel" translatable="false">@string/sort_cancel</string>
     <string name="pause">Pause</string>
+    <string name="start">Start</string>
+    <string name="test_failed">Failed</string>
+    <string name="test_passed">Passed</string>
     <string name="resume">Resume</string>
     <string name="go_back_30">-30</string>
     <string name="go_forward_30">+30</string>
@@ -390,6 +396,10 @@
     <string name="video_buffer_length_settings">Video buffer length</string>
     <string name="video_buffer_disk_settings">Video cache on disk</string>
     <string name="video_buffer_clear_settings">Clear video and image cache</string>
+    <string name="android_tv_interface_on_seek_settings">Player Shown - Seek Amount</string>
+    <string name="android_tv_interface_on_seek_settings_summary">The seek amount used when the player is visible</string>
+    <string name="android_tv_interface_off_seek_settings">Player Hidden - Seek Amount</string>
+    <string name="android_tv_interface_off_seek_settings_summary">The seek amount used when the player is hidden</string>
     <string name="video_ram_description">Causes crashes if set too high on devices with low memory, such as Android TV.</string>
     <string name="video_disk_description">Causes problems if set too high on devices with low storage space, such as Android TV.</string>
     <string name="dns_pref">DNS over HTTPS</string>
@@ -439,6 +449,7 @@
     <string name="pref_category_extensions">Extensions</string>
     <string name="pref_category_actions">Actions</string>
     <string name="pref_category_cache">Cache</string>
+    <string name="pref_category_android_tv">Android TV</string>
     <string name="pref_category_gestures">Gestures</string>
     <string name="pref_category_player_features">Player features</string>
     <string name="pref_category_subtitles">Subtitles</string>
@@ -455,6 +466,7 @@
     <string name="enable_nsfw_on_providers">Enable NSFW on supported providers</string>
     <string name="subtitles_encoding">Subtitle encoding</string>
     <string name="category_providers">Providers</string>
+    <string name="category_provider_test">Provider test</string>
     <string name="category_ui">Layout</string>
     <string name="category_about">About</string>
     <string name="automatic">Auto</string>
@@ -637,6 +649,8 @@
     <string name="audio_tracks">Audio tracks</string>
     <string name="video_tracks">Video tracks</string>
     <string name="apply_on_restart">Apply on Restart</string>
+    <string name="restart">Restart</string>
+    <string name="stop">Stop</string>
     <string name="safe_mode_title">Safe mode on</string>
     <string name="safe_mode_description">All extensions were turned off due to a crash to help you find the one causing trouble.</string>
     <string name="safe_mode_crash_info">View crash info</string>
@@ -679,7 +693,6 @@
     <string name="update_notification_downloading">Downloading app update…</string>
     <string name="update_notification_installing">Installing app update…</string>
     <string name="update_notification_failed">Could not install the new version of the app</string>
-
     <string name="apk_installer_legacy">Legacy</string>
     <string name="apk_installer_package_installer">PackageInstaller</string>
     <string name="delayed_update_notice">App will be updated upon exit</string>
@@ -696,5 +709,9 @@
     <string name="empty_library_no_accounts_message">Looks like your library is empty :(\nLogin to a library account or add shows to your local library</string>
     <string name="empty_library_logged_in_message">Looks like this list is empty, try switching to another one</string>
     <string name="safe_mode_file">Safe mode file found!\nNot loading any extensions on startup until file is removed.</string>
->>>>>>> 2ff90c03cadb97741b0cc08d3ff91b03aa8aad7a
+    <string name="subscription_in_progress_notification">Updating subscribed shows</string>
+    <string name="subscription_list_name">Subscribed</string>
+    <string name="subscription_new">Subscribed to %s</string>
+    <string name="subscription_deleted">Unsubscribed from %s</string>
+    <string name="subscription_episode_released">Episode %d released!</string>
 </resources>
